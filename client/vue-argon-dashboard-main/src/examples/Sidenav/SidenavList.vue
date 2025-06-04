@@ -35,7 +35,7 @@ const getRoute = () => {
 
       <li class="nav-item">
         <sidenav-item
-          to="/tables"
+          to="/table"
           :class="getRoute() === 'tables' ? 'active' : ''"
           :navText="isRTL ? 'الجداول' : 'Tables'"
         >
