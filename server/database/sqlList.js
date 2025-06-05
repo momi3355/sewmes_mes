@@ -6,7 +6,8 @@
 //   ...books, //enter로 구분
 // }
 
+const processMaster =require('./sqls/processMaster.js');
 
 module.exports = {
-
+  ...processMaster,
 }
