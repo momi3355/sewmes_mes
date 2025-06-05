@@ -53,16 +53,16 @@ const getRoute = () => {
         <sidenav-item
           navText="기준정보 관리"
           :subItems="[
-            { name: '사원 관리', to: '/temp' },
-            { name: '사원 정보 변경', to: '/temp' },
-            { name: '자재 품목 관리', to: '/temp' },
-            { name: '제품 품목 관리', to: '/temp' },
-            { name: '품질기준 관리', to: '/temp' },
-            { name: '공정 관리', to: '/temp' },
-            { name: '공정흐름도 관리', to: '/temp' },
-            { name: 'BOM조회', to: '/temp' },
-            { name: 'BOM등록', to: '/temp' },
-            { name: '설비 관리', to: '/temp' },
+            { name: '사원 관리', to: '/empMaster' },
+            { name: '사원 정보 변경', to: '/empChange' },
+            { name: '자재 품목 관리', to: '/matMaster' },
+            { name: '제품 품목 관리', to: '/prdMaster' },
+            { name: '품질기준 관리', to: '/qualityMaster' },
+            { name: '공정 관리', to: '/processMaster' },
+            { name: '공정흐름도 관리', to: '/flowMaster' },
+            { name: 'BOM조회', to: '/bomView' },
+            { name: 'BOM등록', to: '/bomSave' },
+            { name: '설비 관리', to: '/equiMaster' },
           ]"
         >
         </sidenav-item>
@@ -72,10 +72,11 @@ const getRoute = () => {
         <sidenav-item
           navText="영업"
           :subItems="[
-            { name: '주문서 관리', to: '/temp' },
-            { name: '주문서 등록', to: '/temp' },
-            { name: '업체 관리', to: '/temp' },
-            { name: '업체 거래내역 조회', to: '/temp' },
+            { name: '주문서 관리', to: '/ordMngment' },
+            { name: '주문서 등록', to: '/ordSave' },
+            { name: '업체 관리', to: '/cpMngment' },
+            { name: '업체 거래내역 조회', to: '/tranHistory' },
+            { name: '업체별 외주제품', to: '/outPossible' },
           ]"
         >
         </sidenav-item>
@@ -85,13 +86,12 @@ const getRoute = () => {
         <sidenav-item
           navText="자재"
           :subItems="[
-            { name: '자재 재고 조회', to: '/temp' },
-            { name: '제품 재고 조회', to: '/temp' },
-            { name: '예약 자재 재고 조회', to: '/temp' },
-            { name: '자재 발주서 관리', to: '/temp' },
-            { name: '자재 발주서 조회', to: '/temp' },
-            { name: '자재 입출고 조회', to: '/temp' },
-            { name: '자재 수입검사 관리', to: '/temp' },
+            { name: '예약 자재 재고 조회', to: '/matHold' },
+            { name: '자재 발주서 관리', to: '/matOrder' },
+            { name: '자재 발주서 조회', to: '/matOrderView' },
+            { name: '자재 입출고 조회', to: '/matInoutView' },
+            { name: '자재 수입검사 관리', to: '/matCheck' },
+            { name: '자재 수입검사 조회', to: '/matCheckView' },
           ]"
         >
         </sidenav-item>
@@ -101,18 +101,18 @@ const getRoute = () => {
         <sidenav-item
           navText="생산"
           :subItems="[
-            { name: '생산계획 관리', to: '/temp' },
-            { name: '작업지시 관리', to: '/temp' },
-            { name: '생산 작업 실행', to: '/temp' },
-            { name: 'LOT 이력 조회', to: '/temp' },
-            { name: '생산 실적 조회', to: '/temp' },
-            { name: '생산 불량 이력 관리', to: '/temp' },
-            { name: '외주 발주서 관리', to: '/temp' },
-            { name: '외주 출고 처리', to: '/temp' },
-            { name: '외주 입고 관리', to: '/temp' },
-            { name: '외주 입고 불량 관리', to: '/temp' },
-            { name: '출고 내역 조회', to: '/temp' },
-            { name: '출고 처리', to: '/temp' },
+            { name: '생산계획 관리', to: '/prdPlanMngment' },
+            { name: '작업지시 관리', to: '/workInstMngment' },
+            { name: '생산 작업 실행', to: '/prdWorking' },
+            { name: 'LOT 이력 조회', to: '/lotHistory' },
+            { name: '생산 실적 조회', to: '/prdPrefView' },
+            { name: '생산 불량 이력 관리', to: '/prdErrMngment' },
+            { name: '외주 발주서 관리', to: '/outsouMngment' },
+            { name: '외주 출고 처리', to: '/outsouRelease' },
+            { name: '외주 입고 관리', to: '/outsouInbound' },
+            { name: '외주 입고 불량 관리', to: '/outsouErrMngment' },
+            { name: '출고 내역 조회', to: '/releaseHistory' },
+            { name: '출고 처리', to: '/releaseProcess' },
           ]"
         >
         </sidenav-item>
@@ -122,7 +122,7 @@ const getRoute = () => {
         <sidenav-item
           navText="설비"
           :subItems="[
-            { name: '설비 점검/수리', to: '/temp' },
+            { name: '설비 점검/수리', to: '/equiMaint' },
           ]"
         >
         </sidenav-item>

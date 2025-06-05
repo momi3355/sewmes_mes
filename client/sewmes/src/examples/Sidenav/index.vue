@@ -14,8 +14,7 @@ const darkMode = computed(() => store.state.darkMode);
 <template>
   <div
     v-show="layout === 'default'"
-    class="min-height-300 position-absolute w-100"
-    :class="`${darkMode ? 'bg-transparent' : 'bg-success'}`"
+    class="min-height-300 position-absolute w-100 bg-color"
   />
 
   <aside
@@ -38,9 +37,10 @@ const darkMode = computed(() => store.state.darkMode);
           :src="darkMode || sidebarType === 'bg-default' ? logoWhite : logo"
           class="navbar-brand-img h-100"
           alt="main_logo"
+          style="max-height: 3rem;"
         />
 
-        <span class="ms-2 font-weight-bold me-2">Argon Dashboard 2</span>
+        <span class="ms-2 font-weight-bold me-2">한땀한땀</span>
       </router-link>
     </div>
 
@@ -49,3 +49,9 @@ const darkMode = computed(() => store.state.darkMode);
     <sidenav-list />
   </aside>
 </template>
+
+<style scoped>
+.bg-color {
+  background-color: #d4f0f0;
+}
+</style>

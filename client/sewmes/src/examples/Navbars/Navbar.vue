@@ -50,7 +50,7 @@ const closeMenu = () => {
           class="pe-md-3 d-flex align-items-center"
           :class="isRTL ? 'me-md-auto' : 'ms-md-auto'"
         >
-          <div class="input-group">
+          <!-- <div class="input-group">
             <span class="input-group-text text-body">
               <i class="fas fa-search" aria-hidden="true"></i>
             </span>
@@ -59,14 +59,13 @@ const closeMenu = () => {
               class="form-control"
               :placeholder="isRTL ? 'أكتب هنا...' : 'Type here...'"
             />
-          </div>
+          </div> -->
         </div>
         <ul class="navbar-nav justify-content-end">
           <li class="nav-item d-flex align-items-center">
             <router-link
               :to="{ name: 'Signin' }"
-              class="px-0 nav-link font-weight-bold text-white"
-              target="_blank"
+              class="px-0 nav-link font-weight-bold text-black"
             >
               <i class="fa fa-user" :class="isRTL ? 'ms-sm-2' : 'me-sm-2'"></i>
               <span v-if="isRTL" class="d-sm-inline d-none">يسجل دخول</span>
@@ -77,21 +76,21 @@ const closeMenu = () => {
             <a
               href="#"
               @click="minimizeSidebar"
-              class="p-0 nav-link text-white"
+              class="p-0 nav-link text-black"
               id="iconNavbarSidenav"
             >
               <div class="sidenav-toggler-inner">
-                <i class="sidenav-toggler-line bg-white"></i>
-                <i class="sidenav-toggler-line bg-white"></i>
-                <i class="sidenav-toggler-line bg-white"></i>
+                <i class="sidenav-toggler-line bg-black"></i>
+                <i class="sidenav-toggler-line bg-black"></i>
+                <i class="sidenav-toggler-line bg-black"></i>
               </div>
             </a>
           </li>
-          <li class="px-3 nav-item d-flex align-items-center">
+          <!-- <li class="px-3 nav-item d-flex align-items-center">
             <a class="p-0 nav-link text-white" @click="toggleConfigurator">
               <i class="cursor-pointer fa fa-cog fixed-plugin-button-nav"></i>
             </a>
-          </li>
+          </li> -->
           <li
             class="nav-item dropdown d-flex align-items-center"
             :class="isRTL ? 'ps-2' : 'pe-2'"
@@ -106,7 +105,7 @@ const closeMenu = () => {
               @click="showMenu = !showMenu"
               @blur="closeMenu"
             >
-              <i class="cursor-pointer fa fa-bell"></i>
+              <!-- <i class="cursor-pointer fa fa-bell"></i> -->
             </a>
             <ul
               class="px-2 py-3 dropdown-menu dropdown-menu-end me-sm-n4"

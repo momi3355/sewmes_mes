@@ -60,11 +60,11 @@ const navClasses = computed(() => {
 
     <router-view />
 
-    <app-footer v-show="showFooter" />
+    <!-- <app-footer v-show="showFooter" /> -->
 
-    <configurator
+    <!-- <configurator
       :toggle="toggleConfigurator"
       :class="[showConfig ? 'show' : '', hideConfigButton ? 'd-none' : '']"
-    />
+    /> -->
   </main>
 </template>

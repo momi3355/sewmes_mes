@@ -1,6 +1,9 @@
 <script setup>
 import { TabulatorFull as Tabulator } from "tabulator-tables";
 import { ref, onMounted } from "vue"; // Import ref and onMounted
+import axios from "axios";
+
+import ArgonButton from "@/components/ArgonButton.vue";
 
 import DefaultInfoCard from "@/examples/Cards/DefaultInfoCard.vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
@@ -124,6 +127,7 @@ const handleUserRowClick = (e, row) => {
 //     { id: userData.value.length + 1, name: "새로운 사용자", age: 22, email: "new@example.com", status: "Pending" }
 //   ];
 // };
+
 </script>
 
 <template>
@@ -139,6 +143,7 @@ const handleUserRowClick = (e, row) => {
                 class='text-sm font-weight-bolder text-success'
                 >+5%</span> than last month"
             />
+            <argon-button>버튼</argon-button>
           </div>
         </div>
         <div class="row mt-4">
