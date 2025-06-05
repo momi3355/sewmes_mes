@@ -74,9 +74,8 @@ watch(
   <div class="card">
     <div class="p-3 pt-0 text-center card-body">
       <div class="table-title">
-        <h6 class="mb-0 text-start">{{ cardTitle }}</h6>
+        <h5 class="mb-0 text-start">{{ cardTitle }}</h5>
       </div>
-      <hr class="my-3 horizontal dark" />
       <div ref="tabulatorTableRef"></div>
     </div>
   </div>
@@ -84,9 +83,9 @@ watch(
 
 <style scoped>
 .table-title {
-  border: 1px solid black;
+  /* border: 1px solid black; */
   margin: 10px;
-  padding: 5px;
+  padding: 10px;
 }
 
 /* 카드 본문과 Tabulator 테이블 사이의 여백 */
