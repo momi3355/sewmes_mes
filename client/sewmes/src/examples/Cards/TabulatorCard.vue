@@ -42,6 +42,11 @@ const initializeTabulator = () => {
       // 추가 옵션 병합
       ...props.tabulatorOptions,
     });
+
+    // 이벤트 핸들러가 존재 시 수동으로 등록
+    if (props.tabulatorOptions?.rowDblClick) {
+      tabulatorInstance.on("rowDblClick", props.tabulatorOptions.rowDblClick);
+    }
   }
 };
 
