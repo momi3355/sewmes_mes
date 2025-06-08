@@ -7,7 +7,11 @@
 // }
 
 const processMaster =require('./sqls/processMaster.js');
+const qualityMaster = require('./sqls/qualityMaster.js');
+const equiMaster = require('./sqls/equiMaster.js');
 
 module.exports = {
   ...processMaster,
+  ...qualityMaster,
+  ...equiMaster,
 }
