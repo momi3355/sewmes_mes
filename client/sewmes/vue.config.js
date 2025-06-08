@@ -11,7 +11,12 @@ module.exports = defineConfig({
         changeOrigin : true,
         ws : false,
         pathRewrite : { '^/api' :'/' }
-      }
+      },
+      '^/production-plans':{ //정민 생산계획모달
+        target,
+        changeOrigin:true,
+        ws:false,
+      },
     }
   }
 });

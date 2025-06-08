@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted, watch, onUnmounted } from "vue";
+import { ref, onMounted, watch, onUnmounted,nextTick } from "vue";
 import { TabulatorFull as Tabulator } from "tabulator-tables";
 import "tabulator-tables/dist/css/tabulator_bootstrap5.min.css"; // Bootstrap 5 테마 CSS
 import axios from 'axios'; // axios 임포트
@@ -33,7 +33,7 @@ const modalTableColumns = [
   },
   { title: "생산계획코드", field: "prod_plan_code", width: 150 },
   { title: "제품코드", field: "prod_code", width: 150 },
-  { title: "제품명", field: "prod_", width: 150 },
+  
   { title: "생산계획수량", field: "prod_qty", width: 150 },
   { title: "생산계획등록일자", field: "reg_date", width: 150 },
   { title: "납기일자", field: "dead_date", width: 150 }
@@ -61,7 +61,7 @@ const initializeModalTabulator = () => {
 // 생산계획 데이터를 백엔드에서 불러오는 함수
 const fetchProductionPlans = async () => {
   try {
-    const response = await axios.get('http://localhost:3000/production-plans', {
+    const response = await axios.get('/production-plans', {
         params: {
             complete: 'N' // 완료 여부 'N'인 데이터만 요청 (백엔드에서 처리 필요)
         }
@@ -105,7 +105,7 @@ const handleCloseModal = () => {
 
 // 컴포넌트 마운트 시 Tabulator 초기화
 onMounted(() => {
-  initializeModalTabulator();
+  
 });
 
 // `productionPlans` 데이터가 변경될 때 Tabulator 데이터 업데이트
@@ -119,6 +119,15 @@ watch(() => productionPlans.value, (newData) => {
 watch(() => props.isModalOpen, (newVal) => {
   if (newVal) {
     fetchProductionPlans();
+    nextTick(()=>{
+      initializeModalTabulator();
+    });
+  }else {
+    // 모달이 닫힐 때 Tabulator 인스턴스 파괴 (메모리 누수 방지)
+    if (modalTabulatorInstance) {
+      modalTabulatorInstance.destroy();
+      modalTabulatorInstance = null;
+    }
   }
 });
 
@@ -155,7 +164,7 @@ onUnmounted(() => {
   display: flex;
   justify-content: center; /* 가로 중앙 정렬 */
   align-items: center; /* 세로 중앙 정렬 */
-  z-index: 1000; /* 👈 이 속성도 중요합니다! 다른 요소들 위에 표시되도록 높은 z-index 설정 */
+  z-index: 1000; /*  다른 요소들 위에 표시되도록 높은 z-index 설정 */
 }
 
 /* 모달 내용 컨테이너 */

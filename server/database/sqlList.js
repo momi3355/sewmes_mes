@@ -8,6 +8,9 @@
 
 const processMaster =require('./sqls/processMaster.js');
 
+const workInsstSqls=require('./sqls/workInst.js');
+
 module.exports = {
   ...processMaster,
+  ...workInsstSqls, //정민
 }

@@ -17,12 +17,12 @@ const workInstColumns = [
   },
   { title: "NO", field: "NO", width: 80 },
   { title: "작업지시코드", field: "instcd", width: 180 },
-  { title: "생산계획코드", field: "plancd", width: 180 },
-  { title: "제품명", field: "prdname", width: 180 },
+  { title: "생산계획코드", field: "plancd", width: 180  , editor: "input" },
+  { title: "제품코드", field: "prdcode", width: 180  , editor: "input"},
   { title: "지시수량", field: "instqty", width: 180 , editor: "input" },
   { title: "작업시작일", field: "worksd", width: 180 },
   { title: "작업종료일", field: "workdd", width: 180 },
-  { title: "납기일자", field: "dd", width: 180 },
+  { title: "납기일자", field: "dd", width: 180 , editor: "input"},
   { title: "상태", field: "state", hozAlign: "center" },
 ];
 //생산계획 모달에서 데이터받아, 작업지시서 화면의 그리드에 표시될 데이터 추가하는 함수
@@ -33,8 +33,8 @@ const handleSelectedPlans =(plans)=>{
       plancd: plan.prod_plan_code,
       prdname:plan.prod_code,
       instqty: plan.prod_qty, //자동생성 , 수동입력가능
-      worksd: plan.start_date,
-      workdd: plan.end_date,
+      worksd: '',
+      workdd: '',
       dd: plan.dead_date, //주문상세테이블과 조인해서 가져올 납기일자
       state:'생산 전' //초기상태
   }));
@@ -59,6 +59,53 @@ const searchField4 =ref(''); //담당자자
 //tabulatorCardRef 컴포넌트의 ref 선언
 const tabulatorCardRef = ref(null);
 
+//행추가 함수(생산계획 목록 없이 작업지시 생성) 
+const addRow=()=>{
+  //새로운 행을 위한 NO값 생성
+  const newNo =workInstData.value.length>0 ? Math.max(...workInstData.value.map(item=>item.NO||0))+1:1;
+  //새로운 빈 행 데이터 객체 생성
+  const newRow={
+    NO:newNo,
+    instcd :'', //지시코드 자동생성 저장전에는 빈값
+    plancd: '',
+    prdname:'', //제품
+    instqty: 0, //지시수량 사용자입력 
+    worksd: '', //작업공정에서 자동입력
+    workdd: '', //작업공정에서 자동입력
+    dd: '', //주문상세테이블과 조인해서 가져올 납기일자
+    state:'생산 전' //초기상태
+  }
+  workInstData.value.push(newRow);
+}
+// 저장 함수
+const saveWorkInstructions= async()=>{
+  try{//모든작업지시 데이터 가져오기 
+    const dataToSave = workInstData.value;
+    if(dataToSave.length===0){
+      alert("저장할 작업지시데이터가 없습니다.");
+      return;
+    }
+
+    const response = await axios.post('/workInstMngment/save',{
+        workInstructions: dataToSave
+    });
+    //성공/실패 응답처리
+    if(response.data.success){
+      alert("작업지시가 성공적으로 저장되었습니다.");
+    }else{
+      console.error("작업지시 저장 실패",response.data.message);
+    }
+  }catch(error){
+      console.error("작업지시 저장 중 오류 발생:",error);
+      if(error.response){
+        console.error("서버오류");
+      }else if(error.request){
+        console.error("네트워크 오류: 서버에 연결할 수 없습니다. 백엔드 서버가 실행 중인지 확인하세요.");
+      }else{
+        console.error(`예상치 못한 오류: ${error.message}`);
+      }
+  }
+}
 </script>
 
 <template>
@@ -92,7 +139,8 @@ const tabulatorCardRef = ref(null);
     <div class="row mt-3">
       <div class="col-12">
         <button class="btn btn-info" @click="openModal">생산계획서 불러오기</button>
-        <button class="btn btn-success ms-2" @click="saveWorkInstructions">저장</button>
+        <button class="btn btn-success ms-2 " @click="saveWorkInstructions">저장</button>
+        <button class="btn btn-secondary ms-2" @click="addRow">행추가</button>
       </div>
     </div>
 

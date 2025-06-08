@@ -8,7 +8,6 @@ const selectProdPlansList =
 `SELECT
             pp.prod_plan_code,
             pp.prod_code,
-            od.prod_name,
             pp.prod_qty,
             pp.reg_date,
             od.dead_date
@@ -17,12 +16,31 @@ const selectProdPlansList =
         LEFT JOIN
             t_order_detail od ON pp.order_detail_code = od.order_detail_code
         WHERE
-            pp.complete = 'N'`;
+            pp.complete = ?`;
 
-// 등록
+// 작업지시서 등록(새로운 작업지시 생성)
+const insertWorkInstList =
+`INSERT INTO t_work_inst (
+                                                                                                                                                                                                   
+    prod_plan_code,
+    bom_code,
+    inst_qty,
+    inst_date,
+    prod_code,
+    emp_num,
+    inst_reg_date    
+)VALUES(?,?,?,?,?,?,?)`;
+
+//bom_code를 조회
+const selectBomByProdCode=
+`SELECT bom_code
+FROM t_bom
+WHERE prod_code=?
+`;
 
 module.exports = {
     selectProdPlansList,
-
+    insertWorkInstList,
+    selectBomByProdCode,
 }
 
