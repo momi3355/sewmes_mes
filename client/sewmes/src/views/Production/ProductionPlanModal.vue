@@ -175,7 +175,7 @@ onUnmounted(() => {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* 그림자 효과 */
   margin-left:300px;
   margin-right:300px;
-  min-width: %; /* 최소 너비 */
+  min-width: 70%; /* 최소 너비 */
   max-width: 95%; /* 화면 너비의 최대 90% */
   max-height: 90%; /* 화면 높이의 최대 90% */
   overflow: auto; /* 내용이 넘칠 경우 스크롤바 생성 */

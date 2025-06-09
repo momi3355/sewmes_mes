@@ -21,15 +21,16 @@ const selectProdPlansList =
 // 작업지시서 등록(새로운 작업지시 생성)
 const insertWorkInstList =
 `INSERT INTO t_work_inst (
-                                                                                                                                                                                                   
+    work_inst_code,                                                                                                                                                                                 
     prod_plan_code,
     bom_code,
     inst_qty,
     inst_date,
     prod_code,
     emp_num,
-    inst_reg_date    
-)VALUES(?,?,?,?,?,?,?)`;
+    inst_reg_date,
+    inst_state    
+)VALUES(?,?,?,?,?,?,?,?,?)`;
 
 //bom_code를 조회
 const selectBomByProdCode=
@@ -37,10 +38,16 @@ const selectBomByProdCode=
 FROM t_bom
 WHERE prod_code=?
 `;
-
+//가장큰 작업지시 코드 조회
+const selectMaxWorkInstCode=
+`SELECT MAX(work_inst_code) AS max_code
+FROM t_work_inst
+WHERE work_inst_code LIKE 'I%'
+`;
 module.exports = {
     selectProdPlansList,
     insertWorkInstList,
     selectBomByProdCode,
+    selectMaxWorkInstCode,
 }
 
