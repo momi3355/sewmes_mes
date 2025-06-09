@@ -2,9 +2,9 @@
 const selectQualityList = 
 `
 SELECT quality_code 
-	     , test_name 
-       , test_target 
-	     , test_ref
+	, test_name 
+      , test_target 
+	, test_ref
 FROM t_quality
 WHERE use_yn = '0b1b'
 AND ((? IS NULL OR ? = '') OR test_name LIKE CONCAT('%', ?, '%'))
@@ -56,10 +56,26 @@ FROM   t_quality_history
 WHERE  quality_code = ?
 `;
 
+//코드 생성 프로시저
+const createCodeProc =
+`
+CALL createcode_proc(?, ?, ?, @new_code) 
+SELECT @new_code
+`;
+
+//갱신 프로시저
+const renewQuality = 
+`
+CALL quality_copy_proc(?, @msg)
+SELECT @msg
+`;
+
 module.exports = {
   selectQualityList 
   , selectQualityInfo
   , insertQualityinfo 
   , updateQualityinfo
   , selectQualityHistory
+  , createCodeProc
+  , renewQuality
 }
