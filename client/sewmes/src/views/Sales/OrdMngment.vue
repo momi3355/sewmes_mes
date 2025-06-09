@@ -1,55 +1,142 @@
 <template>
-  <div class="container">
   <div class="py-4 container-fluid">
     <div class="row">
       <div class="col-12">
         <div class="row">
-          <div class="col-lg-3 col-md-6">
-            <default-info-card
-              title="Sales"
-              value="$103,430"
-              description="<span
-                class='text-sm font-weight-bolder text-success'
-                >+5%</span> than last month"
-            />
-            <argon-button>버튼</argon-button>
-          </div>
-        </div>
-        <div class="row mt-4">
-          <div class="col-12"></div>
-        </div>
-        <div class="row mt-4">
-          <div class="col-lg-12" id="AAA">
+          <div class="col-lg-6 col-md-12 mb-4">
             <tabulator-card
-              card-title="사용자 목록"
-              :table-data="userData"
-              :table-columns="userColumns"
-              :tabulator-options="{
-                paginationSize: 7,
-                rowClick: handleUserRowClick,
-              }"
+              card-title="주문서 목록"
+              :table-data="OrderData"
+              :table-columns="OrderColumns"
+              :tabulator-options="OrderTabulatorOptions"
+              style="height: 800px;"
             />
           </div>
-          <div class="row">
-            <div class="col-6 mt-4" id="BBB">
-              <tabulator-card
-                card-title="제품 재고 현황"
-                :table-data="productData"
-                :table-columns="productColumns"
-              />
-            </div>
-            <div class="col-6 mt-4" id="CCC">
-              <tabulator-card
-                card-title="제품 재고 현황"
-                :table-data="productData"
-                :table-columns="productColumns"
-              />
+          <div class="col-lg-6 col-md-12 mb-4">
+            <div class="card h-100">
+              <div class="card-header pb-0">
+                <h6>작업지시 상세</h6>
+              </div>
+              <div class="card-body">
+                <form>
+                  <div class="row mb-0">
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="companyName">업체명</label>
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="companyName"
+                          v-model="ordercurrentOrder.companyName"
+                          readonly
+                        />
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="">업체연락처</label>
+                        <input
+                          type="tel"
+                          class="form-control"
+                          id=""
+                          v-model="ordercurrentOrder.companyTel"
+                          readonly
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="row mb-0">
+                    <div class="col-md-15">
+                      <div class="form-group">
+                        <label for="">주소</label>
+                        <input
+                          type="text"
+                          class="form-control"
+                          id=""
+                          v-model="ordercurrentOrder.address"
+                          readonly
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="row mb-0">
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="">주문일자</label>
+                        <input
+                          type="text"
+                          class="form-control"
+                          id=""
+                          v-model="ordercurrentOrder.orderdate"
+                        />
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="">납기일자</label>
+                        <input
+                          type="text"
+                          class="form-control"
+                          id=""
+                          v-model="ordercurrentOrder.deaddate"
+                        />
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="">영업 담당자</label>
+                        <input
+                          type="text"
+                          class="form-control"
+                          id=""
+                          v-model="ordercurrentOrder.salesManager"
+                        />
+                      </div>
+                    </div>
+                    <div class="col-md-6">
+                      <div class="form-group">
+                        <label for="">영업 담당자 연락처</label>
+                        <input
+                          type="tel"
+                          class="form-control"
+                          id=""
+                          v-model="ordercurrentOrder.salesTel"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="row mb-0">
+                    <div class="col-md-15">
+                      <div class="form-group">
+                        <label for="width">비고</label>
+                        <input
+                          type="text"
+                          class="form-control"
+                          id="width"
+                          v-model="ordercurrentOrder.note"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </form>
+              </div>
+              <div class="card-footer d-flex justify-content-end pt-0">
+                <argon-button color="secondary" variant="gradient" class="me-2" @click=""
+                  >삭제</argon-button
+                >
+                <argon-button color="success" variant="gradient" @click=""
+                  >저장</argon-button
+                >
+              </div>
+              <p>선택된 업체명: {{ ordercurrentOrder.cp_name }}</p>
             </div>
           </div>
         </div>
       </div>
     </div>
-  </div>
   </div>
 </template>
 
@@ -57,123 +144,71 @@
 import { TabulatorFull as Tabulator } from "tabulator-tables";
 import { ref, onMounted } from "vue"; // Import ref and onMounted
 import axios from "axios";
-
 import ArgonButton from "@/components/ArgonButton.vue";
-
 import DefaultInfoCard from "@/examples/Cards/DefaultInfoCard.vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 
 // 사용자 데이터 및 컬럼 정의
-const userData = ref([
-  {
-    id: 1,
-    name: "홍길동",
-    age: 28,
-    email: "hong.gd@example.com",
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "이순신",
-    age: 45,
-    email: "lee.ss@example.com",
-    status: "Inactive",
-  },
-  {
-    id: 3,
-    name: "김유신",
-    age: 33,
-    email: "kim.ys@example.com",
-    status: "Active",
-  },
-  {
-    id: 4,
-    name: "강감찬",
-    age: 52,
-    email: "kang.gc@example.com",
-    status: "Pending",
-  },
-  {
-    id: 5,
-    name: "유관순",
-    age: 20,
-    email: "ryu.gs@example.com",
-    status: "Active",
-  },
-  {
-    id: 6,
-    name: "안중근",
-    age: 38,
-    email: "ahn.jg@example.com",
-    status: "Active",
-  },
-  {
-    id: 7,
-    name: "윤봉길",
-    age: 25,
-    email: "yoon.bg@example.com",
-    status: "Inactive",
-  },
-  {
-    id: 8,
-    name: "세종대왕",
-    age: 60,
-    email: "sejong.d@example.com",
-    status: "Active",
-  },
-]);
 
-const userColumns = [
-  { title: "ID", field: "id", width: 50, hozAlign: "center" },
-  { title: "이름", field: "name", width: 150, editor: "input" },
-  { title: "나이", field: "age", hozAlign: "center", sorter: "number" },
-  { title: "이메일", field: "email", hozAlign: "left", formatter: "link" },
-  {
-    title: "상태",
-    field: "status",
-    hozAlign: "center",
-    formatter: "tag",
-    editor: "list",
-    editorParams: { values: ["Active", "Inactive", "Pending"] },
-  },
-  {
-    title: "액션",
-    formatter: "buttonCross",
-    width: 80,
-    hozAlign: "center",
-    cellClick: (e, cell) => {
-      /* 삭제 로직 */ alert(`사용자 ${cell.getData().name} 삭제`);
-      cell.getRow().delete();
-    },
-  },
+const OrderData = ref([]);
+
+// 주문 목록
+const OrderColumns = [
+  { title: "순번", field: "num", width: 100, hozAlign: "center" },
+  { title: "주문코드", field: "ordercode", width: 100, hozAlign: "center" },
+  { title: "업체명", field: "companyName", minWidth: 150, hozAlign: "center"},
+  { title: "총수량", field: "totalQty", width: 100, hozAlign: "center",},
+  { title: "주문일자", field: "orderdate", width: 100, hozAlign: "center",},
+  { title: "납기일자", field: "deaddate", width: 100, hozAlign: "center",},
+  { title: "상태", field: "status", width: 100, hozAlign: "center",}
 ];
+onMounted(async () => {
+  try {
+    const res = await axios.get('/api/orderList'); // ✅ 백엔드 API 호출
 
-// 제품 데이터 및 컬럼 정의 (예시)
-const productData = ref([
-  { id: 101, name: "노트북", category: "전자제품", price: 1200, stock: 50 },
-  { id: 102, name: "마우스", category: "전자제품", price: 25, stock: 200 },
-  { id: 103, name: "키보드", category: "전자제품", price: 75, stock: 120 },
-  { id: 104, name: "모니터", category: "전자제품", price: 300, stock: 30 },
-]);
+    // ✅ 응답 데이터를 OrderData에 넣기
+    OrderData.value = res.data.map((item, index) => ({
+      num: index + 1,
+      ordercode: item.order_code,
+      companyName: item.cp_name,
+      totalQty: item.qty,
+      orderdate: item.order_date,
+      deaddate: item.dead_date,
+      companyTel: item.cp_tel,
+      // salesManager: '',
+      // salesTel: '',
+      address: item.address,
+      note: item.note,
+      status: item.state
+    }));
 
-const productColumns = [
-  { title: "제품 ID", field: "id", width: 80 },
-  { title: "제품명", field: "name", width: 180 },
-  { title: "카테고리", field: "category", width: 120 },
-  {
-    title: "가격",
-    field: "price",
-    hozAlign: "right",
-    formatter: "money",
-    formatterParams: { symbol: "$", precision: 0 },
+    console.log('📦 DB에서 받아온 데이터:', OrderData.value);
+} catch (error) {
+  console.error('❌ 주문 목록 로딩 실패:', error.message);
+}
+});
+
+// 주문 상세 정보
+const ordercurrentOrder = ref({});
+
+const OrderTabulatorOptions = {
+  // pagination: 'local', // Paging removed
+  // paginationSize: 7, // Paging size removed
+  layout: 'fitColumns',
+  rowClick: (e, row) => {
+    OrderData.value.forEach(item => item.isSelected = false);
+    row.getData().isSelected = true;
+    ordercurrentOrder.value = { ...row.getData() }; // Update detailed view
   },
-  { title: "재고", field: "stock", hozAlign: "center" },
-];
-
-// Tabulator 옵션에 전달할 함수 예시
-const handleUserRowClick = (e, row) => {
-  alert(`"${row.getData().name}" 행이 클릭되었습니다.`);
+  rowFormatter: function(row) {
+    if (row.getData().isSelected) {
+      row.getElement().classList.add("selected-row");
+    } else {
+      row.getElement().classList.remove("selected-row");
+    }
+  }
 };
+
 
 // 동적으로 데이터 업데이트 예시 (버튼 클릭 시)
 // const updateUserData = () => {
@@ -186,9 +221,8 @@ const handleUserRowClick = (e, row) => {
 </script>
 
 <style scoped>
-.container {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
+  input {
+    display: block;
+    margin-bottom: -10px; /* 간격을 줄임 */
+  }
 </style>
