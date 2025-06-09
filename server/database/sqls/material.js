@@ -10,6 +10,19 @@ const selectMaterialList = `
   FROM t_material
 `;
 
+const insertMaterial = `
+  INSERT INTO t_material
+  SET ?
+`;
+
+const updateMaterial = `
+  UPDATE t_material
+  SET ?
+  WHERE material_code = ?
+`;
+
 module.exports = {
-  selectMaterialList
+  selectMaterialList,
+  insertMaterial,
+  updateMaterial
 }

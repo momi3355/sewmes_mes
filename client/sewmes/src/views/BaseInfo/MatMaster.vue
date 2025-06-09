@@ -1,5 +1,5 @@
 <script setup>
-import { onBeforeMount, ref } from "vue";
+import { onMounted, ref } from "vue";
 import axios from "axios";
 
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
@@ -65,20 +65,13 @@ const colortype = ref([
     code: "0i9i",
     name: "검",
   }
-])
-  // SELECT material_code
-  //       ,material_name
-  //       ,material_type
-  //       ,standard
-  //       ,unit
-  //       ,unit_price
-  //       ,safe_stock
-  //       ,color
+]);
+
 const materialData = ref([
   {
     material_code: "FAB001",
     material_name: "면 30수 싱글 원단",
-    material_type: "0l2l",
+    material_type: "0l1l",
     standard: "30수 / 싱글 / 화이트 / 150mm",
     unit: "M",
     unit_price: 2800,
@@ -89,21 +82,62 @@ const materialData = ref([
   {
     material_code: "BTNPL15",
     material_name: "플라스틱 단추 15mm",
-    material_type: 25,
-    stock: 200
+    material_type: "0l2l",
+    standard: "15mm / 2홀",
+    unit: "EA",
+    unit_price: 15,
+    safe_stock: 5000,
+    color: "0i9i",
+    use_yn: "0b1b"
   },
 ]);
+
+const mattypeFormatter = (cell) => {
+  const code = cell.getValue();
+  const foundType = mattype.value.find(type => type.code === code);
+  return foundType ? foundType.name : code;
+};
+
+const usetypeFormatter = (cell) => {
+  const code = cell.getValue();
+  const foundType = usetype.value.find(type => type.code === code);
+  return foundType ? foundType.name : code;
+};
+
+const colortypeFormatter = (cell) => {
+  const code = cell.getValue();
+  const foundType = colortype.value.find(type => type.code === code);
+  return foundType ? foundType.name : code;
+};
 
 const materialColumns = [
   { title: "자재코드", field: "material_code", width: 100 },
   { title: "자재명", field: "material_name", width: 170 },
-  { title: "자재 유형", field: "material_type", width: 75 },
+  {
+    title: "자재 유형",
+    field: "material_type",
+    width: 75,
+    formatter: mattypeFormatter // 포매터만 적용
+  },
   { title: "규격", field: "standard", width: 160 },
   { title: "단위", field: "unit", width: 50 },
-  { title: "사용여부", field: "use_yn", width: 105 },
+  {
+    title: "사용여부",
+    field: "use_yn",
+    width: 105,
+    formatter: usetypeFormatter // 포매터만 적용
+  },
+  { title: "단가", field: "unit_price", width: 70, hozAlign: "right" },
+  { title: "안전 재고 수량", field: "safe_stock", width: 70, hozAlign: "right" },
+  {
+    title: "색상",
+    field: "color",
+    width: 70,
+    formatter: colortypeFormatter // 포매터만 적용
+  }
 ];
 
-const detailFields = ref({
+const initialDetailFields = {
   material_code: "",
   material_name: "",
   material_type: "0l1l",
@@ -113,7 +147,9 @@ const detailFields = ref({
   safe_stock: 0,
   color: "0i8i",
   use_yn: "0b1b"
-})
+};
+
+const detailFields = ref({ ...initialDetailFields });
 
 // const rowClick = (row) => {
 //   let str = "";
@@ -125,16 +161,39 @@ const detailFields = ref({
 // }
 
 const tabulatorOptions = {
-  rowDblClick: (e, row) => {
-    const rowData = row.getData();
-    console.log(rowData);
-    detailFields.value = rowData;
-    console.log(detailFields.value.material_code);
-  }
+  selectableRows: 1,
 }
 
-onBeforeMount(async () => {
+const tabulatorEvent = [
+  {
+    eventName: "rowClick",
+    eventAction: (e, row) => {
+      const rowData = row.getData();
+      console.log(rowData);
+      detailFields.value = rowData;
+      //console.log(detailFields.value.material_code);
+    }
+  }
+];
+
+const materialClickhandler = async () => {
+  const find = materialData.value.find(e => {
+    return e.material_code === detailFields.value.material_code
+  });
+  if (find !== null) {
+    const result = await axios.put("/api/materialUpdate/"+find.material_code);
+    console.log(result);
+  } else {
+    const result = await axios.post("/api/materialInsert");
+    console.log(result);
+  }
+};
+
+onMounted(async () => {
   const material = await axios.get("/api/materialList");
+  materialData.value.push({
+    initialDetailFields
+  });
   console.log(material.data);
 });
 
@@ -177,20 +236,21 @@ onBeforeMount(async () => {
       </div>
     </div>
 
-    <div class="row p-4">
-      <div class="col md-3">
+    <div class="row me-3">
+      <div class="col-7 md-3">
         <tabulator-card
           card-title="자제 품목 리스트"
           :table-data="materialData"
           :table-columns="materialColumns"
           :tabulator-options="tabulatorOptions"
+          :on="tabulatorEvent"
         />
       </div>
-      <div class="col-md-5">
+      <div class="col">
         <div class="card mb-3">
           <div class="card-header d-flex justify-content-between align-items-center">
             <h5>자재 상세</h5>
-            <button class="btn btn-sm btn-success">저장</button>
+            <button class="btn btn-sm btn-success" @click="materialClickhandler">저장</button>
           </div>
           <div class="card-body">
             <div class="row mb-2">
