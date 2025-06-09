@@ -1,4 +1,4 @@
-<!--자재 발주서 관리-->
+<!--자재 발주서 -->
 <script setup>
 import { TabulatorFull as Tabulator } from "tabulator-tables";
 import { ref, onMounted } from "vue"; // Import ref and onMounted
@@ -9,175 +9,86 @@ import ArgonButton from "@/components/ArgonButton.vue";
 import DefaultInfoCard from "@/examples/Cards/DefaultInfoCard.vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 
-const userData = ref([
+const materialData = ref([
   {
     id: 1,
-    name: "홍길동",
-    age: 28,
-    email: "hong.gd@example.com",
-    status: "Active",
-    selected: true
+    matcode: "MAT-001",
+    matname: "원자재001",
+    company: "원자재판매처",
+    mat_category: "원자재",
+    stock: "0",
   },
   {
-    id: 2,
-    name: "이순신",
-    age: 45,
-    email: "lee.ss@example.com",
-    status: "Inactive",
-    selected: true
-  },
-  {
-    id: 3,
-    name: "김유신",
-    age: 33,
-    email: "kim.ys@example.com",
-    status: "Active",
-    selected: true
-  },
-  {
-    id: 4,
-    name: "강감찬",
-    age: 52,
-    email: "kang.gc@example.com",
-    status: "Pending",
-    selected: true
-  },
-  {
-    id: 5,
-    name: "유관순",
-    age: 20,
-    email: "ryu.gs@example.com",
-    status: "Active",
-    selected: true
-  },
-  {
-    id: 6,
-    name: "안중근",
-    age: 38,
-    email: "ahn.jg@example.com",
-    status: "Active",
-    selected: true
-  },
-  {
-    id: 7,
-    name: "윤봉길",
-    age: 25,
-    email: "yoon.bg@example.com",
-    status: "Inactive",
-    selected: true
-  },
-  {
-    id: 8,
-    name: "세종대왕",
-    age: 60,
-    email: "sejong.d@example.com",
-    status: "Active",
-    selected: true
+     id: 1,
+    matcode: "MAT-002",
+    matname: "원자재002",
+    company: "원자재판매처",
+    mat_category: "원자재",
+    stock: "1",
   },
 ]);
 
 const productData = ref([
   {
     id: 1,
-    name: "홍길동",
-    age: 28,
-    email: "hong.gd@example.com",
-    status: "Active",
-  },
-  {
-    id: 2,
-    name: "이순신",
-    age: 45,
-    email: "lee.ss@example.com",
-    status: "Inactive",
-  },
-  {
-    id: 3,
-    name: "김유신",
-    age: 33,
-    email: "kim.ys@example.com",
-    status: "Active",
-  },
-  {
-    id: 4,
-    name: "강감찬",
-    age: 52,
-    email: "kang.gc@example.com",
-    status: "Pending",
-  },
-  {
-    id: 5,
-    name: "유관순",
-    age: 20,
-    email: "ryu.gs@example.com",
-    status: "Active",
-  },
-  {
-    id: 6,
-    name: "안중근",
-    age: 38,
-    email: "ahn.jg@example.com",
-    status: "Active",
-  },
-  {
-    id: 7,
-    name: "윤봉길",
-    age: 25,
-    email: "yoon.bg@example.com",
-    status: "Inactive",
-  },
-  {
-    id: 8,
-    name: "세종대왕",
-    age: 60,
-    email: "sejong.d@example.com",
-    status: "Active",
+    matname: "",
+    qty: "",
+    unit: "",
+    unit_price: "",
+    total_price: "",
+    color: "",
+    size: "",
+    order_date: "",
+    deadline: "",
+    address: "", 
+    note: "",
   },
 ]);
 
-const userColumns = [
-  { 
-    title: "선택", 
-    field: "selected", 
-    width: 80, 
-    hozAlign: "center",
-    formatter: "tickCross",
-    editor: true,
-    headerSort: false
+const materialColumns = [
+  {
+  formatter: "rowSelection",  // 행 선택 체크박스를 생성합니다.
+  titleFormatter: "rowSelection", // 헤더에 '전체 선택' 체크박스를 생성합니다.
+  hozAlign: "center",
+  headerSort: false,          // 이 열은 정렬 기능을 비활성화합니다.
+  cellClick: function(e, cell) { // 셀의 아무 곳이나 클릭해도 체크되도록 합니다.
+    cell.getRow().toggleSelect();
   },
-  { title: "자재코드", field: "name", width: 150, editor: "input" },
-  { title: "발주일자", field: "age", hozAlign: "center", sorter: "number" },
-  { title: "납기일자", field: "email", hozAlign: "left", formatter: "link" },
-  { title: "업체코드", field: "cp_code", hozAlign: "left"},
-  { title: "단가", field: "unit_price", hozAlign: "center"},
-  { title: "합계", field: "total_price", hozAlign: "center"},
+   width: 1
+},
+  { title: "자재코드", field: "matcode", width: 150, editor: "input" },
+  { title: "자재명", field: "matname", hozAlign: "left"},
+  { title: "공급처", field: "company", hozAlign: "left"},
+  { title: "자재유형", field: "mat_category", hozAlign: "left"},
+  { title: "재고량", field: "stock", hozAlign: "left"},
 ];
 
 const productColumns = [
-  { 
-    title: "선택", 
-    field: "selected", 
-    width: 80, 
-    hozAlign: "center",
-    formatter: "tickCross",
-    editor: true,
-    headerSort: false
+  {
+  formatter: "rowSelection",  // 행 선택 체크박스를 생성합니다.
+  titleFormatter: "rowSelection", // 헤더에 '전체 선택' 체크박스를 생성합니다.
+  hozAlign: "center",
+  headerSort: false,          // 이 열은 정렬 기능을 비활성화합니다.
+  cellClick: function(e, cell) { // 셀의 아무 곳이나 클릭해도 체크되도록 합니다.
+    cell.getRow().toggleSelect();
   },
-  { title: "자재명", field: "name", width: 150, editor: "input" },
-  { title: "수량", field: "age", hozAlign: "center", sorter: "number", editor: "input" },
-  { title: "단위", field: "email", hozAlign: "left", formatter: "link", editor: "input" },
-  { title: "단가", field: "cp_code", hozAlign: "left", editor: "input"},
-  { title: "합계", field: "unit_price", hozAlign: "center"},
-  { title: "색상", field: "total_price", hozAlign: "center", editor: "input"},
-  { title: "사이즈", field: "total_price", hozAlign: "center", editor: "input"},
-  { title: "발주일자", field: "total_price", hozAlign: "center", editor: "input"},
-  { title: "납기일자", field: "total_price", hozAlign: "center", editor: "input"},
-  { title: "주소", field: "total_price", hozAlign: "center", editor: "input"},
-  { title: "비고", field: "total_price", hozAlign: "center", editor: "input"},
+   width: 1
+},
+  { title: "자재명", field: "matname", width: 150, editor: "input" },
+  { title: "수량", field: "qty", hozAlign: "left", sorter: "number", editor: "input" },
+  { title: "단위", field: "unit", hozAlign: "left", formatter: "link", editor: "input" },
+  { title: "단가", field: "unit_price", hozAlign: "left", editor: "input"},
+  { title: "합계", field: "total_price", hozAlign: "left"},
+  { title: "색상", field: "color", hozAlign: "left", editor: "input"},
+  { title: "사이즈", field: "size", hozAlign: "left", editor: "input"},
+  { title: "발주일자", field: "order_date", hozAlign: "left"},
+  { title: "납기일자", field: "deadline", hozAlign: "left"},
+  { title: "주소", field: "address", hozAlign: "left", editor: "input"},
+  { title: "비고", field: "note", hozAlign: "left", editor: "input"},
 ];
 
 // 선택된 행들을 처리하는 함수
-const handleUserRowClick = (e, row) => {
+const handleMatRowClick = (e, row) => {
   console.log("Row clicked:", row.getData());
 };
 
@@ -199,20 +110,16 @@ const getSelectedRows = (tableRef) => {
     <!-- 상단 검색 영역 -->
     <div class="row searchbox mb-3">
       <div class="col-md-2">
-        <label class="form-label">검색항목 1</label>
+        <label class="form-label">자재명</label>
         <input type="text" class="form-control" v-model="searchField1">
       </div>
       <div class="col-md-2">
-        <label class="form-label">검색항목 2</label>
+        <label class="form-label">자재코드</label>
         <input type="text" class="form-control" v-model="searchField2">
       </div>
       <div class="col-md-2">
-        <label class="form-label">검색항목 3</label>
+        <label class="form-label">공급처</label>
         <input type="text" class="form-control" v-model="searchField3">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">검색항목 4</label>
-        <input type="text" class="form-control" v-model="searchField4">
       </div>
       <div class="col-md-2 d-flex align-items-end">
         <button class="btn btn-secondary me-2">초기화</button>
@@ -223,13 +130,25 @@ const getSelectedRows = (tableRef) => {
           <div class="col-lg-12">
             <tabulator-card
               card-title="공급할 자재 목록"
-              :table-data="userData"
-              :table-columns="userColumns"
+              :table-data="materialData"
+              :table-columns="materialColumns"
               :tabulator-options="{
                 paginationSize: 7,
-                rowClick: handleUserRowClick,
+                rowClick: handleMatRowClick,
               }"
             />
+              <div class="button-container">
+                <ArgonButton 
+                  class="addbutton"
+                  color="info" 
+                  variant="gradient"
+                  @click="add"
+                >
+                  추가
+                </ArgonButton>
+              </div>
+
+
           </div>
             <div class="col-12 mt-4">
               <tabulator-card
@@ -255,5 +174,13 @@ const getSelectedRows = (tableRef) => {
  }
  .btn btn-secondary me-2{
   margin-right: 10px;
+ }
+ .button-container{
+  display: flex;
+  justify-content: center;
+ }
+ .addbutton{
+  width: 140px;
+  margin-top: 25px;
  }
 </style>
