@@ -10,7 +10,10 @@ const processMaster =require('./sqls/processMaster.js');
 const processFlow =require('./sqls/processFlow.js');
 
 
+const workInsstSqls=require('./sqls/workInst.js');
+
 module.exports = {
   ...processMaster,
   ...processFlow
+  ...workInsstSqls, //정민
 }
