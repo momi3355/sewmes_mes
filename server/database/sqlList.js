@@ -11,6 +11,7 @@ const processMaster =require('./sqls/processMaster.js');
 const qualityMaster = require('./sqls/qualityMaster.js');
 const equiMaster = require('./sqls/equiMaster.js');
 const workInsstSqls=require('./sqls/workInst.js');
+const material = require('./sqls/material.js');
 const orderListSql=require('./sqls/orderList.js');
 const companyListSql=require('./sqls/companyList.js');
 
@@ -19,6 +20,7 @@ module.exports = {
   ...qualityMaster,
   ...equiMaster,
   ...processFlow,
+  ...material,
   ...workInsstSqls, //정민
   ...orderListSql, // 주문서 관리
   ...companyListSql, // 업체 정보
