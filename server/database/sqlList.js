@@ -11,11 +11,13 @@ const processMaster =require('./sqls/processMaster.js');
 const qualityMaster = require('./sqls/qualityMaster.js');
 const equiMaster = require('./sqls/equiMaster.js');
 const workInsstSqls=require('./sqls/workInst.js');
+const material = require('./sqls/material.js');
 
 module.exports = {
   ...processMaster,
   ...qualityMaster,
   ...equiMaster,
   ...processFlow,
+  ...material,
   ...workInsstSqls, //정민
 }
