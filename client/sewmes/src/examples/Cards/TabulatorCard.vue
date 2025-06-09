@@ -116,11 +116,11 @@ onBeforeUnmount(() => {
 <template>
   <div class="card">
     <div class="p-3 pt-0 text-center card-body">
-      <div class="table-title">
-        <h5 class="mt-3 text-start">{{ cardTitle }}</h5>
-      </div>
-      <div>
-        <slot name="actions"></slot>
+      <div class="table-title d-flex justify-content-between align-items-center mb-3 mt-3">
+        <h5 class="mt-0 text-start">{{ cardTitle }}</h5>
+        <div>
+          <slot name="actions"></slot>
+        </div>
       </div>
       <div ref="tabulatorTableRef"></div>
     </div>
