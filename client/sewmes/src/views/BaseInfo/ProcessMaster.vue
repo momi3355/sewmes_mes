@@ -73,33 +73,6 @@ const detailFields = ref({
   useYn: ''
 });
 
-const tabulatorOptions = {
-  rowDblClick: (e, row) => {
-    const rowData = row.getData();
-    if (!rowData.processCode) {
-      // 빈 행일 경우 초기화
-      detailFields.value = {
-        processCode: '',
-        processName: '',
-        detail: '',
-        equiType: '',
-        needTime: '',
-        processType: '0m3m', // 상관없음
-        useYn: '0b1b'         // 사용
-      };
-    } else {
-      detailFields.value = {
-        processCode: rowData.processCode,
-        processName: rowData.processName,
-        detail: rowData.detail,
-        equiType: rowData.equiType,
-        needTime: rowData.needTime,
-        processType: rowData.processType,
-        useYn: rowData.useYn
-      };
-    }
-  }
-};
 const saveProcess = async () => {
   const df = detailFields.value;
   // 유효성 검사
@@ -180,6 +153,36 @@ const deleteProcess = async () => {
 onBeforeMount(() => {
   // getProcessList();
 })
+const tabulatorEvent = [
+  {
+    eventName: "rowDblClick",
+    eventAction: (e, row) => {
+      const rowData = row.getData();
+      if (!rowData.processCode) {
+        // 빈 행일 경우 초기화
+        detailFields.value = {
+          processCode: '',
+          processName: '',
+          detail: '',
+          equiType: '',
+          needTime: '',
+          processType: '0m3m', // 상관없음
+          useYn: '0b1b'         // 사용
+        };
+      } else {
+        detailFields.value = {
+          processCode: rowData.processCode,
+          processName: rowData.processName,
+          detail: rowData.detail,
+          equiType: rowData.equiType,
+          needTime: rowData.needTime,
+          processType: rowData.processType,
+          useYn: rowData.useYn
+        };
+      }
+    }
+  }
+];
 </script>
 
 <template>
@@ -221,7 +224,7 @@ onBeforeMount(() => {
           card-title="공정 목록"
           :table-data="processData"
           :table-columns="processColumns"
-          :tabulator-options="tabulatorOptions"
+          :on="tabulatorEvent"
         />
       </div>
 
@@ -313,4 +316,4 @@ onBeforeMount(() => {
   border-radius: 15px;
   background-color: #FFF;
 }
-</style>
+</style>  

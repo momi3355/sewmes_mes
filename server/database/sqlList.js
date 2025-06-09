@@ -17,5 +17,6 @@ module.exports = {
   ...qualityMaster,
   ...equiMaster,
   ...processFlow,
-  ...workInsstSqls, //정민
+  ...workInsstSqls,
+
 }

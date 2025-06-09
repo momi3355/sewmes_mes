@@ -1,4 +1,6 @@
 const express = require('express');
+const multer = require('multer');
+const path = require('path');
 const router = express.Router();
 
  // 해당 라우터를 통해 제공할 서비스를 가져옴
@@ -59,5 +61,75 @@ router.get('/productList', async (req, res)=>{
     res.status(500).send({ message: "검색 중 오류 발생" });
   }
 });
+// Prod_code 기준으로 공정흐름 data가져오기
+router.get('/flowList', async (req, res) => {
+  try {
+    const prodCode = req.query.prodCode;
+    if (!prodCode) return res.status(400).send('prodCode is required');
 
+    const result = await processService.getProcessFlowByProdCode(prodCode);
+    res.json(result);
+  } catch (err) {
+    console.error('공정 흐름 조회 오류:', err);
+    res.status(500).send('Server Error');
+  }
+});
+// Prod_code 기준으로 공정흐름 저장
+router.post('/flowSave', async (req, res) => {
+  try {
+    const { prodCode, flows } = req.body;
+    if (!prodCode || !Array.isArray(flows)) return res.status(400).send('Invalid data');
+
+    await processService.saveProcessFlows(prodCode, flows);
+    res.send({ success: true, message: "저장 완료" });
+  } catch (err) {
+    console.error("flowSave 오류:", err);
+    res.status(500).send("저장 실패");
+  }
+});
+// 공정 흐름 이미지 등록
+const storage = multer.diskStorage({
+  destination: 'uploads/',
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    const newName = `${Date.now()}${ext}`;
+    cb(null, newName);
+  }
+});
+const upload = multer({ storage });
+
+router.post('/flowImageUpload', upload.single('image'), async (req, res) => {
+  
+  const flowCode = req.body.flowCode;
+  const file = req.file;
+
+  if (!flowCode || !file) {
+    return res.status(400).send('필수 정보 누락');
+  }
+  const originFileName = Buffer.from(file.originalname, 'latin1').toString('utf8');
+  try {
+    await processService.saveAttachFile({
+      flowCode,
+      fileName: file.filename,
+      originFileName
+    });
+    res.sendStatus(200);
+  } catch (err) {
+    console.error(err);
+    res.sendStatus(500);
+  }
+});
+router.get('/flowImage/:flowCode', async (req, res) => {
+  const flowCode = req.params.flowCode;
+  try {
+    const file = await processService.getAttachFileByFlowCode(flowCode);
+    if (!file) return res.status(404).send("이미지 없음");
+
+    const imagePath = path.join(__dirname, '../../uploads', file.file_name);
+    res.sendFile(imagePath);
+  } catch (err) {
+    console.error(err);
+    res.sendStatus(500);
+  }
+});
 module.exports = router;
