@@ -40,7 +40,11 @@ const directQuery = async (sql, params = []) => {
     conn.release();
   }
 };
+const getConnection = async () => {
+  return await connectionPool.getConnection();
+};
 module.exports = {
   query,
-  directQuery
+  directQuery,
+  getConnection
 };
