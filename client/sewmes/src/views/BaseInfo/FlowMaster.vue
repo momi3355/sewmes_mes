@@ -4,7 +4,6 @@ import { ref } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
 import { useRouter } from 'vue-router';
 
-const router = useRouter();
 const productTableRef = ref(null);
 
 const searchProdCategory = ref('');
@@ -16,6 +15,7 @@ const selectedImage = ref(null);
 const prodData = ref([]);
 const processList = ref([]);
 
+// 제품 목록 조건에 따른 검색
 const searchProduct = async () => {
   const params = {};
   if (searchProdCategory.value.trim()) params.cate = searchProdCategory.value.trim();
@@ -92,12 +92,12 @@ const processColumns = [
     width: 100
   }
 ];
-
+// 초기화 버튼 클릭 시 검색조건 입력란 비움움
 const resetProductFilter = () => {
   searchProdName.value = '';
   searchProdCategory.value = '';
 };
-
+// prod_code를 기준으로 공정흐름 목록 가져오기기
 const loadProcesses = async () => {
   if (!selectedProdCode.value) return;
   try {
@@ -149,6 +149,7 @@ const onRowMoved = () => {
 
   processList.value = reordered;
 };
+// 공정흐름 한번에 저장장
 const saveProcesses = async () => {
   try {
     const flows = processList.value
@@ -180,7 +181,7 @@ const deleteSelected = async () => {
     console.error("삭제 오류:", err);
   }
 };
-
+// 공통코드 변환환
 const convertCode = (code) => {
   switch (code) {
     case '0j1j': return '상의';
@@ -188,6 +189,7 @@ const convertCode = (code) => {
     default: return code;
   }
 };
+// flow_code를 외래키로 하여 t_process_flow_attach 테이블에 이미지 저장장
 const onImageUploadClick = async (flowCode) => {
   const fileInput = document.createElement('input');
   fileInput.type = 'file';
@@ -211,21 +213,6 @@ const onImageUploadClick = async (flowCode) => {
 
   fileInput.click();
 };
-const onProcessRowClick = async (e, row) => {
-  const rowData = row.getData();
-  if (!rowData.flowCode) {
-    selectedImage.value = null;
-    return;
-  }
-
-  try {
-    const url = `/api/flowImage/${rowData.flowCode}?t=${Date.now()}`; // 캐시 방지용 타임스탬프
-    selectedImage.value = url;
-  } catch (err) {
-    console.error("이미지 불러오기 실패", err);
-    selectedImage.value = null;
-  }
-};
 const tabulatorEvent = [
   {
     eventName: "rowDblClick",
@@ -239,13 +226,35 @@ const tabulatorEvent = [
       const tableInstance = productTableRef.value?.$el?.querySelector('.tabulator')?.__tabulator__;
       if (tableInstance) {
         tableInstance.redraw(true);
-  }
+      }
     }
   },
-    {
+  {
     eventName: "rowMoved",
     eventAction: onRowMoved
-  }
+  },
+  {
+    eventName: "rowClick", // 행 클릭 시 flow_code를 기준으로 이미지 불러오기기
+    eventAction: 
+    async (e, row) => {
+      const rowData = row.getData();
+
+      if (!allowedNames.includes(rowData.processName)) return;
+      
+      if (!rowData.flowCode) {
+        selectedImage.value = null;
+        return;
+      }
+      try {
+        const url = `/api/flowImage/${rowData.flowCode}?t=${Date.now()}`; // 캐시 방지용 타임스탬프
+        selectedImage.value = url;
+      } catch (err) {
+        console.error("이미지 불러오기 실패", err);
+        selectedImage.value = null;
+      }
+    }
+  },
+
 ];
 
 </script>
@@ -290,11 +299,7 @@ const tabulatorEvent = [
           card-title="공정순서"
           :table-data="processList"
           :table-columns="processColumns"
-          :tabulator-options="{
-            movableRows: true,
-            rowMoved: onRowMoved,
-            rowClick: onProcessRowClick
-          }"
+          :on="tabulatorEvent"
         />
         <div class="d-flex justify-content-between mt-2 mb-2">
           <button class="btn btn-success" @click="loadProcesses">불러오기</button>

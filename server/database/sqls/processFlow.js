@@ -35,20 +35,35 @@ const selectMaxFlowCode = `
 const insertProcessFlow = `
     INSERT INTO t_process_flow (flow_code, process_code, process_seq, prod_code)
     VALUES (?, ?, ?, ?)`;
+const updateProcessFlow = `
+    UPDATE t_process_flow
+    SET process_code = ?, process_seq = ?
+    WHERE flow_code = ?`;
 
-// 공정흐름 이미지 저장
+// 공정흐름 PK값 숫자만 가져오기
 const selectMaxAttachCode = `
     SELECT MAX(CAST(SUBSTRING(attach_code, 4) AS UNSIGNED)) AS maxCode
     FROM t_process_flow_attach`;
+// 공정흐름 이미지 저장
 const insertAttachFile = `
-  INSERT INTO t_process_flow_attach (attach_code, flow_code, file_name, origin_file_name)
-  VALUES (?, ?, ?, ?)`;
+    INSERT INTO t_process_flow_attach (attach_code, flow_code, file_name, origin_file_name)
+    VALUES (?, ?, ?, ?)`;
+// flow_code 기준 저장된 이미지 가져오기기
+const getAttachFile = `
+    SELECT file_name, origin_file_name
+    FROM t_process_flow_attach
+    WHERE flow_code = ?
+    ORDER BY attach_code DESC
+    LIMIT 1`;
 module.exports = {
     selectProductByConditions,
     getProcessFlow,
     deleteProcessFlowsByProdCode,
     selectMaxFlowCode,
     insertProcessFlow,
+    updateProcessFlow,
+    // 공정 흐름 이미지
     selectMaxAttachCode,
-    insertAttachFile
+    insertAttachFile,
+    getAttachFile
 }

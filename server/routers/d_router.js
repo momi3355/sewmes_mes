@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const router = express.Router();
 
  // 해당 라우터를 통해 제공할 서비스를 가져옴
@@ -97,7 +98,7 @@ const storage = multer.diskStorage({
   }
 });
 const upload = multer({ storage });
-
+// 이미지 등록
 router.post('/flowImageUpload', upload.single('image'), async (req, res) => {
   
   const flowCode = req.body.flowCode;
@@ -119,16 +120,25 @@ router.post('/flowImageUpload', upload.single('image'), async (req, res) => {
     res.sendStatus(500);
   }
 });
+// 저장된 이미지 불러오기
 router.get('/flowImage/:flowCode', async (req, res) => {
   const flowCode = req.params.flowCode;
+
   try {
     const file = await processService.getAttachFileByFlowCode(flowCode);
     if (!file) return res.status(404).send("이미지 없음");
 
-    const imagePath = path.join(__dirname, '../../uploads', file.file_name);
+    const imagePath = path.resolve(__dirname, '../uploads', file.file_name);
+
+    // 파일이 존재하는지 명확히 확인
+    if (!fs.existsSync(imagePath)) {
+      console.error("파일 없음:", imagePath);
+      return res.status(404).send("파일 경로 오류");
+    }
+
     res.sendFile(imagePath);
   } catch (err) {
-    console.error(err);
+    console.error("파일 전송 실패:", err);
     res.sendStatus(500);
   }
 });
