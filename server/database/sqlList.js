@@ -6,12 +6,16 @@
 //   ...books, //enter로 구분
 // }
 
+const processFlow =require('./sqls/processFlow.js');
 const processMaster =require('./sqls/processMaster.js');
 const qualityMaster = require('./sqls/qualityMaster.js');
 const equiMaster = require('./sqls/equiMaster.js');
+const workInsstSqls=require('./sqls/workInst.js');
 
 module.exports = {
   ...processMaster,
   ...qualityMaster,
   ...equiMaster,
+  ...processFlow,
+  ...workInsstSqls, //정민
 }

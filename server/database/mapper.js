@@ -32,7 +32,15 @@ const query = async (alias, values) => {
     if (conn) conn.release();
   }
 };
-
+const directQuery = async (sql, params = []) => {
+  const conn = await connectionPool.getConnection();
+  try {
+    return await conn.query(sql, params);
+  } finally {
+    conn.release();
+  }
+};
 module.exports = {
   query,
+  directQuery
 };
