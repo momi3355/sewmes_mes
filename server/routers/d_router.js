@@ -4,17 +4,60 @@ const router = express.Router();
  // 해당 라우터를 통해 제공할 서비스를 가져옴
 const processService =require('../services/BaseInfo/process_service.js');
 
-
+// 공정관리 페이지 라우터 =========================================
 router.get('/processList', async (req, res)=>{
-    // 해당 엔드포인트(URL+METHOD)로 접속할 경우 제공되는 서비스를 실행
-    // -> 서비스가 DB에 접속하므로 비동기 작업, await/async를 활용해서 동기식으로 동작하도록 진행
-    let processMasterList = await processService.findAll()
-                         .catch(err => console.log(err));
+  try {
+    const { code, name, equi } = req.query;
+    const result = await processService.findProcessByConditions(code, name, equi);
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "검색 중 오류 발생" });
+  }
+});
+// 신규데이터 추가
+router.post('/processInsert', async (req, res) => {
+  try {
+    const newCode = await processService.insertProcess(req.body);
+    res.send({ success: true, processCode: newCode });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ success: false, message: "등록 중 오류 발생" });
+  }
+});
+// processCode 기준 업데이트
+router.put('/processUpdate', async (req, res) => {
+  try {
+    await processService.updateProcess(req.body);
+    res.send({ success: true, message: "수정 완료" });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ success: false, message: "수정 중 오류 발생" });
+  }
+});
+// processCode 기준 삭제
+router.delete('/processDelete/:code', async(req, res) => {
+    try {
+        const processCode = req.params.code;
+        await processService.deleteProcess(processCode);
+        res.send({ success : true, message : "삭제 완료" });
+    } catch (err) {
+        console.log(err);
+        res.status(500).send({ success : false, message : "삭제 중 오료" })
+    }
+})
+// ==============================================================
 
-    // res(Http Response에 대응되는 변수)의 응답메소드를 호출해 데이터를 반환하거나 통신을 종료함 
-    // 주의사항) res(Http Response에 대응되는 변수)의 응답메소드를 호출하지 않으면 통신이 종료되지 않음                   
-    // res.send()는 데이터를 반환하는 응답 메소드며 객체로 반환되므로 JSON으로 자동 변환
-    res.send(processMasterList); 
+// 공정흐름름 페이지 라우터 =========================================
+router.get('/productList', async (req, res)=>{
+  try {
+    const { cate, name } = req.query;
+    const result = await processService.findProdByConditions(cate, name);
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "검색 중 오류 발생" });
+  }
 });
 
 module.exports = router;
