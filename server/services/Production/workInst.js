@@ -4,11 +4,32 @@ const mariadb = require("../../database/mapper.js");
 const { convertObjToAry } = require('../../utils/converts.js');
 
 // 실제 제공할 서비스 등록 영역
-//const productionPlansSqls = require('../../database/sqls/workInst.js');
-module.exports ={
+const sqls = require('../../database/sqls/workInst.js');
+
+
+// 작업지시코드 생성 함수
+const generateWorkInstCode = async(conn)=>{
+    const prefix='I';
+    const [rows] = await mariadb.executeTransactionalQuery(conn,'selectMaxWorkInstCode');
+    let maxCode= rows&& rows.length>0?rows[0].max_code :null;
+    let sequence =1;
+     if (maxCode && maxCode.startsWith(prefix)) {
+        const lastSequenceStr = maxCode.substring(prefix.length);
+        const parsedSequence = parseInt(lastSequenceStr);
+        if (!isNaN(parsedSequence)) {
+            sequence = parsedSequence + 1;
+        }
+    }
+    const sequenceStr = String(sequence).padStart(3, '0');
+    
+    return `${prefix}${sequenceStr}`;
+}
+
+
+
     // 해당 객체에 등록해야지 외부로 노출
     //생산계획목록 
-    getProductionPlans:async(params)=>{
+ const    getProductionPlans=async(params)=>{
         try{
             const completeStatus = params.complete || 'N';
             const [rows] = await mariadb.query('selectProdPlansList',[completeStatus]);
@@ -17,35 +38,38 @@ module.exports ={
             console.error('생산계획목록 중 문제 발생',error);
             throw error;
         }
-    },
-    //작업지시서 저장 
- saveWorkInstructions: async (workInstructions) => {
+    };
+//작업지시서 저장 
+const saveWorkInstructions= async (workInstructions) => {
+    let conn;
         try {
+            conn = await mariadb.beginTransaction(); 
             const savedResults = [];
 
             for (const instruction of workInstructions) {
                 // 프론트엔드 데이터 필드명과 DB 컬럼 매핑
-                const plancd = instruction.plancd || null;
-                const prodCode = instruction.prdname; 
-                const instqty = instruction.instqty;
+                const work_inst_code = await generateWorkInstCode(conn);
+                const prod_plan_code = instruction.prod_plan_code || null;
+                const prod_code = instruction.prod_code; 
+                const inst_qty = instruction.inst_qty;
 
                 // prodCode를 통해 bom코드조회
                 let bom_code= null;
-                if(prodCode){
-                    const bomRows= await mariadb.query('selectBomByProdCode',[prodCode]);
+                if(prod_code){
+                    const bomRows= await mariadb.executeTransactionalQuery(conn,'selectBomByProdCode',[prod_code]);
                     if(bomRows&&bomRows.length>0){
-                        bomCode =bomRows[0].bom_code;
+                        bom_code =bomRows[0].bom_code;
                     }else{
-                        console.log(`제품코드 '${prodCode}' 에 해당하는 bom코드를 찾을 수 없습니다`);
+                        console.log(`제품코드 '${prod_code}' 에 해당하는 bom코드를 찾을 수 없습니다`);
                     }
                 }
                 // DB 스키마에 맞춘 추가/변경된 필드 처리
                 
-                const instDate = instruction.inst_date ? new Date(instruction.inst_date) : new Date();
-                const instRegDate = instruction.inst_reg_date ? new Date(instruction.inst_reg_date) : new Date();
+                const inst_date = instruction.inst_date ? new Date(instruction.inst_date) : new Date();
+                const inst_reg_date = instruction.inst_reg_date ? new Date(instruction.inst_reg_date) : new Date();
 
-                const empNum = instruction.emp_num || null;
-
+                const emp_num = instruction.emp_num || null;
+                 const inst_state = instruction.inst_state || '0s';
                 // 유효성 검사 (NOT NULL 필드 확인)
                 // prodCode가 NOT NULL이므로 검사 유지
                 if (!prodCode || !instqty) { // 'prdcode' 대신 'prodCode' 사용
@@ -54,23 +78,37 @@ module.exports ={
 
                
                 const insertValues = [
-                    plancd,
-                    bomCode,
-                    instqty,
-                    instDate,
-                    prodCode, 
-                    empNum,
-                    instRegDate,
+                    work_inst_code,
+                    prod_plan_code,
+                    bom_code,
+                    inst_qty,
+                    inst_date,
+                    prod_code, 
+                    emp_num,
+                    inst_reg_date,
+                    inst_state
                 ];
-                const insertResult = await mariadb.insertWorkInstList(insertValues);
-                savedResults.push({ ...instruction, instcd: 'db에서 자동생성됨', id: insertResult.insertId });
+                const insertResult = await mariadb.executeTransactionalQuery(conn, 'insertWorkInstList', insertValues); ;
+                savedResults.push({ ...instruction, instcd: workInstCode, id: insertResult.insertId });
             }
 
-            return savedResults;
+            await mariadbMapper.commit(conn); // ✨ mapper를 통해 트랜잭션 커밋
+            console.log('모든 작업지시 성공적으로 커밋됨.');
+            return { success: true, message: '모든 작업지시가 성공적으로 저장되었습니다.', data: savedResults };
 
         } catch (error) {
-            console.error('작업지시 저장 서비스 중 오류 발생:', error);
-            throw error;
+            if(conn){
+                await mariadb.rollback(conn);
+            }
+             console.error('작업지시 저장 중 오류 발생 및 롤백됨. 오류 상세:', error);
+            return { success: false, message: '작업지시 저장 중 오류가 발생했습니다: ' + error.message };
+        }finally {
+            if (conn) { // 작업이 끝나면 연결을 풀에 반환
+                await mariadbMapper.releaseConnection(conn); // ✨ mapper를 통해 연결 해제
+            }
         }
-    }
+    };
+module.exports ={
+    getProductionPlans,
+    saveWorkInstructions,
 };

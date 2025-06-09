@@ -5,7 +5,7 @@ const express = require('express');
 const router = express.Router();
 
 // 👈 2단계에서 만든 요리사 파일 (서비스 파일)을 가져와요. (경로가 맞는지 꼭 확인)
-const productionService = require('../services/Production/workInst'); //
+const workInstService = require('../services/Production/workInst'); //
 
 // ... (여기에 다른 메뉴들이 이미 적혀 있을 수 있어요.) ...
 
@@ -17,7 +17,7 @@ router.get('/production-plans', async (req, res) => {
         const queryParams = req.query;
 
         // 요리사에게 "생산계획 목록" 요리 좀 해달라고 부탁해요.
-        const productionPlans = await productionService.getProductionPlans(queryParams);
+        const productionPlans = await workInstService.getProductionPlans(queryParams);
 
         // 요리된 음식을 손님에게 예쁜 그릇(JSON)에 담아 전달해요. (success: true는 잘 됐다는 표시)
         res.json({
@@ -34,6 +34,27 @@ router.get('/production-plans', async (req, res) => {
         });
     }
 });
+//작업지시 저장
+router.post('/workInstMngment/save',async(req,res)=>{
 
+    try{
+        const workInstructions = req.body.workInstructions;
+        const result = await workInstService.saveWorkInstructions(workInstructions);
+        res.json({
+            success:true,
+            message:'작업지시가 성공적으로 자장!',
+            data:result
+        });
+
+    }catch(error){
+                // 오류가 발생하면 클라이언트에게 실패 응답을 보냅니다.
+        console.error('작업지시 저장 중 문제가 발생했어요:', error);
+        res.status(500).json({
+            success: false,
+            message: '작업지시 저장 중 서버 오류가 발생했습니다.',
+            error: error.message // 디버깅을 위해 실제 에러 메시지를 포함시키는 것이 좋습니다.
+        });
+    }
+})
 
 module.exports = router;
