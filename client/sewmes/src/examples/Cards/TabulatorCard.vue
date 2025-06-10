@@ -67,6 +67,14 @@ const initializeTabulator = () => {
   }
 };
 
+const getTabulator = () => {
+  return tabulatorInstance;
+}
+
+defineExpose({
+  getTabulator
+});
+
 onMounted(() => {
   initializeTabulator();
 });
