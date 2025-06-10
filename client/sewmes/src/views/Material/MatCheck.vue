@@ -9,6 +9,7 @@ import DefaultInfoCard from "@/examples/Cards/DefaultInfoCard.vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import MatCheckModal from '@/views/Material/MatCheckModal.vue';
 
+
 const searchField1 = ref('');
 const searchField2 = ref('');
 const searchField3 = ref('');
@@ -24,26 +25,28 @@ const openCheckModal = () => {
   }
 };
 
-const materialData = ref([
-  {
-    id: 1,
-    order_no: "ORD-01",
-    mat_name: "폴리에스터 원단(화이트)",
-    order_qty: "2400",
-    inbound_qty: "2400",
-    company: "미세플라스틱",
-    inbound_date: "2025-05-31",
-  },
-  {
-    id: 2,
-    order_no: "ORD-02",
-    mat_name: "실크 원단(레드)",
-    order_qty: "500",
-    inbound_qty: "500",
-    company: "누에나방",
-    inbound_date: "2025-05-24",
-  },
-]);
+// 처음에는 데이터가 없는 빈 배열로 시작합니다.
+const materialData = ref([]);
+
+// onMounted: Vue 컴포넌트가 화면에 그려진 직후에 자동으로 실행되는 함수입니다.
+onMounted(() => {
+  fetchMaterials(); // 컴포넌트가 로드되면 바로 DB에서 데이터를 가져옵니다.
+});
+
+// 백엔드 서버로부터 자재 데이터를 가져오는 비동기 함수
+const fetchMaterials = async () => {
+  try {
+    // 백엔드 서버의 API 주소로 GET 요청을 보냅니다.
+    const response = await axios.get('http://localhost:3000/api/materials');
+    
+    // 성공적으로 데이터를 받아오면, materialData의 값을 서버에서 받은 데이터로 교체합니다.
+    materialData.value = response.data;
+    
+    console.log('DB 데이터를 성공적으로 불러왔습니다.');
+  } catch (error) {
+    console.error('데이터를 불러오는 중 오류가 발생했습니다:', error);
+  }
+};
 
 
 
