@@ -2,7 +2,7 @@
 import axios from 'axios';
 import { ref } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
-import { useRouter } from 'vue-router';
+
 
 const productTableRef = ref(null);
 
@@ -11,6 +11,7 @@ const searchProdName = ref('');
 const selectedProdCode = ref('');
 const selectedProdName = ref('');
 const selectedImage = ref(null);
+const selectedProcessFlowCode = ref('');
 
 const prodData = ref([]);
 const processList = ref([]);
@@ -53,13 +54,11 @@ const processColumns = [
   {
     title: '공정이름',
     field: 'processName',
-    editor: "input",
     width: 150
   },
   {
     title: '상세',
     field: 'detail',
-    editor: "input",
     width: 200
   },
   {
@@ -171,14 +170,24 @@ const saveProcesses = async () => {
   }
 };
 
-const deleteSelected = async () => {
-  if (!selectedProdCode.value) return;
+const deleteProcessFlow = async () => {
+  if (!selectedProcessFlowCode.value) {
+    alert("삭제할 공정을 선택해주세요.");
+    return;
+  }
+
+  const confirmDelete = confirm("정말 삭제하시겠습니까?");
+  if (!confirmDelete) return;
+
   try {
-    await axios.delete(`/api/flowDelete/${selectedProdCode.value}`);
-    alert('삭제 완료');
-    processList.value = [];
+    await axios.delete(`/api/flowDelete/${selectedProcessFlowCode.value}`);
+    alert("삭제 완료");
+    await loadProcesses();
+    selectedImage.value = null;
+    selectedProcessFlowCode.value = '';
   } catch (err) {
-    console.error("삭제 오류:", err);
+    console.error("삭제 실패:", err);
+    alert("삭제 중 오류 발생");
   }
 };
 // 공통코드 변환환
@@ -238,7 +247,7 @@ const tabulatorEvent = [
     eventAction: 
     async (e, row) => {
       const rowData = row.getData();
-
+      selectedProcessFlowCode.value = rowData.flowCode;
       if (!allowedNames.includes(rowData.processName)) return;
       
       if (!rowData.flowCode) {
@@ -301,11 +310,12 @@ const tabulatorEvent = [
           :table-columns="processColumns"
           :on="tabulatorEvent"
         />
+        <div v-if="selectedProcessFlowCode" class="text-danger mt-1">선택 공정: {{ selectedProcessFlowCode }}</div>
         <div class="d-flex justify-content-between mt-2 mb-2">
           <button class="btn btn-success" @click="loadProcesses">불러오기</button>
           <div>
             <button class="btn btn-primary me-2" @click="saveProcesses">저장</button>
-            <button class="btn btn-danger" @click="deleteSelected">삭제</button>
+            <button class="btn btn-danger" @click="deleteProcessFlow">삭제</button>
           </div>
         </div>
         <div class="mt-3 flex-grow-1">

@@ -1,4 +1,4 @@
-// 제품 조건 검색 SQL
+// 제품 조건 검색
 const selectProductByConditions = `
     SELECT 
         prod_code,
@@ -53,7 +53,7 @@ const getAttachFile = `
     SELECT file_name, origin_file_name
     FROM t_process_flow_attach
     WHERE flow_code = ?
-    ORDER BY attach_code DESC
+    ORDER BY CAST(SUBSTRING(attach_code, 4) AS UNSIGNED) DESC
     LIMIT 1`;
 module.exports = {
     selectProductByConditions,
