@@ -93,8 +93,11 @@ const tabulatorCardRef = ref(null);
 // 저장 함수 cell edited된 worInstaData.value를 그대로 백엔드에 보내기
 const saveWorkInstructions = async (workInstructions) => {
     const a = tabulatorCardRef.value.getTabulator();
-    
+
     console.log(a.getSelectedData());
+    if(!a){
+        
+    }
     for(const instructuon of workInstructions){
 
     }
