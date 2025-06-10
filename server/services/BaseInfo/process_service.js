@@ -90,23 +90,38 @@ const saveProcessFlows = async (prodCode, flows) => {
   try {
     await conn.beginTransaction();
 
-    // 1. 기존 공정 흐름 삭제
-    await conn.query(sqlList.deleteProcessFlowsByProdCode, [prodCode]);
+    // 1. 현재 존재하는 flow 목록 조회
+    const existingRows = await conn.query(`
+      SELECT flow_code
+      FROM t_process_flow
+      WHERE prod_code = ?
+    `, [prodCode]);
+
+    const existingCodes = new Set(existingRows.map(r => r.flow_code));
 
     // 2. flow_code 최대값 조회
-    const [result] = await conn.query(sqlList.selectMaxFlowCode);
-    let maxNum = result.maxFlowNum || 0;
+    const [maxResult] = await conn.query(sqlList.selectMaxFlowCode);
+    let maxNum = maxResult.maxFlowNum || 0;
 
-    // 3. flow_code 생성 후 INSERT
     for (const row of flows) {
-      maxNum++;
-      const newFlowCode = `FC${maxNum}`;
-      await conn.query(sqlList.insertProcessFlow, [
-        newFlowCode,
-        row.processCode,
-        row.processSeq,
-        prodCode
-      ]);
+      if (row.flowCode && existingCodes.has(row.flowCode)) {
+        // 기존 flow_code → update
+        await conn.query(sqlList.updateProcessFlow, [
+          row.processCode,
+          row.processSeq,
+          row.flowCode
+        ]);
+      } else {
+        // 신규 → insert
+        maxNum++;
+        const newFlowCode = `FC${maxNum}`;
+        await conn.query(sqlList.insertProcessFlow, [
+          newFlowCode,
+          row.processCode,
+          row.processSeq,
+          prodCode
+        ]);
+      }
     }
 
     await conn.commit();
@@ -127,14 +142,7 @@ const saveAttachFile = async ({ flowCode, fileName, originFileName }) => {
 };
 // 공정 흐름에 저장된 이미지 가져오기
 const getAttachFileByFlowCode = async (flowCode) => {
-  const sql = `
-    SELECT file_name, origin_file_name
-    FROM t_process_flow_attach
-    WHERE flow_code = ?
-    ORDER BY attach_code DESC
-    LIMIT 1
-  `;
-  const result = await mariadb.directQuery(sql, [flowCode]);
+  const result = await mariadb.query("getAttachFile", [flowCode]);
   return result[0]; // 없으면 undefined
 };
 
