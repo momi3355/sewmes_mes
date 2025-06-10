@@ -91,18 +91,32 @@ const tabulatorCardRef = ref(null);
 
 
 // 저장 함수 cell edited된 worInstaData.value를 그대로 백엔드에 보내기
-const saveWorkInstructions = async (workInstructions) => {
-    const a = tabulatorCardRef.value.getTabulator();
-
-    console.log(a.getSelectedData());
-    if(!a){
+// saveWorkInstructions 함수 정의 (인자를 받음)
+const saveWorkInstructions = async (workInstructionsToSave) => { // 인자 이름을 명확히 변경
+    try {
+        if (!workInstructionsToSave || !Array.isArray(workInstructionsToSave) || workInstructionsToSave.length === 0) {
+            alert("저장할 작업지시 데이터가 유효하지 않습니다.");
+            return;
+        }
         
-    }
-    for(const instructuon of workInstructions){
+        console.log("백엔드로 보낼 데이터:", workInstructionsToSave);
 
+        // 백엔드 API 호출
+        const response = await axios.post('/api/workInstMngment/save', workInstructionsToSave); 
+
+        if (response.data.success) {
+            alert("작업지시가 성공적으로 저장되었습니다!");
+            // ... (성공 후 로직)
+        } else {
+            alert(`작업지시 저장 실패: ${response.data.message}`);
+        }
+
+    } catch (error) {
+        console.error("작업지시 저장 중 오류 발생:", error);
+        alert("작업지시 저장 중 예상치 못한 오류가 발생했습니다.");
     }
-    console.log(tabulatorCardRef)
-}
+};
+
 </script>
 
 <template>
@@ -134,7 +148,7 @@ const saveWorkInstructions = async (workInstructions) => {
         <div class="row mt-3">
             <div class="col-12">
                 <button class="btn btn-info" @click="openModal">생산계획서 불러오기</button>
-                <button class="btn btn-success ms-2 " @click="saveWorkInstructions">저장</button>
+                <button class="btn btn-success ms-2 " @click="saveWorkInstructions(workInstData)">저장</button>
                 <button class="btn btn-secondary ms-2" @click="addRow">행추가</button>
             </div>
         </div>
