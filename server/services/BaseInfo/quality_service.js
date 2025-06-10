@@ -6,11 +6,11 @@ const { convertObjToAry } = require('../../utils/converts.js');
 // 실제 제공할 서비스 등록 영역
 
 //전체 조회 + 검색 조회
-const qualityList = async ({ test_name, test_target, test_ref }) => {
+const qualityList = async ({ testName, testTarget, testRef }) => {
   const params = [
-    test_name,
-    test_target,
-    test_ref,
+    testName,
+    testTarget,
+    testRef,
   ];
 
   let list = await mariadb.query("selectQualityList", params)
@@ -38,6 +38,11 @@ const qualityAdd = async (qualityInfo) => {
   let resInfo = await mariadb.query("insertQualityinfo", qualityInfo)
     .catch(err => console.log(err));
 
+  if(qualityInfo.fileName) {
+    const imgParams = [generatedCode, qualityInfo.fileName, qualityInfo.originalName, qualityInfo.filePath];
+    await mariadb.query("insertImages", imgParams).catch(err => console.log(err));
+  }
+
   let result = null;
 
   if (resInfo.affectedRows > 0) {
@@ -58,6 +63,11 @@ const qualityModify = async (qualityCode, qualityInfo) => {
 
   let resInfo = await mariadb.query("updateQualityinfo", data)
     .catch(err => console.log(err));
+
+  if(qualityInfo.fileName) {
+    const imgParams = [generatedCode, qualityInfo.fileName, qualityInfo.originalName, qualityInfo.filePath];
+    await mariadb.query("insertImages", imgParams).catch(err => console.log(err));
+  }
 
   let result = null;
 

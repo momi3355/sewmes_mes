@@ -30,20 +30,16 @@ const productColumns = [
     <!-- 상단 검색 영역 -->
     <div class="row mb-3">
       <div class="col-md-2">
-        <label class="form-label">검색항목 1</label>
+        <label class="form-label">검사명</label>
         <input type="text" class="form-control" v-model="searchField1">
       </div>
       <div class="col-md-2">
-        <label class="form-label">검색항목 2</label>
+        <label class="form-label">대상품목목</label>
         <input type="text" class="form-control" v-model="searchField2">
       </div>
       <div class="col-md-2">
-        <label class="form-label">검색항목 3</label>
+        <label class="form-label">참조</label>
         <input type="text" class="form-control" v-model="searchField3">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">검색항목 4</label>
-        <input type="text" class="form-control" v-model="searchField4">
       </div>
       <div class="col-md-2 d-flex align-items-end">
         <button class="btn btn-secondary me-2">초기화</button>
