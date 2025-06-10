@@ -21,6 +21,7 @@ const updateMaterial = `
   WHERE material_code = ?
 `;
 
+
 module.exports = {
   selectMaterialList,
   insertMaterial,

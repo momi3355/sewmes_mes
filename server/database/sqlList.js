@@ -14,6 +14,7 @@ const workInsstSqls=require('./sqls/workInst.js');
 const material = require('./sqls/material.js');
 const orderListSql=require('./sqls/orderList.js');
 const companyListSql=require('./sqls/companyList.js');
+const matorderListSql=require('./sqls/matOrder.js')
 
 module.exports = {
   ...processMaster,
@@ -24,4 +25,5 @@ module.exports = {
   ...workInsstSqls, //정민
   ...orderListSql, // 주문서 관리
   ...companyListSql, // 업체 정보
+  ...matorderListSql,
 }
