@@ -8,7 +8,7 @@
               card-title="주문서 목록"
               :table-data="OrderData"
               :table-columns="OrderColumns"
-              :tabulator-options="OrderTabulatorOptions"
+              :tabulator-options="tabulatorEvent"
               style="height: 800px;"
             />
           </div>
@@ -27,7 +27,7 @@
                           type="text"
                           class="form-control"
                           id="companyName"
-                          v-model="ordercurrentOrder.companyName"
+                          v-model="orderDetailFields.companyName"
                           readonly
                         />
                       </div>
@@ -39,7 +39,7 @@
                           type="tel"
                           class="form-control"
                           id=""
-                          v-model="ordercurrentOrder.companyTel"
+                          v-model="orderDetailFields.companyTel"
                           readonly
                         />
                       </div>
@@ -54,7 +54,7 @@
                           type="text"
                           class="form-control"
                           id=""
-                          v-model="ordercurrentOrder.address"
+                          v-model="orderDetailFields.address"
                           readonly
                         />
                       </div>
@@ -69,7 +69,7 @@
                           type="text"
                           class="form-control"
                           id=""
-                          v-model="ordercurrentOrder.orderdate"
+                          v-model="orderDetailFields.orderdate"
                         />
                       </div>
                     </div>
@@ -80,7 +80,7 @@
                           type="text"
                           class="form-control"
                           id=""
-                          v-model="ordercurrentOrder.deaddate"
+                          v-model="orderDetailFields.deaddate"
                         />
                       </div>
                     </div>
@@ -91,7 +91,7 @@
                           type="text"
                           class="form-control"
                           id=""
-                          v-model="ordercurrentOrder.salesManager"
+                          v-model="orderDetailFields.salesManager"
                         />
                       </div>
                     </div>
@@ -102,7 +102,7 @@
                           type="tel"
                           class="form-control"
                           id=""
-                          v-model="ordercurrentOrder.salesTel"
+                          v-model="orderDetailFields.salesTel"
                         />
                       </div>
                     </div>
@@ -116,7 +116,7 @@
                           type="text"
                           class="form-control"
                           id="width"
-                          v-model="ordercurrentOrder.note"
+                          v-model="orderDetailFields.note"
                         />
                       </div>
                     </div>
@@ -131,7 +131,7 @@
                   >저장</argon-button
                 >
               </div>
-              <p>선택된 업체명: {{ ordercurrentOrder.cp_name }}</p>
+              <p>선택된 업체명: {{ orderDetailFields.cp_name }}</p>
             </div>
           </div>
         </div>
@@ -191,31 +191,37 @@ onMounted(async () => {
 // 주문 상세 정보
 const ordercurrentOrder = ref({});
 
-const OrderTabulatorOptions = {
-  // pagination: 'local', // Paging removed
-  // paginationSize: 7, // Paging size removed
-  layout: 'fitColumns',
-  rowClick: (e, row) => {
-    OrderData.value.forEach(item => item.isSelected = false);
-    row.getData().isSelected = true;
-    ordercurrentOrder.value = { ...row.getData() }; // Update detailed view
-  },
-  rowFormatter: function(row) {
-    if (row.getData().isSelected) {
-      row.getElement().classList.add("selected-row");
-    } else {
-      row.getElement().classList.remove("selected-row");
+
+const tabulatorEvent = [
+  {
+    eventName: "rowClick",
+    eventAction: (e, row) => {
+      const rowData = row.getData();
+      console.log(rowData);
+      detailFields.value = rowData;
+      //console.log(detailFields.value.material_code);
     }
   }
-};
+];
 
+const orderDetailFields={
+  companyName: "",
+  companyTel: "",
+  address: "",
+  orderDate: "",
+  deadDate: "",
+  salesManager: "",
+  salesTel: "",
+  note: ""
+}
+const detailFields = ref({ ...orderDetailFields });
 
 // 동적으로 데이터 업데이트 예시 (버튼 클릭 시)
 // const updateUserData = () => {
-//   userData.value = [
-//     ...userData.value,
-//     { id: userData.value.length + 1, name: "새로운 사용자", age: 22, email: "new@example.com", status: "Pending" }
-//   ];
+  //   userData.value = [
+    //     ...userData.value,
+    //     { id: userData.value.length + 1, name: "새로운 사용자", age: 22, email: "new@example.com", status: "Pending" }
+    //   ];
 // };
 
 </script>
