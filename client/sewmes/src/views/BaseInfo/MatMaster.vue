@@ -67,6 +67,7 @@ const colortype = ref([
   }
 ]);
 
+const table = ref(null);
 const materialData = ref([]);
 
 const mattypeFormatter = (cell) => {
@@ -168,7 +169,8 @@ const resetHandler = () => {
 
 //검색
 const searchHandler = () => {
-
+  const tabulator = table.value.getTabulator();
+  tabulator.setData("/api/baseMaterial");
 };
 
 const materialClickhandler = async () => {
@@ -206,15 +208,28 @@ const materialClickhandler = async () => {
     });
     console.log(result);
   }
+  const tabulator = table.value.getTabulator();
+  tabulator.setData("/api/baseMaterial");
 };
 
-onMounted(async () => {
+const getBaseMaterial = async() => {
   const material = await axios.get("/api/baseMaterial");
   materialData.value = material.data;
+  //빈 칼럼 누르면 새로 추가
   materialData.value.push({
     initialDetailFields
   });
-  console.log(material.data);
+  return material;
+}
+
+onMounted(() => {
+  // const tabulator = table.value.getTabulator();
+  // tabulator.setData("/api/baseMaterial");
+  getBaseMaterial();
+  // let a = table.value.getTabulator();
+  // a.selectRow(1);
+  
+  // console.log();
 });
 </script>
 
@@ -257,6 +272,7 @@ onMounted(async () => {
     <div class="row me-3">
       <div class="col-7 md-3">
         <tabulator-card
+          ref="table"
           card-title="자제 품목 리스트"
           :table-data="materialData"
           :table-columns="materialColumns"
