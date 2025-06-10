@@ -171,7 +171,7 @@ const resetHandler = () => {
 //검색
 const searchHandler = () => {
   const tabulator = table.value.getTabulator();
-  tabulator.setData("/api/baseMaterial" , searchData);
+  tabulator.setData("/api/baseMaterial" , searchData.value);
 };
 
 const materialClickhandler = async () => {
@@ -210,22 +210,22 @@ const materialClickhandler = async () => {
     console.log(result);
   }
   const tabulator = table.value.getTabulator();
-  tabulator.setData("/api/baseMaterial", searchData);
+  tabulator.setData("/api/baseMaterial", searchData.value);
 };
 
 const getBaseMaterial = async() => {
   //params 전달
-  // const material = await axios.get("/api/baseMaterial", {
-  //   params: {
-  //     search_material_code
-  //   }
-  // });
-  const material = await axios.get("/api/baseMaterial");
+  const material = await axios.get("/api/baseMaterial", {
+    params: {
+      ...searchData.value
+    }
+  });
+  //const material = await axios.get("/api/baseMaterial");
   materialData.value = material.data;
   //빈 칼럼 누르면 새로 추가
-  materialData.value.push({
-    initialDetailFields
-  });
+  //materialData.value.push({
+  //  initialDetailFields
+  //});
   return material;
 }
 
@@ -263,8 +263,8 @@ onMounted(() => {
         <div class="col-md-2">
           <label class="form-label">사용여부</label>
           <div class="form-check" v-for="type in usetype">
-            <input class="form-check-input" type="radio" v-model="searchData.use_yn" :value="'search-'+type.code">
-            <label class="form-check-label" :for="'search-'+type.code">
+            <input class="form-check-input" type="radio" v-model="searchData.use_yn" :value="type.code">
+            <label class="form-check-label" :for="type.code">
               {{ type.name }}
             </label>
           </div>
