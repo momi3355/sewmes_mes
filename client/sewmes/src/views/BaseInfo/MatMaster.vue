@@ -165,12 +165,13 @@ const tabulatorEvent = [
 //리셋
 const resetHandler = () => {
   searchData.value = { ...initialSearchFields };
+  detailFields.value = { ...initialDetailFields };
 };
 
 //검색
 const searchHandler = () => {
   const tabulator = table.value.getTabulator();
-  tabulator.setData("/api/baseMaterial");
+  tabulator.setData("/api/baseMaterial" , searchData);
 };
 
 const materialClickhandler = async () => {
@@ -209,10 +210,16 @@ const materialClickhandler = async () => {
     console.log(result);
   }
   const tabulator = table.value.getTabulator();
-  tabulator.setData("/api/baseMaterial");
+  tabulator.setData("/api/baseMaterial", searchData);
 };
 
 const getBaseMaterial = async() => {
+  //params 전달
+  // const material = await axios.get("/api/baseMaterial", {
+  //   params: {
+  //     search_material_code
+  //   }
+  // });
   const material = await axios.get("/api/baseMaterial");
   materialData.value = material.data;
   //빈 칼럼 누르면 새로 추가

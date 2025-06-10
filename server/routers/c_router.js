@@ -5,6 +5,7 @@ const router = express.Router();
 const materialService = require('../services/BaseInfo/baseMaterial_service');
 
 router.get("/baseMaterial", async (req, res) => {
+  //query string 사용
   try {
     const result = await materialService.getMaterialList();
     res.send(result);
