@@ -1,9 +1,11 @@
 const express = require('express');
+const { convertObjToAry } = require('../utils/converts.js');
 const router = express.Router();
 
-const materialService = require('../services/BaseInfo/material_service');
+const materialService = require('../services/BaseInfo/baseMaterial_service');
 
-router.get("/materialList", async (req, res) => {
+router.get("/baseMaterial", async (req, res) => {
+  //query string 사용
   try {
     const result = await materialService.getMaterialList();
     res.send(result);
@@ -13,10 +15,9 @@ router.get("/materialList", async (req, res) => {
   }
 });
 
-router.post("/materialInsert", async (req, res) => {
-  let code = req.params.code;
+router.post("/baseMaterial", async (req, res) => {
   try {
-    const result = await materialService.setMaterial(code, req.body);
+    const result = await materialService.addMaterial(req.body.data);
     res.send(result);
   } catch (err) {
     console.error(err);
@@ -24,10 +25,12 @@ router.post("/materialInsert", async (req, res) => {
   }
 });
 
-router.put("/materialUpdate/:code", async (req, res) => {
-  let code = req.params.code;
+router.put("/baseMaterial", async (req, res) => {
+  const updateColumn = Object.keys(req.body);
+  const attr = convertObjToAry(req.body, updateColumn); //객체 분해
+  const code = req.query.code; // '/baseMaterial?code='
   try {
-    const result = await materialService.addMaterial(code, req.body);
+    const result = await materialService.setMaterial(code, attr);
     res.send(result);
   } catch (err) {
     console.error(err);

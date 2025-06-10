@@ -67,30 +67,8 @@ const colortype = ref([
   }
 ]);
 
-const materialData = ref([
-  {
-    material_code: "FAB001",
-    material_name: "면 30수 싱글 원단",
-    material_type: "0l1l",
-    standard: "30수 / 싱글 / 화이트 / 150mm",
-    unit: "M",
-    unit_price: 2800,
-    safe_stock: 2500,
-    color: "0i8i",
-    use_yn: "0b1b"
-  },
-  {
-    material_code: "BTNPL15",
-    material_name: "플라스틱 단추 15mm",
-    material_type: "0l2l",
-    standard: "15mm / 2홀",
-    unit: "EA",
-    unit_price: 15,
-    safe_stock: 5000,
-    color: "0i9i",
-    use_yn: "0b1b"
-  },
-]);
+const table = ref(null);
+const materialData = ref([]);
 
 const mattypeFormatter = (cell) => {
   const code = cell.getValue();
@@ -149,7 +127,15 @@ const initialDetailFields = {
   use_yn: "0b1b"
 };
 
+const initialSearchFields = {
+  material_code: "",
+  material_name: "",
+  material_type: "",
+  use_yn: "0b1b"
+};
+
 const detailFields = ref({ ...initialDetailFields });
+const searchData = ref({  ...initialSearchFields });
 
 // const rowClick = (row) => {
 //   let str = "";
@@ -170,34 +156,88 @@ const tabulatorEvent = [
     eventAction: (e, row) => {
       const rowData = row.getData();
       console.log(rowData);
-      detailFields.value = rowData;
+      detailFields.value = { ...rowData };
       //console.log(detailFields.value.material_code);
     }
   }
 ];
 
+//리셋
+const resetHandler = () => {
+  searchData.value = { ...initialSearchFields };
+  detailFields.value = { ...initialDetailFields };
+};
+
+//검색
+const searchHandler = () => {
+  const tabulator = table.value.getTabulator();
+  tabulator.setData("/api/baseMaterial" , searchData);
+};
+
 const materialClickhandler = async () => {
+  const currentDetailFields = detailFields.value;
+
+  const isAnyRequiredFieldEmpty =
+      currentDetailFields.material_code === "" ||
+      currentDetailFields.material_name === "" ||
+      currentDetailFields.standard === "" ||
+      currentDetailFields.unit === "";
+
+  if (isAnyRequiredFieldEmpty) {
+      alert("필수 입력 항목(자재 코드, 자재명, 규격, 단위)을 모두 채워주세요.");
+      return;
+  }
+
+  if (currentDetailFields.unit_price === 0 || currentDetailFields.safe_stock === 0) {
+      alert("단가 또는 안전 재고가 0으로 설정되어 있습니다. 확인해 주세요.");
+      return;
+  }
+
   const find = materialData.value.find(e => {
     return e.material_code === detailFields.value.material_code
   });
-  if (find !== null) {
-    const result = await axios.put("/api/materialUpdate/"+find.material_code);
+
+  if (find != null) {
+    console.log(detailFields.value);
+    const result = await axios.put("/api/baseMaterial?code="+find.material_code, {
+      data: detailFields.value,
+    });
     console.log(result);
   } else {
-    const result = await axios.post("/api/materialInsert");
+    const result = await axios.post("/api/baseMaterial", {
+      data: detailFields.value,
+    });
     console.log(result);
   }
+  const tabulator = table.value.getTabulator();
+  tabulator.setData("/api/baseMaterial", searchData);
 };
 
-onMounted(async () => {
-  const material = await axios.get("/api/materialList");
+const getBaseMaterial = async() => {
+  //params 전달
+  // const material = await axios.get("/api/baseMaterial", {
+  //   params: {
+  //     search_material_code
+  //   }
+  // });
+  const material = await axios.get("/api/baseMaterial");
+  materialData.value = material.data;
+  //빈 칼럼 누르면 새로 추가
   materialData.value.push({
     initialDetailFields
   });
-  console.log(material.data);
+  return material;
+}
+
+onMounted(() => {
+  // const tabulator = table.value.getTabulator();
+  // tabulator.setData("/api/baseMaterial");
+  getBaseMaterial();
+  // let a = table.value.getTabulator();
+  // a.selectRow(1);
+  
+  // console.log();
 });
-
-
 </script>
 
 <template>
@@ -207,31 +247,31 @@ onMounted(async () => {
       <div class="row mb-3">
         <div class="col-md-2 d-inline-block-custom">
           <label class="form-label">자재코드</label>
-          <input name="searchField1" type="text" class="form-control" v-model="searchField1">
+          <input type="text" class="form-control" v-model="searchData.material_code">
         </div>
         <div class="col-md-2">
           <label class="form-label">자재유형</label>
-          <select class="form-select">
-            <option selected>전체</option>
+          <select class="form-select" v-model="searchData.material_type">
+            <option selected value="">전체</option>
             <option v-for="type in mattype" :value="type.code">{{ type.name }}</option>
           </select>
         </div>
         <div class="col-md-2">
           <label class="form-label">자재명</label>
-          <input type="text" class="form-control" v-model="searchField3">
+          <input type="text" class="form-control" v-model="searchData.material_name">
         </div>
         <div class="col-md-2">
           <label class="form-label">사용여부</label>
           <div class="form-check" v-for="type in usetype">
-            <input class="form-check-input" type="radio" name="search-useType" :id="'search-'+type.code">
+            <input class="form-check-input" type="radio" v-model="searchData.use_yn" :value="'search-'+type.code">
             <label class="form-check-label" :for="'search-'+type.code">
               {{ type.name }}
             </label>
           </div>
         </div>
         <div class="col-md-2 d-flex align-items-end">
-          <button class="btn btn-secondary me-2">초기화</button>
-          <button class="btn btn-primary">조회</button>
+          <button class="btn btn-secondary me-2" @click="resetHandler">초기화</button>
+          <button class="btn btn-primary" @click="searchHandler">조회</button>
         </div>
       </div>
     </div>
@@ -239,6 +279,7 @@ onMounted(async () => {
     <div class="row me-3">
       <div class="col-7 md-3">
         <tabulator-card
+          ref="table"
           card-title="자제 품목 리스트"
           :table-data="materialData"
           :table-columns="materialColumns"
@@ -260,7 +301,7 @@ onMounted(async () => {
               </div>
               <div class="col-md-6">
                 <label class="form-label">자재 유형</label>
-                <select class="form-select">
+                <select class="form-select" v-model="detailFields.material_type">
                   <option v-for="type in mattype" :value="type.code" :selected="type.code == detailFields.material_type">{{ type.name }}</option>
                 </select>
                 <!-- <input type="text" class="form-control" v-model="detailFields.material_type"> -->
@@ -287,7 +328,7 @@ onMounted(async () => {
                   <option v-for="type in usetype" :value="type.code" :selected="type.code == detailFields.use_yn">{{ type.name }}</option>
                 </select> -->
                 <div class="form-check" v-for="type in usetype">
-                  <input class="form-check-input" type="radio" name="useType" :id="type.code" :checked="type.code == detailFields.use_yn">
+                  <input class="form-check-input" type="radio" v-model=detailFields.use_yn :value="type.code" :checked="type.code == detailFields.use_yn">
                   <label class="form-check-label" :for="type.code">
                   {{ type.name }}
                   </label>
@@ -297,7 +338,7 @@ onMounted(async () => {
               <div class="col-md-6">
                 <label class="form-label">색상</label>
                 <!-- <input type="text" class="form-control" v-model="detailFields.color"> -->
-                 <select class="form-select">
+                 <select class="form-select" v-model="detailFields.color">
                   <option v-for="type in colortype" :value="type.code" :selected="type.code == detailFields.color">{{ type.name }}</option>
                 </select>
               </div>
