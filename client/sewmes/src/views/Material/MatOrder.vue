@@ -10,22 +10,7 @@ import DefaultInfoCard from "@/examples/Cards/DefaultInfoCard.vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 
 const materialData = ref([
-  {
-    id: 1,
-    matcode: "MAT-001",
-    matname: "원자재001",
-    company: "원자재판매처",
-    mat_category: "원자재",
-    stock: "0",
-  },
-  {
-     id: 1,
-    matcode: "MAT-002",
-    matname: "원자재002",
-    company: "원자재판매처",
-    mat_category: "원자재",
-    stock: "1",
-  },
+
 ]);
 
 const productData = ref([
@@ -34,14 +19,13 @@ const productData = ref([
     matname: "",
     qty: "",
     unit: "",
+    order_qty: "",
     unit_price: "",
     total_price: "",
     color: "",
     size: "",
     order_date: "",
     deadline: "",
-    address: "", 
-    note: "",
   },
 ]);
 
@@ -58,7 +42,6 @@ const materialColumns = [
 },
   { title: "자재코드", field: "matcode", width: 150, editor: "input" },
   { title: "자재명", field: "matname", hozAlign: "left"},
-  { title: "공급처", field: "company", hozAlign: "left"},
   { title: "자재유형", field: "mat_category", hozAlign: "left"},
   { title: "재고량", field: "stock", hozAlign: "left"},
 ];
@@ -77,14 +60,14 @@ const productColumns = [
   { title: "자재명", field: "matname", width: 150, editor: "input" },
   { title: "수량", field: "qty", hozAlign: "left", sorter: "number", editor: "input" },
   { title: "단위", field: "unit", hozAlign: "left", formatter: "link", editor: "input" },
+  { title: "주문수량", field: "order_qty", hozAlign: "left", editor: "input" },
   { title: "단가", field: "unit_price", hozAlign: "left", editor: "input"},
   { title: "합계", field: "total_price", hozAlign: "left"},
   { title: "색상", field: "color", hozAlign: "left", editor: "input"},
   { title: "사이즈", field: "size", hozAlign: "left", editor: "input"},
+  { title: "공급처", field: "company", hozAlign: "left", editor: "input"},
   { title: "발주일자", field: "order_date", hozAlign: "left"},
-  { title: "납기일자", field: "deadline", hozAlign: "left"},
-  { title: "주소", field: "address", hozAlign: "left", editor: "input"},
-  { title: "비고", field: "note", hozAlign: "left", editor: "input"},
+  { title: "납기일자", field: "deadline", hozAlign: "left", editor: "input"},
 ];
 
 // 선택된 행들을 처리하는 함수
@@ -116,10 +99,6 @@ const getSelectedRows = (tableRef) => {
       <div class="col-md-2">
         <label class="form-label">자재코드</label>
         <input type="text" class="form-control" v-model="searchField2">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">공급처</label>
-        <input type="text" class="form-control" v-model="searchField3">
       </div>
       <div class="col-md-2 d-flex align-items-end">
         <button class="btn btn-secondary me-2">초기화</button>
@@ -155,7 +134,13 @@ const getSelectedRows = (tableRef) => {
                 card-title="발주 요청서 작성"
                 :table-data="productData"
                 :table-columns="productColumns"
-              />
+              >
+                <template #actions>
+                <ArgonButton class="savebtn"color="success" variant="gradient">
+                  저장
+                </ArgonButton>
+              </template>
+              </tabulator-card>
             </div>
           </div>
         </div>
@@ -163,24 +148,32 @@ const getSelectedRows = (tableRef) => {
     </div>
 </template>
 <style scoped>
- .searchbox{
-  background-color: #FFFFFF;
+.searchbox {
+  background-color: #ffffff;
   border-radius: 1rem;
   margin: 30px;
- }
- .btn{
+}
+
+.btn {
   padding: 10px;
-  margin: 0px;
- }
- .btn btn-secondary me-2{
+  margin: 0;
+}
+
+.btn.btn-secondary.me-2 {
   margin-right: 10px;
- }
- .button-container{
+}
+
+.button-container {
   display: flex;
   justify-content: center;
- }
- .addbutton{
+}
+
+.addbutton {
   width: 140px;
   margin-top: 25px;
- }
+}
+.savebtn {
+  width: 70px;
+  margin-top: 25px;
+}
 </style>

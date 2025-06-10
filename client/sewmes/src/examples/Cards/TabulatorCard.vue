@@ -49,7 +49,7 @@ const initializeTabulator = () => {
       columns: props.tableColumns,
       layout: "fitColumns",
       pagination: false,
-      reactiveData: true,
+      // reactiveData: true,
       theme: "bootstrap",
       ...props.tabulatorOptions,
     });

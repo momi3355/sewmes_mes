@@ -6,6 +6,7 @@ const router = express.Router();
 
  // 해당 라우터를 통해 제공할 서비스를 가져옴
 const processService =require('../services/BaseInfo/process_service.js');
+const outsouService =require('../services/Production/outsou_service.js');
 
 // 공정관리 페이지 라우터 =========================================
 router.get('/processList', async (req, res)=>{
@@ -51,7 +52,7 @@ router.delete('/processDelete/:code', async(req, res) => {
 })
 // ==============================================================
 
-// 공정흐름름 페이지 라우터 =========================================
+// 공정흐름 페이지 라우터 =========================================
 router.get('/productList', async (req, res)=>{
   try {
     const { cate, name } = req.query;
@@ -86,6 +87,17 @@ router.post('/flowSave', async (req, res) => {
   } catch (err) {
     console.error("flowSave 오류:", err);
     res.status(500).send("저장 실패");
+  }
+});
+// 공정 순서 삭제하기
+router.delete('/flowDelete/:flowCode', async (req, res) => {
+  const flowCode = req.params.flowCode;
+  try {
+    await processService.deleteFlowWithAttach(flowCode);
+    res.send({ success: true, message: "공정 및 이미지 삭제 완료" });
+  } catch (err) {
+    console.error("flowDelete 오류:", err);
+    res.status(500).send("삭제 실패");
   }
 });
 // 공정 흐름 이미지 등록
@@ -142,4 +154,44 @@ router.get('/flowImage/:flowCode', async (req, res) => {
     res.sendStatus(500);
   }
 });
+// ==============================================================
+
+// 외주발주 페이지 라우터 =========================================
+router.get('/outsouOrderList', async (req, res)=>{
+  try {
+    const {
+      outsouOrderCode, prodName, cpName, releaseState, regStartDate,
+      regEndDate, deadStartDate, deadEndDate
+    } = req.query;
+    const result = await outsouService.findOutsouOrderByConditions({
+      outsouOrderCode, prodName, cpName, releaseState, regStartDate,
+      regEndDate, deadStartDate, deadEndDate
+    });
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "검색 중 오류 발생" });
+  }
+});
+
+// ==============================================================
+
+// 외주자재출고 페이지 라우터 =========================================
+router.get('/outsouReleaseMaterialList', async (req, res)=>{
+  try {
+    const {
+      outsouOrderCode, materialName, cpName, releaseState, regStartDate,
+      regEndDate, deadStartDate, deadEndDate
+    } = req.query;
+    const result = await outsouService.findOutsouReleaseMaterialByConditions({
+      outsouOrderCode, materialName, cpName, releaseState, regStartDate,
+      regEndDate, deadStartDate, deadEndDate
+    });
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "검색 중 오류 발생" });
+  }
+});
+
 module.exports = router;

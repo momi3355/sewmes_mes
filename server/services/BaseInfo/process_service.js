@@ -61,7 +61,7 @@ const deleteProcess = async (processCode) => {
 }
 // ==============================================================
 
-// 공정흐름름 페이지 서비스 =========================================
+// 공정흐름 페이지 서비스 =========================================
 const findProdByConditions = async (cate, name) => {
   let baseSql = sqlList.selectProductByConditions;
   const whereClauses = [];
@@ -132,6 +132,30 @@ const saveProcessFlows = async (prodCode, flows) => {
     conn.release();
   }
 };
+// 공정 순서 삭제하기
+const deleteFlowWithAttach = async (flowCode) => {
+  const conn = await mariadb.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    // 첨부 파일 먼저 삭제 (외래키 제약 때문에)
+    await conn.query(`
+      DELETE FROM t_process_flow_attach WHERE flow_code = ?
+    `, [flowCode]);
+
+    // 그 다음 공정 흐름 삭제
+    await conn.query(`
+      DELETE FROM t_process_flow WHERE flow_code = ?
+    `, [flowCode]);
+
+    await conn.commit();
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
+};
 // 이미지 저장
 const saveAttachFile = async ({ flowCode, fileName, originFileName }) => {
   const result = await mariadb.query("selectMaxAttachCode");
@@ -157,6 +181,7 @@ module.exports ={
   findProdByConditions,
   getProcessFlowByProdCode,
   saveProcessFlows,
+  deleteFlowWithAttach,
   saveAttachFile,
   getAttachFileByFlowCode
 };
