@@ -6,7 +6,7 @@ import axios from 'axios';
 
 // 실제 작업지시 데이터
 const workInstData = ref([]); //초기에는 빈값
-const workList = ref([]);
+
 
 // 작업지시컬럼
 const workInstColumns = [
@@ -69,8 +69,8 @@ const searchField4 = ref(''); //담당자
 //행추가 함수(생산계획 목록 없이 작업지시 생성)
 const addRow = () => {    
     //새로운 행을 위한 NO값 생성
-    //const newNo = workInstData.value.length > 0 ? Math.max(...workInstData.value.map(item => item.NO || 0)) + 1 : 1;
-    const newNo = workList.value.length > 0 ? Math.max(...workList.value.map(item => item.NO || 0)) + 1 : 1;
+    const newNo = workInstData.value.length > 0 ? Math.max(...workInstData.value.map(item => item.NO || 0)) + 1 : 1;
+
     //새로운 빈 행 데이터 객체 생성
     const newRow = {
         NO: newNo,
@@ -83,19 +83,18 @@ const addRow = () => {
         emp_num: '',
     }
     workInstData.value.push(newRow);
-    //workList.value.splice(workList.value.length, 0, newRow);
-    workList.value.push(newRow);
-    console.log('addRow', workList.value[0]);
+
 }
-watch(()=> workInstData, (newValue,oldValue) =>{
-    console.log(newValue);
-},{deep : true});
+
 // tabulatorCardRef 컴포넌트의 ref 선언
 const tabulatorCardRef = ref(null);
 
 
 // 저장 함수 cell edited된 worInstaData.value를 그대로 백엔드에 보내기
 const saveWorkInstructions = async (workInstructions) => {
+    const a = tabulatorCardRef.value.getTabulator();
+    
+    console.log(a.getSelectedData());
     for(const instructuon of workInstructions){
 
     }
@@ -138,7 +137,8 @@ const saveWorkInstructions = async (workInstructions) => {
         </div>
 
         <div class="col-12 mt-4">
-            <tabulator-card              
+            <tabulator-card
+                ref="tabulatorCardRef"        
                 card-title="작업지시서 작성"
                 :table-data="workInstData"
                 :table-columns="workInstColumns"
@@ -146,11 +146,7 @@ const saveWorkInstructions = async (workInstructions) => {
                 
             />
         </div>
-        <div>
-            <p v-for="(info,idx) in workList">
-                {{idx}} {{ info.NO }}
-            </p>
-        </div>
+
 
         <ProductionPlanModal
             v-bind:isModalOpen="isModalOpen"

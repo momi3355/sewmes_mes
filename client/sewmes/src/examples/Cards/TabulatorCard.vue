@@ -49,7 +49,7 @@ const initializeTabulator = () => {
       columns: props.tableColumns,
       layout: "fitColumns",
       pagination: false,
-      reactiveData: true,
+      // reactiveData: true,
       theme: "bootstrap",
       ...props.tabulatorOptions,
     });
@@ -66,6 +66,14 @@ const initializeTabulator = () => {
     // 여기서는 onBeforeUnmount에서 일괄 제거하는 방식을 권장합니다.
   }
 };
+
+const getTabulator = () => {
+  return tabulatorInstance;
+}
+
+defineExpose({
+  getTabulator
+});
 
 onMounted(() => {
   initializeTabulator();
