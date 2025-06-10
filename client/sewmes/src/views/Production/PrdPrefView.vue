@@ -1,10 +1,10 @@
 <script setup>
-import { TabulatorFull as Tabulator } from "tabulator-tables";
+
 import { ref, onMounted } from "vue"; // Import ref and onMounted
 import axios from "axios";
 
-import ArgonButton from "@/components/ArgonButton.vue";
 
+import ArgonButton from "@/components/ArgonButton.vue";
 import DefaultInfoCard from "@/examples/Cards/DefaultInfoCard.vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 
