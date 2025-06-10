@@ -5,6 +5,7 @@ SELECT quality_code
 	, test_name 
       , test_target 
 	, test_ref
+      , use_yn
 FROM t_quality
 WHERE use_yn = '0b1b'
 AND ((? IS NULL OR ? = '') OR test_name LIKE CONCAT('%', ?, '%'))
@@ -21,8 +22,7 @@ SELECT quality_code
       , test_method 
       , test_ref 
       , test_standard 
-      , test_note 
-      , ref_img
+      , test_note
       , use_yn
 FROM   t_quality
 WHERE  quality_code = ?
@@ -54,6 +54,7 @@ SELECT quality_ver
       , test_note
 FROM   t_quality_history
 WHERE  quality_code = ?
+ORDER BY quality_ver
 `;
 
 //코드 생성 프로시저
@@ -70,6 +71,32 @@ CALL quality_copy_proc(?, @msg)
 SELECT @msg
 `;
 
+//이미지 등록
+const insertImages = 
+`
+INSERT INTO images (code, file_name, original_name, file_path)
+VALUES (?, ?, ?, ?)
+`;
+
+//이미지 조회
+const selectImgInfo = 
+`
+SELECT code
+       , file_name 
+       , original_name 
+       , file_path
+FROM   images
+WHERE  code = ?
+`;
+
+//이미지 수정
+const updateImgInfo = 
+`
+UPDATE images 
+SET ?
+WHERE  code = ?
+`;
+
 module.exports = {
   selectQualityList 
   , selectQualityInfo
@@ -78,4 +105,7 @@ module.exports = {
   , selectQualityHistory
   , createCodeProc
   , renewQuality
+  , insertImages
+  , selectImgInfo
+  , updateImgInfo
 }
