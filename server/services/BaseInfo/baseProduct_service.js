@@ -1,34 +1,43 @@
 const mariadb = require("../../database/mapper.js");
 const sqlList = require("../../database/sqlList.js"); 
 
-getProductList = async (/*{material_code, material_name, material_type, use_yn}*/) => {
-  // let baseSql = sqlList.selectBaseMaterialList;
-  // const whereClauses = [];
-  // const params = [];
+getProductList = async ({prod_code, prod_name, prod_type, category, size, use_yn}) => {
+  let baseSql = sqlList.selectBaseProductList;
+  const whereClauses = [];
+  const params = [];
 
-  // if (material_code) {
-  //   whereClauses.push("AND material_code LIKE ?");
-  //   params.push(`%${material_code}%`);
-  // }
+  if (prod_code) {
+    whereClauses.push("AND prod_code LIKE ?");
+    params.push(`%${prod_code}%`);
+  }
 
-  // if (material_name) {
-  //   whereClauses.push("AND material_name LIKE ?");
-  //   params.push(`%${material_name}%`);
-  // }
+  if (prod_name) {
+    whereClauses.push("AND prod_name LIKE ?");
+    params.push(`%${prod_name}%`);
+  }
 
-  // if (material_type) {
-  //   whereClauses.push("AND material_type = ?");
-  //   params.push(`${material_type}`);
-  // }
+  if (prod_type) {
+    whereClauses.push("AND prod_type = ?");
+    params.push(`${prod_type}`);
+  }
 
-  // if (use_yn) {
-  //   whereClauses.push("AND use_yn = ?");
-  //   params.push(`${use_yn}`);
-  // }
+  if (category) {
+    whereClauses.push("AND category = ?");
+    params.push(`${category}`);
+  }
 
-  // const finalSql = baseSql.concat(whereClauses.join("\n"));
-  // return mariadb.directQuery(finalSql, params);
-  return mariadb.query("selectBaseProductList");
+  if (size) {
+    whereClauses.push("AND size = ?");
+    params.push(`${size}`);
+  }
+
+  if (use_yn) {
+    whereClauses.push("AND use_yn = ?");
+    params.push(`${use_yn}`);
+  }
+
+  const finalSql = baseSql.concat(whereClauses.join("\n"));
+  return mariadb.directQuery(finalSql, params);
 };
 
 addProduct = async (params) => {

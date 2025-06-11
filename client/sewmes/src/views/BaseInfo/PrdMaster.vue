@@ -166,6 +166,8 @@ const initialSearchFields = {
   prod_code: "",
   prod_name: "",
   prod_type: "",
+  size:"",
+  category: "",
   use_yn: "0b1b",
 };
 
@@ -212,17 +214,20 @@ const searchHandler = async () => {
 
 const productClickhandler = async () => {
   const find = productData.value.find((e) => {
-    return e.product_code === detailFields.value.prod_code;
+    return e.prod_code === detailFields.value.prod_code;
   });
 
   if (find != null) {
     console.log(detailFields.value);
-    const result = await axios.put(
-      "/api/baseProduct?code=" + find.product_code,
-      {
-        data: detailFields.value,
+    const result = await axios.put("/api/baseProduct", {
+      //body
+      data: detailFields.value,
+    }, {
+      //params
+      params: {
+        code: find.prod_code,
       }
-    );
+    });
     console.log(result);
   } else {
     const result = await axios.post("/api/baseProduct", {
@@ -257,7 +262,7 @@ onMounted(() => {
       <!-- 상단 검색 영역 -->
       <div class="row mb-3">
         <div class="col-md-2 d-inline-block-custom">
-          <label class="form-label">자재코드</label>
+          <label class="form-label">제품코드</label>
           <input
             type="text"
             class="form-control"
@@ -265,7 +270,15 @@ onMounted(() => {
           />
         </div>
         <div class="col-md-2">
-          <label class="form-label">자재유형</label>
+          <label class="form-label">제품명</label>
+          <input
+            type="text"
+            class="form-control"
+            v-model="searchData.prod_name"
+          />
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">제품유형</label>
           <select class="form-select" v-model="searchData.prod_type">
             <option selected value="">전체</option>
             <option v-for="type in prdtype" :value="type.code">
@@ -273,13 +286,25 @@ onMounted(() => {
             </option>
           </select>
         </div>
+      </div>
+      <div class="row mb-3">
         <div class="col-md-2">
-          <label class="form-label">자재명</label>
-          <input
-            type="text"
-            class="form-control"
-            v-model="searchData.prod_name"
-          />
+          <label class="form-label">카테고리</label>
+          <select class="form-select" v-model="searchData.category">
+            <option selected value="">전체</option>
+            <option v-for="type in catetype" :value="type.code">
+              {{ type.name }}
+            </option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">사이즈</label>
+          <select class="form-select" v-model="searchData.size">
+            <option selected value="">전체</option>
+            <option v-for="type in sizetype" :value="type.code">
+              {{ type.name }}
+            </option>
+          </select>
         </div>
         <div class="col-md-2">
           <label class="form-label">사용여부</label>
@@ -319,7 +344,7 @@ onMounted(() => {
       <div class="col-md-5 d-flex flex-column">
         <div class="card mb-2 flex-grow-1" style="min-height: 350px">
           <div class="card-header d-flex justify-content-between align-items-center">
-            <span>검사항목 상세</span>
+            <span>제품항목 상세</span>
             <button class="btn btn-sm btn-success" @click="productClickhandler">저장</button>
           </div>
           <div class="card-body p-2">
@@ -332,17 +357,17 @@ onMounted(() => {
                   </td>
                 </tr>
                 <tr>
+                  <th>제품명</th>
+                  <td>
+                    <input type="text" class="form-control form-control-sm" v-model="detailFields.prod_name"/>
+                  </td>
+                </tr>
+                <tr>
                   <th>제품유형</th>
                   <td>
                     <select class="form-select form-select-sm" v-model="detailFields.prod_type">
                       <option v-for="type in prdtype" :value="type.code" :selected="type.code == detailFields.prod_type">{{ type.name }}</option>
                     </select>
-                  </td>
-                </tr>
-                <tr>
-                  <th>제품명</th>
-                  <td>
-                    <input type="text" class="form-control form-control-sm" v-model="detailFields.prod_name"/>
                   </td>
                 </tr>
                 <tr>
@@ -389,9 +414,7 @@ onMounted(() => {
                 </tr>
                 <tr>
                   <th>비고</th>
-                  <td>
-                    <textarea rows="5" class="form-control" v-model="detailFields.node"></textarea>
-                  </td>
+                  <td><textarea rows="5" class="form-control" v-model="detailFields.node"></textarea></td>
                 </tr>
               </tbody>
             </table>
@@ -408,11 +431,6 @@ onMounted(() => {
   padding: 20px;
   border-radius: 1rem;
   background-color: #fff;
-}
-.use-label {
-  display: block;
-  margin: 0.5rem;
-  margin-left: 0;
 }
 .use-radio {
   display: inline-block;

@@ -19,7 +19,7 @@ const insertBaseProduct =
 const updateBaseProduct = 
 `UPDATE t_product
   SET ?
-  WHERE product_code = ?`;
+  WHERE prod_code = ?`;
 
 module.exports = {
   selectBaseProductList,

@@ -246,6 +246,10 @@ onMounted(() => {
           <input type="text" class="form-control" v-model="searchData.material_code">
         </div>
         <div class="col-md-2">
+          <label class="form-label">자재명</label>
+          <input type="text" class="form-control" v-model="searchData.material_name">
+        </div>
+        <div class="col-md-2">
           <label class="form-label">자재유형</label>
           <select class="form-select" v-model="searchData.material_type">
             <option selected value="">전체</option>
@@ -253,14 +257,16 @@ onMounted(() => {
           </select>
         </div>
         <div class="col-md-2">
-          <label class="form-label">자재명</label>
-          <input type="text" class="form-control" v-model="searchData.material_name">
-        </div>
-        <div class="col-md-2">
           <label class="form-label">사용여부</label>
           <div class="form-check" v-for="type in usetype">
-            <input class="form-check-input" type="radio" v-model="searchData.use_yn" :value="type.code">
-            <label class="form-check-label" :for="type.code">
+            <input 
+              class="form-check-input"
+              type="radio"
+              v-model="searchData.use_yn"
+              :value="type.code"
+              :id="'search-'+type.code"
+            />
+            <label class="form-check-label" :for="'search-'+type.code">
               {{ type.name }}
             </label>
           </div>
@@ -276,73 +282,76 @@ onMounted(() => {
       <div class="col-7 md-3">
         <tabulator-card
           ref="table"
-          card-title="자제 품목 리스트"
+          card-title="자재 품목 리스트"
           :table-data="materialData"
           :table-columns="materialColumns"
           :tabulator-options="tabulatorOptions"
           :on="tabulatorEvent"
         />
       </div>
-      <div class="col">
-        <div class="card mb-3">
+      <div class="col-md-5 d-flex flex-column">
+        <div class="card mb-2 flex-grow-1" style="min-height: 350px;">
           <div class="card-header d-flex justify-content-between align-items-center">
-            <h5>자재 상세</h5>
+            <span>자재항목 상세</span>
             <button class="btn btn-sm btn-success" @click="materialClickhandler">저장</button>
           </div>
-          <div class="card-body pt-0">
-            <div class="row mb-2">
-              <div class="col-md-6">
-                <label class="form-label">자제코드</label>
-                <input type="text" class="form-control" v-model="detailFields.material_code">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">자재 유형</label>
-                <select class="form-select" v-model="detailFields.material_type">
-                  <option v-for="type in mattype" :value="type.code" :selected="type.code == detailFields.material_type">{{ type.name }}</option>
-                </select>
-                <!-- <input type="text" class="form-control" v-model="detailFields.material_type"> -->
-              </div>
-              <div class="col-md-12">
-                <label class="form-label">자재명</label>
-                <input type="text" class="form-control" v-model="detailFields.material_name">
-              </div>
-              <div class="col-md-12">
-                <label class="form-label">규격</label>
-                <input type="text" class="form-control" v-model="detailFields.standard">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">단위</label>
-                <input type="text" class="form-control" v-model="detailFields.unit">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">단가</label>
-                <input type="text" class="form-control" v-model="detailFields.unit_price">
-              </div>
-              <div class="col-md-12">
-                <label class="form-label use-label">사용여부</label>
-                <!-- <select class="form-select">
-                  <option v-for="type in usetype" :value="type.code" :selected="type.code == detailFields.use_yn">{{ type.name }}</option>
-                </select> -->
-                <div class="form-check use-radio" v-for="type in usetype">
-                  <input class="form-check-input" type="radio" v-model=detailFields.use_yn :value="type.code" :checked="type.code == detailFields.use_yn">
-                  <label class="form-check-label" :for="type.code">
-                  {{ type.name }}
-                  </label>
-                </div>
-                <!-- <input type="text" class="form-control" v-model="detailFields.use_yn"> -->
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">색상</label>
-                <!-- <input type="text" class="form-control" v-model="detailFields.color"> -->
-                 <select class="form-select" v-model="detailFields.color">
-                  <option v-for="type in colortype" :value="type.code" :selected="type.code == detailFields.color">{{ type.name }}</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">안전 재고 수량</label>
-                <input type="text" class="form-control" v-model="detailFields.safe_stock">
-              </div>
-            </div>
+          <div class="card-body p-2">
+            <table class="table table-bordered table-sm align-middle mb-2">
+              <tbody>
+                <tr>
+                  <th style="width: 30%;">자재코드</th>
+                  <td><input type="text" class="form-control form-control-sm" v-model="detailFields.material_code"></td>
+                </tr>
+                <tr>
+                  <th>자재명</th>
+                  <td><input type="text" class="form-control form-control-sm" v-model="detailFields.material_name"></td>
+                </tr>
+                <tr>
+                  <th>자재유형</th>
+                  <td>
+                    <select class="form-select form-select-sm" v-model="detailFields.material_type">
+                      <option v-for="type in mattype" :value="type.code" :selected="type.code == detailFields.material_type">{{ type.name }}</option>
+                    </select>
+                  </td>
+                </tr>
+                <tr>
+                  <th>색상</th>
+                  <td>
+                    <select class="form-select form-select-sm" v-model="detailFields.color">
+                      <option v-for="type in colortype" :value="type.code" :selected="type.code == detailFields.color">{{ type.name }}</option>
+                    </select>
+                  </td>
+                </tr>
+                <tr>
+                  <th>규격</th>
+                  <td><textarea rows="3" class="form-control" v-model="detailFields.standard"></textarea></td>
+                </tr>
+                <tr>
+                  <th>단위</th>
+                  <td><input type="text" class="form-control form-control-sm" v-model="detailFields.unit"></td>
+                </tr>
+                <tr>
+                  <th>단가</th>
+                  <td><input type="text" class="form-control form-control-sm" v-model="detailFields.unit_price"></td>
+                </tr>
+                <tr>
+                  <th>사용여부</th>
+                  <td>
+                    <div class="form-check use-radio" v-for="type in usetype">
+                      <input class="form-check-input" type="radio" :id="'form-'+type.code" 
+                        v-model=detailFields.use_yn :value="type.code" :checked="type.code == detailFields.use_yn">
+                      <label class="form-check-label" :for="'form-'+type.code">
+                      {{ type.name }}
+                      </label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <th>안전 재고 수량</th>
+                  <td><input type="text" class="form-control form-control-sm" v-model="detailFields.safe_stock"></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -356,11 +365,6 @@ onMounted(() => {
   padding: 20px;
   border-radius: 1rem;
   background-color: #fff;
-}
-.use-label {
-  display: block;
-  margin: 0.5rem;
-  margin-left: 0;
 }
 .use-radio {
   display: inline-block;
