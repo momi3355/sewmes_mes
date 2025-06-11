@@ -111,7 +111,8 @@ const loadProcesses = async () => {
       image: '',
       processSeq: f.process_seq
     }));
-    while (converted.length < 10) {
+    const count = converted.length + 5;
+    while (converted.length < count) {
       converted.push({  
                         rowNum: converted.length + 1,
                         flowCode: '',     
@@ -119,7 +120,6 @@ const loadProcesses = async () => {
                         processName: '',
                         detail: '',
                         image: '',
-                        rowNum: converted.length + 1
                       });
     }
     processList.value = converted;
@@ -224,7 +224,7 @@ const onImageUploadClick = async (flowCode) => {
 };
 const tabulatorEvent = [
   {
-    eventName: "rowDblClick",
+    eventName: "rowClick",
     eventAction: 
       async (e, row) => {
       const data = row.getData();
