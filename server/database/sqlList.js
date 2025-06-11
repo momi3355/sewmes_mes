@@ -19,7 +19,7 @@ const prdPlanMngment = require('./sqls/prdPlanMngment.js');
 const outsouMngment = require('./sqls/outsouMngment.js');
 const outsouRelease = require('./sqls/outsouRelease.js');
 const outsouInbound = require('./sqls/outsouInbound.js');
-const matorderListSql=require('./sqls/matOrder.js')
+const matorderList=require('./sqls/matOrder.js');
 const loginSql=require('./sqls/login.js');
 
 module.exports = {
@@ -36,6 +36,6 @@ module.exports = {
   ...workInsstSqls, //정민
   ...orderListSql, // 주문서 관리
   ...companyListSql, // 업체 정보
-  ...matorderListSql,
+  ...matorderList,
   ...loginSql, // 로그인
 }
