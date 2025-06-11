@@ -12,6 +12,7 @@ const qualityMaster = require('./sqls/qualityMaster.js');
 const equiMaster = require('./sqls/equiMaster.js');
 const workInsstSqls=require('./sqls/workInst.js');
 const baseMaterial = require('./sqls/baseMaterial.js');
+const baseProduct = require('./sqls/baseProduct.js');
 const orderListSql=require('./sqls/orderList.js');
 const companyListSql=require('./sqls/companyList.js');
 const outsouMngment = require('./sqls/outsouMngment.js');
@@ -24,6 +25,7 @@ module.exports = {
   ...qualityMaster,
   ...equiMaster,
   ...baseMaterial,
+  ...baseProduct, //기준 제품
   ...processFlow, // 공정흐름
   ...outsouMngment, // 외주발주
   ...outsouRelease, // 외주자재출고

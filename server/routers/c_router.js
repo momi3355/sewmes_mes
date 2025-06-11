@@ -3,6 +3,7 @@ const { convertObjToAry } = require('../utils/converts.js');
 const router = express.Router();
 
 const materialService = require('../services/BaseInfo/baseMaterial_service');
+const productService = require('../services/BaseInfo/baseProduct_service');
 
 router.get("/baseMaterial", async (req, res) => {
   //query string 사용
@@ -35,6 +36,16 @@ router.put("/baseMaterial", async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send({ message: "추가 중 오류 발생" });
+  }
+});
+
+router.get("/baseProduct", async (req, res) => {
+  try {
+    const result = await productService.getProductList();
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "검색 중 오류 발생" });
   }
 });
 

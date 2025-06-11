@@ -155,7 +155,7 @@ const tabulatorEvent = [
     eventName: "rowClick",
     eventAction: (e, row) => {
       const rowData = row.getData();
-      console.log(rowData);
+      // console.log(rowData);
       detailFields.value = { ...rowData };
       //console.log(detailFields.value.material_code);
     }
@@ -165,13 +165,14 @@ const tabulatorEvent = [
 //리셋
 const resetHandler = () => {
   searchData.value = { ...initialSearchFields };
-  detailFields.value = { ...initialDetailFields };
+  // detailFields.value = { ...initialDetailFields };
 };
 
 //검색
-const searchHandler = () => {
+const searchHandler = async () => {
   const tabulator = table.value.getTabulator();
-  tabulator.setData("/api/baseMaterial" , searchData.value);
+  await tabulator.setData("/api/baseMaterial" , searchData.value);
+  materialData.value = tabulator.getData();
 };
 
 const materialClickhandler = async () => {
@@ -199,8 +200,14 @@ const materialClickhandler = async () => {
 
   if (find != null) {
     console.log(detailFields.value);
-    const result = await axios.put("/api/baseMaterial?code="+find.material_code, {
+    const result = await axios.put("/api/baseMaterial", {
+      //body
       data: detailFields.value,
+    }, {
+      //params
+      params: {
+        code: find.material_code,
+      }
     });
     console.log(result);
   } else {
@@ -210,7 +217,8 @@ const materialClickhandler = async () => {
     console.log(result);
   }
   const tabulator = table.value.getTabulator();
-  tabulator.setData("/api/baseMaterial", searchData.value);
+  await tabulator.setData("/api/baseMaterial" , searchData.value);
+  materialData.value = tabulator.getData();
 };
 
 const getBaseMaterial = async() => {
@@ -220,23 +228,11 @@ const getBaseMaterial = async() => {
       ...searchData.value
     }
   });
-  //const material = await axios.get("/api/baseMaterial");
   materialData.value = material.data;
-  //빈 칼럼 누르면 새로 추가
-  //materialData.value.push({
-  //  initialDetailFields
-  //});
-  return material;
 }
 
 onMounted(() => {
-  // const tabulator = table.value.getTabulator();
-  // tabulator.setData("/api/baseMaterial");
   getBaseMaterial();
-  // let a = table.value.getTabulator();
-  // a.selectRow(1);
-  
-  // console.log();
 });
 </script>
 
@@ -293,7 +289,7 @@ onMounted(() => {
             <h5>자재 상세</h5>
             <button class="btn btn-sm btn-success" @click="materialClickhandler">저장</button>
           </div>
-          <div class="card-body">
+          <div class="card-body pt-0">
             <div class="row mb-2">
               <div class="col-md-6">
                 <label class="form-label">자제코드</label>
@@ -323,11 +319,11 @@ onMounted(() => {
                 <input type="text" class="form-control" v-model="detailFields.unit_price">
               </div>
               <div class="col-md-12">
-                <label class="form-label">사용여부</label>
+                <label class="form-label use-label">사용여부</label>
                 <!-- <select class="form-select">
                   <option v-for="type in usetype" :value="type.code" :selected="type.code == detailFields.use_yn">{{ type.name }}</option>
                 </select> -->
-                <div class="form-check" v-for="type in usetype">
+                <div class="form-check use-radio" v-for="type in usetype">
                   <input class="form-check-input" type="radio" v-model=detailFields.use_yn :value="type.code" :checked="type.code == detailFields.use_yn">
                   <label class="form-check-label" :for="type.code">
                   {{ type.name }}
@@ -360,5 +356,14 @@ onMounted(() => {
   padding: 20px;
   border-radius: 1rem;
   background-color: #fff;
+}
+.use-label {
+  display: block;
+  margin: 0.5rem;
+  margin-left: 0;
+}
+.use-radio {
+  display: inline-block;
+  padding-right: 15px;
 }
 </style>
