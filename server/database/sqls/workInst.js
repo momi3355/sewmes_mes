@@ -4,6 +4,7 @@
 
 // 조건없이 전체조회
 //작성할 때 백틱`` 사용.
+//생산계획수량>지시된총수량 모달표시
 const selectProdPlansList =
 `SELECT
             pp.prod_plan_code,
@@ -16,7 +17,10 @@ const selectProdPlansList =
         LEFT JOIN
             t_order_detail od ON pp.order_detail_code = od.order_detail_code
         WHERE
-            pp.complete = ?`;
+            pp.prod_qty>(SELECT IFNULL(SUM(twi.inst_qty),0)
+                        FROM t_work_inst twi
+                        WHERE twi.prod_plan_code = pp.prod_plan_code
+        )`;
 
             
 // 지시코드 클릭 하지 않고 초기 작업지시의 지시상태가 생산전, 생산중인 경우 작업지시서 다건조회
@@ -58,18 +62,22 @@ const insertWorkInstList =
     inst_state    
 )VALUES(?,?,?,?,?,?,?,?,?)`;
 
-//bom_code를 조회
+// 생산계획없이 작업지시 생성할 때 bom_code를 조회
 const selectBomByProdCode=
 `SELECT bom_code
 FROM t_bom
 WHERE prod_code=?
 `;
+
+
 //가장큰 작업지시 코드 조회
 const selectMaxWorkInstCode=
 `SELECT MAX(work_inst_code) AS max_code
 FROM t_work_inst
 WHERE work_inst_code LIKE 'I%'
 `;
+
+//작업지시 테이블 bom_code로 소요량 조회회
 module.exports = {
     selectProdPlansList,
     selectWorkInstListDefault,
