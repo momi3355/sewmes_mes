@@ -85,9 +85,24 @@ router.put('/quality/renew/:code', async(req, res) => {
 router.get('/quality/history/:code', async(req, res) => {
   let qualityCode = req.params.code;
 
-  let qualityHistoryList = qualityService.qualityHistoryList(qualityCode)
+  let qualityHistoryList = await qualityService.qualityHistoryList(qualityCode)
                                          .catch(err => console.log(err));
   res.send(qualityHistoryList);
 });
+
+//그룹코드 전체조회
+router.get('/groupCode/gc/:code', async(req, res) => {
+  let groupCode = req.params.code;
+
+  let groupCodeList = await qualityService.groupCodeSearchList(groupCode).catch(err => console.log(err));
+  res.send(groupCodeList);
+})
+
+//그룹코드 상세조회
+router.get('/groupCode/dc/:code', async(req, res) => {
+  let detailCode = req.params.code;
+  let detailCodeInfo = await qualityService.groupCodeDetailInfo(detailCode).catch(err => console.log(err));
+  res.send(detailCodeInfo);
+})
 
 module.exports = router;
