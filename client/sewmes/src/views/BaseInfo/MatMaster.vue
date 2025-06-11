@@ -70,21 +70,11 @@ const colortype = ref([
 const table = ref(null);
 const materialData = ref([]);
 
-const mattypeFormatter = (cell) => {
+const typeFormatter = (cell, formatterParams) => {
+  const typeArray = formatterParams.typeArray;
   const code = cell.getValue();
-  const foundType = mattype.value.find(type => type.code === code);
-  return foundType ? foundType.name : code;
-};
 
-const usetypeFormatter = (cell) => {
-  const code = cell.getValue();
-  const foundType = usetype.value.find(type => type.code === code);
-  return foundType ? foundType.name : code;
-};
-
-const colortypeFormatter = (cell) => {
-  const code = cell.getValue();
-  const foundType = colortype.value.find(type => type.code === code);
+  const foundType = typeArray.find((type) => type.code === code);
   return foundType ? foundType.name : code;
 };
 
@@ -92,10 +82,13 @@ const materialColumns = [
   { title: "자재코드", field: "material_code", width: 100 },
   { title: "자재명", field: "material_name", width: 170 },
   {
-    title: "자재 유형",
+    title: "자재유형",
     field: "material_type",
     width: 75,
-    formatter: mattypeFormatter // 포매터만 적용
+    formatter: typeFormatter,
+    formatterParams: {
+      typeArray: mattype.value,
+    },
   },
   { title: "규격", field: "standard", width: 160 },
   { title: "단위", field: "unit", width: 50 },
@@ -103,7 +96,10 @@ const materialColumns = [
     title: "사용여부",
     field: "use_yn",
     width: 105,
-    formatter: usetypeFormatter // 포매터만 적용
+    formatter: typeFormatter,
+    formatterParams: {
+      typeArray: usetype.value,
+    },
   },
   { title: "단가", field: "unit_price", width: 70, hozAlign: "right" },
   { title: "안전 재고 수량", field: "safe_stock", width: 70, hozAlign: "right" },
@@ -111,7 +107,10 @@ const materialColumns = [
     title: "색상",
     field: "color",
     width: 70,
-    formatter: colortypeFormatter // 포매터만 적용
+    formatter: typeFormatter,
+    formatterParams: {
+      typeArray: colortype.value,
+    },
   }
 ];
 
@@ -297,7 +296,7 @@ onMounted(() => {
           </div>
           <div class="card-body p-2">
             <table class="table table-bordered table-sm align-middle mb-2">
-              <tbody>
+              <tbody style="border-width: 1px">
                 <tr>
                   <th style="width: 30%;">자재코드</th>
                   <td><input type="text" class="form-control form-control-sm" v-model="detailFields.material_code"></td>

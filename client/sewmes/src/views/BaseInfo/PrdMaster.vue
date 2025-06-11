@@ -213,6 +213,24 @@ const searchHandler = async () => {
 };
 
 const productClickhandler = async () => {
+  const currentDetailFields = detailFields.value;
+
+  const isAnyRequiredFieldEmpty =
+    currentDetailFields.prod_code === "" ||
+    currentDetailFields.prod_name === "" ||
+    currentDetailFields.standard === "" ||
+    currentDetailFields.unit === "";
+
+  if (isAnyRequiredFieldEmpty) {
+    alert("필수 입력 항목(제품 코드, 제품명, 규격, 단위)을 모두 채워주세요.");
+    return;
+  }
+
+  if (currentDetailFields.unit_price === 0) {
+    alert("단가가 0으로 설정되어 있습니다. 확인해 주세요.");
+    return;
+  }
+
   const find = productData.value.find((e) => {
     return e.prod_code === detailFields.value.prod_code;
   });
@@ -349,7 +367,7 @@ onMounted(() => {
           </div>
           <div class="card-body p-2">
             <table class="table table-bordered table-sm align-middle mb-2">
-              <tbody>
+              <tbody style="border-width: 1px">
                 <tr>
                   <th style="width: 30%">제품코드</th>
                   <td>
