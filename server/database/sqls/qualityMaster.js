@@ -7,10 +7,10 @@ SELECT quality_code
 	, test_ref
       , use_yn
 FROM t_quality
-WHERE use_yn = '0b1b'
-AND ((? IS NULL OR ? = '') OR test_name LIKE CONCAT('%', ?, '%'))
+WHERE ((? IS NULL OR ? = '') OR test_name LIKE CONCAT('%', ?, '%'))
 AND ((? IS NULL OR ? = '') OR test_target LIKE CONCAT('%', ?, '%'))
 AND ((? IS NULL OR ? = '') OR test_ref LIKE CONCAT('%', ?, '%'))
+AND ((? IS NULL OR ? = '') OR use_yn LIKE CONCAT('%', ?, '%'))
 `;
 
 //단건조회
@@ -50,11 +50,11 @@ WHERE quality_code = ?
 const selectQualityHistory = 
 `
 SELECT quality_ver 
+      , test_name
       , test_target 
       , test_method 
       , test_ref 
       , test_standard
-      , test_note
 FROM   t_quality_history
 WHERE  quality_code = ?
 ORDER BY quality_ver
@@ -63,15 +63,15 @@ ORDER BY quality_ver
 //코드 생성 프로시저
 const createCodeProc =
 `
-CALL createcode_proc(?, ?, ?, @new_code) 
-SELECT @new_code
+CALL createcode_proc(?, ?, ?, @new_code);
+SELECT @new_code AS newCode;
 `;
 
 //갱신 프로시저
 const renewQuality = 
 `
-CALL quality_copy_proc(?, @msg)
-SELECT @msg
+CALL quality_copy_proc(?, @msg);
+SELECT @msg AS msg;
 `;
 
 //이미지 등록
@@ -89,6 +89,20 @@ SET ?
 WHERE  code = ?
 `;
 
+//공통코드 조회(groupcode)
+const groupCodeSearch = `
+SELECT group_name, detail_code, detail_name 
+FROM   v_groupcode
+WHERE  group_code LIKE CONCAT('%', ?, '%')
+`;
+
+//공통코드 상세 조회(detailcode)
+const detailCodeSearch = `
+SELECT detail_code, detail_name 
+FROM   v_groupcode
+WHERE  detail_code LIKE CONCAT('%', ?, '%')
+`;
+
 module.exports = {
   selectQualityList 
   , selectQualityInfo
@@ -99,4 +113,6 @@ module.exports = {
   , renewQuality
   , insertImages
   , updateImgInfo
+  , groupCodeSearch
+  , detailCodeSearch
 }

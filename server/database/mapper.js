@@ -8,7 +8,8 @@ const connectionPool = mariadb.createPool({
   password: process.env.DB_PWD,
   database: process.env.DB_DB,
   connectionLimit: process.env.DB_LIMIT,
-
+  
+  multipleStatements: true,
   permitSetMultiParamEntries: true,
   insertIdAsNumber: true,
   bigIntAsNumber: true,
