@@ -1,39 +1,42 @@
 const mariadb = require("../../database/mapper.js");
 const sqlList = require("../../database/sqlList.js"); 
 
-getMaterialList = async (search) => {
-  // searchCodeParamForLike = null;
-  // if (search && search.material_code) {
-  //   searchCodeParamForLike = `%${search.material_code}%`;
-  // }
+getMaterialList = async ({material_code, material_name, material_type, use_yn}) => {
+  let baseSql = sqlList.selectBaseMaterialList;
+  const whereClauses = [];
+  const params = [];
 
-  // searchNameParamForLike = null;
-  // if (search && search.material_name) {
-  //   searchNameParamForLike = `%${search.material_name}%`;
-  // }
-  // const params = [
-  //   searchCodeParamForLike,
-  //   search.material_code,
-  //   search.material_type,
-  //   search.material_type,
-  //   searchNameParamForLike,
-  //   search.material_name,
-  //   search.use_yn,
-  //   search.use_yn,
-  // ];
-  // console.log(params);
-  // { material_code, material_type, material_name, use_yn };
+  if (material_code) {
+    whereClauses.push("AND material_code LIKE ?");
+    params.push(`%${material_code}%`);
+  }
 
-  return mariadb.query("selectBaseMaterialList", params);
+  if (material_name) {
+    whereClauses.push("AND material_name LIKE ?");
+    params.push(`%${material_name}%`);
+  }
+
+  if (material_type) {
+    whereClauses.push("AND material_type = ?");
+    params.push(`${material_type}`);
+  }
+
+  if (use_yn) {
+    whereClauses.push("AND use_yn = ?");
+    params.push(`${use_yn}`);
+  }
+
+  const finalSql = baseSql.concat(whereClauses.join("\n"));
+  return mariadb.directQuery(finalSql, params);
 };
 
-addMaterial = async (attr) => {
-  return mariadb.query("insertBaseMaterial", attr);
+addMaterial = async (params) => {
+  return mariadb.query("insertBaseMaterial", params);
 };
 
-setMaterial = async (code, attr) => {
+setMaterial = async (code, params) => {
   // console.log(attr);
-  return mariadb.query("updateBaseMaterial", [attr, code]);
+  return mariadb.query("updateBaseMaterial", [params, code]);
 };
 
 module.exports = {
