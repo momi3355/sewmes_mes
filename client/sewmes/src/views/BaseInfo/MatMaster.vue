@@ -70,21 +70,11 @@ const colortype = ref([
 const table = ref(null);
 const materialData = ref([]);
 
-const mattypeFormatter = (cell) => {
+const typeFormatter = (cell, formatterParams) => {
+  const typeArray = formatterParams.typeArray;
   const code = cell.getValue();
-  const foundType = mattype.value.find(type => type.code === code);
-  return foundType ? foundType.name : code;
-};
 
-const usetypeFormatter = (cell) => {
-  const code = cell.getValue();
-  const foundType = usetype.value.find(type => type.code === code);
-  return foundType ? foundType.name : code;
-};
-
-const colortypeFormatter = (cell) => {
-  const code = cell.getValue();
-  const foundType = colortype.value.find(type => type.code === code);
+  const foundType = typeArray.find((type) => type.code === code);
   return foundType ? foundType.name : code;
 };
 
@@ -92,10 +82,13 @@ const materialColumns = [
   { title: "자재코드", field: "material_code", width: 100 },
   { title: "자재명", field: "material_name", width: 170 },
   {
-    title: "자재 유형",
+    title: "자재유형",
     field: "material_type",
     width: 75,
-    formatter: mattypeFormatter // 포매터만 적용
+    formatter: typeFormatter,
+    formatterParams: {
+      typeArray: mattype.value,
+    },
   },
   { title: "규격", field: "standard", width: 160 },
   { title: "단위", field: "unit", width: 50 },
@@ -103,7 +96,10 @@ const materialColumns = [
     title: "사용여부",
     field: "use_yn",
     width: 105,
-    formatter: usetypeFormatter // 포매터만 적용
+    formatter: typeFormatter,
+    formatterParams: {
+      typeArray: usetype.value,
+    },
   },
   { title: "단가", field: "unit_price", width: 70, hozAlign: "right" },
   { title: "안전 재고 수량", field: "safe_stock", width: 70, hozAlign: "right" },
@@ -111,7 +107,10 @@ const materialColumns = [
     title: "색상",
     field: "color",
     width: 70,
-    formatter: colortypeFormatter // 포매터만 적용
+    formatter: typeFormatter,
+    formatterParams: {
+      typeArray: colortype.value,
+    },
   }
 ];
 
@@ -155,7 +154,7 @@ const tabulatorEvent = [
     eventName: "rowClick",
     eventAction: (e, row) => {
       const rowData = row.getData();
-      console.log(rowData);
+      // console.log(rowData);
       detailFields.value = { ...rowData };
       //console.log(detailFields.value.material_code);
     }
@@ -165,13 +164,14 @@ const tabulatorEvent = [
 //리셋
 const resetHandler = () => {
   searchData.value = { ...initialSearchFields };
-  detailFields.value = { ...initialDetailFields };
+  // detailFields.value = { ...initialDetailFields };
 };
 
 //검색
-const searchHandler = () => {
+const searchHandler = async () => {
   const tabulator = table.value.getTabulator();
-  tabulator.setData("/api/baseMaterial" , searchData.value);
+  await tabulator.setData("/api/baseMaterial" , searchData.value);
+  materialData.value = tabulator.getData();
 };
 
 const materialClickhandler = async () => {
@@ -199,8 +199,14 @@ const materialClickhandler = async () => {
 
   if (find != null) {
     console.log(detailFields.value);
-    const result = await axios.put("/api/baseMaterial?code="+find.material_code, {
+    const result = await axios.put("/api/baseMaterial", {
+      //body
       data: detailFields.value,
+    }, {
+      //params
+      params: {
+        code: find.material_code,
+      }
     });
     console.log(result);
   } else {
@@ -210,7 +216,8 @@ const materialClickhandler = async () => {
     console.log(result);
   }
   const tabulator = table.value.getTabulator();
-  tabulator.setData("/api/baseMaterial", searchData.value);
+  await tabulator.setData("/api/baseMaterial" , searchData.value);
+  materialData.value = tabulator.getData();
 };
 
 const getBaseMaterial = async() => {
@@ -220,23 +227,11 @@ const getBaseMaterial = async() => {
       ...searchData.value
     }
   });
-  //const material = await axios.get("/api/baseMaterial");
   materialData.value = material.data;
-  //빈 칼럼 누르면 새로 추가
-  //materialData.value.push({
-  //  initialDetailFields
-  //});
-  return material;
 }
 
 onMounted(() => {
-  // const tabulator = table.value.getTabulator();
-  // tabulator.setData("/api/baseMaterial");
   getBaseMaterial();
-  // let a = table.value.getTabulator();
-  // a.selectRow(1);
-  
-  // console.log();
 });
 </script>
 
@@ -250,6 +245,10 @@ onMounted(() => {
           <input type="text" class="form-control" v-model="searchData.material_code">
         </div>
         <div class="col-md-2">
+          <label class="form-label">자재명</label>
+          <input type="text" class="form-control" v-model="searchData.material_name">
+        </div>
+        <div class="col-md-2">
           <label class="form-label">자재유형</label>
           <select class="form-select" v-model="searchData.material_type">
             <option selected value="">전체</option>
@@ -257,14 +256,16 @@ onMounted(() => {
           </select>
         </div>
         <div class="col-md-2">
-          <label class="form-label">자재명</label>
-          <input type="text" class="form-control" v-model="searchData.material_name">
-        </div>
-        <div class="col-md-2">
           <label class="form-label">사용여부</label>
           <div class="form-check" v-for="type in usetype">
-            <input class="form-check-input" type="radio" v-model="searchData.use_yn" :value="type.code">
-            <label class="form-check-label" :for="type.code">
+            <input 
+              class="form-check-input"
+              type="radio"
+              v-model="searchData.use_yn"
+              :value="type.code"
+              :id="'search-'+type.code"
+            />
+            <label class="form-check-label" :for="'search-'+type.code">
               {{ type.name }}
             </label>
           </div>
@@ -280,73 +281,76 @@ onMounted(() => {
       <div class="col-7 md-3">
         <tabulator-card
           ref="table"
-          card-title="자제 품목 리스트"
+          card-title="자재 품목 리스트"
           :table-data="materialData"
           :table-columns="materialColumns"
           :tabulator-options="tabulatorOptions"
           :on="tabulatorEvent"
         />
       </div>
-      <div class="col">
-        <div class="card mb-3">
+      <div class="col-md-5 d-flex flex-column">
+        <div class="card mb-2 flex-grow-1" style="min-height: 350px;">
           <div class="card-header d-flex justify-content-between align-items-center">
-            <h5>자재 상세</h5>
+            <span>자재항목 상세</span>
             <button class="btn btn-sm btn-success" @click="materialClickhandler">저장</button>
           </div>
-          <div class="card-body">
-            <div class="row mb-2">
-              <div class="col-md-6">
-                <label class="form-label">자제코드</label>
-                <input type="text" class="form-control" v-model="detailFields.material_code">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">자재 유형</label>
-                <select class="form-select" v-model="detailFields.material_type">
-                  <option v-for="type in mattype" :value="type.code" :selected="type.code == detailFields.material_type">{{ type.name }}</option>
-                </select>
-                <!-- <input type="text" class="form-control" v-model="detailFields.material_type"> -->
-              </div>
-              <div class="col-md-12">
-                <label class="form-label">자재명</label>
-                <input type="text" class="form-control" v-model="detailFields.material_name">
-              </div>
-              <div class="col-md-12">
-                <label class="form-label">규격</label>
-                <input type="text" class="form-control" v-model="detailFields.standard">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">단위</label>
-                <input type="text" class="form-control" v-model="detailFields.unit">
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">단가</label>
-                <input type="text" class="form-control" v-model="detailFields.unit_price">
-              </div>
-              <div class="col-md-12">
-                <label class="form-label">사용여부</label>
-                <!-- <select class="form-select">
-                  <option v-for="type in usetype" :value="type.code" :selected="type.code == detailFields.use_yn">{{ type.name }}</option>
-                </select> -->
-                <div class="form-check" v-for="type in usetype">
-                  <input class="form-check-input" type="radio" v-model=detailFields.use_yn :value="type.code" :checked="type.code == detailFields.use_yn">
-                  <label class="form-check-label" :for="type.code">
-                  {{ type.name }}
-                  </label>
-                </div>
-                <!-- <input type="text" class="form-control" v-model="detailFields.use_yn"> -->
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">색상</label>
-                <!-- <input type="text" class="form-control" v-model="detailFields.color"> -->
-                 <select class="form-select" v-model="detailFields.color">
-                  <option v-for="type in colortype" :value="type.code" :selected="type.code == detailFields.color">{{ type.name }}</option>
-                </select>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">안전 재고 수량</label>
-                <input type="text" class="form-control" v-model="detailFields.safe_stock">
-              </div>
-            </div>
+          <div class="card-body p-2">
+            <table class="table table-bordered table-sm align-middle mb-2">
+              <tbody style="border-width: 1px">
+                <tr>
+                  <th style="width: 30%;">자재코드</th>
+                  <td><input type="text" class="form-control form-control-sm" v-model="detailFields.material_code"></td>
+                </tr>
+                <tr>
+                  <th>자재명</th>
+                  <td><input type="text" class="form-control form-control-sm" v-model="detailFields.material_name"></td>
+                </tr>
+                <tr>
+                  <th>자재유형</th>
+                  <td>
+                    <select class="form-select form-select-sm" v-model="detailFields.material_type">
+                      <option v-for="type in mattype" :value="type.code" :selected="type.code == detailFields.material_type">{{ type.name }}</option>
+                    </select>
+                  </td>
+                </tr>
+                <tr>
+                  <th>색상</th>
+                  <td>
+                    <select class="form-select form-select-sm" v-model="detailFields.color">
+                      <option v-for="type in colortype" :value="type.code" :selected="type.code == detailFields.color">{{ type.name }}</option>
+                    </select>
+                  </td>
+                </tr>
+                <tr>
+                  <th>규격</th>
+                  <td><textarea rows="3" class="form-control" v-model="detailFields.standard"></textarea></td>
+                </tr>
+                <tr>
+                  <th>단위</th>
+                  <td><input type="text" class="form-control form-control-sm" v-model="detailFields.unit"></td>
+                </tr>
+                <tr>
+                  <th>단가</th>
+                  <td><input type="text" class="form-control form-control-sm" v-model="detailFields.unit_price"></td>
+                </tr>
+                <tr>
+                  <th>사용여부</th>
+                  <td>
+                    <div class="form-check use-radio" v-for="type in usetype">
+                      <input class="form-check-input" type="radio" :id="'form-'+type.code" 
+                        v-model=detailFields.use_yn :value="type.code" :checked="type.code == detailFields.use_yn">
+                      <label class="form-check-label" :for="'form-'+type.code">
+                      {{ type.name }}
+                      </label>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <th>안전 재고 수량</th>
+                  <td><input type="text" class="form-control form-control-sm" v-model="detailFields.safe_stock"></td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         </div>
       </div>
@@ -360,5 +364,9 @@ onMounted(() => {
   padding: 20px;
   border-radius: 1rem;
   background-color: #fff;
+}
+.use-radio {
+  display: inline-block;
+  padding-right: 15px;
 }
 </style>

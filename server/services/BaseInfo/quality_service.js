@@ -6,11 +6,12 @@ const { convertObjToAry } = require('../../utils/converts.js');
 // 실제 제공할 서비스 등록 영역
 
 //전체 조회 + 검색 조회
-const qualityList = async ({ testName, testTarget, testRef }) => {
+const qualityList = async ({ testName, testTarget, testRef, useYn }) => {
   const params = [
-    testName,
-    testTarget,
-    testRef,
+    testName, testName, testName,
+    testTarget, testTarget, testTarget,
+    testRef, testRef, testRef,
+    useYn, useYn, useYn,
   ];
 
   let list = await mariadb.query("selectQualityList", params)
@@ -29,17 +30,18 @@ const qualityOneSelect = async (qualityCode) => {
 
 // 등록
 const qualityAdd = async (qualityInfo) => {
-  // 프로시저 결과가 [ [ [ { '@new_code': generatedCode } ] ] ] 형태로 리턴돼서 구조분해할당 사용
-  const [[[{ '@new_code': generatedCode }]]] = await mariadb.query("createCodeProc", [ 't_quality', 'quality_code', 'Q' ]);
-
-  qualityInfo.quality_code = generatedCode;
+  // resultSets => multipleStatements로 두개 실행하면 CALL 후 SELECT한게 resultSet으로 넘어온다고...
+  const [resultSets] = await mariadb.query("createCodeProc", [ 't_quality', 'quality_code', 'Q' ]);
+  const newCode = resultSets[1][0].newCode;
+  console.log(newCode);
+  qualityInfo.quality_code = newCode;
 
   console.log(qualityInfo);
   let resInfo = await mariadb.query("insertQualityinfo", qualityInfo)
     .catch(err => console.log(err));
 
   if(qualityInfo.fileName) {
-    const imgParams = [generatedCode, qualityInfo.fileName, qualityInfo.originalName, qualityInfo.filePath];
+    const imgParams = [newCode, qualityInfo.fileName, qualityInfo.originalName, qualityInfo.filePath];
     await mariadb.query("insertImages", imgParams).catch(err => console.log(err));
   }
 
@@ -92,7 +94,10 @@ const qualityRenewal = async (qualityInfo) => {
   try {
     await conn.beginTransaction();
 
-    const [[[{ '@msg': msg }]]] = await conn.query("renewQuality", qualityInfo.qualityCode);
+    const [resultSets] = await conn.query("renewQuality", qualityInfo.qualityCode);
+    const msg = resultSets[1][0].msg;
+
+    console.log(msg);
 
     if (msg == 'OK') {
       const { qualityCode, ...updateFields } = qualityInfo;
@@ -129,6 +134,19 @@ const qualityHistoryList = async (qualityCode) => {
   return list;
 };
 
+//공통코드 조회
+const groupCodeSearchList = async (groupCode) => {
+  let list = await mariadb.query("groupCodeSearch", groupCode).catch(err => console.log(err));
+  return list;
+}
+
+const groupCodeDetailInfo = async (detailCode) => {
+  let list = await mariadb.query("detailCodeSearch", detailCode).catch(err => console.log(err));
+
+  let info = list[0];
+  return info;
+}
+
 module.exports = {
   // 해당 객체에 등록해야지 외부로 노출
   qualityList,
@@ -137,4 +155,6 @@ module.exports = {
   qualityModify,
   qualityRenewal,
   qualityHistoryList,
+  groupCodeSearchList,
+  groupCodeDetailInfo
 }

@@ -25,7 +25,6 @@
       </div>
     </div>
     </div>
-
     <!-- 📦 주문 목록 + 상세 -->
     <div class="container-fluid py-4" id="odlist">
       <div class="row gx-4">
@@ -129,7 +128,9 @@
 
 <script setup>
 import { TabulatorFull as Tabulator } from "tabulator-tables";
-import { ref, onMounted } from "vue"; // Import ref and onMounted
+import { useStore } from 'vuex';
+import { useRouter } from 'vue-router';
+import { ref, onMounted,computed } from "vue"; // Import ref and onMounted
 import axios from "axios";
 import ArgonButton from "@/components/ArgonButton.vue";
 import DefaultInfoCard from "@/examples/Cards/DefaultInfoCard.vue";
@@ -137,7 +138,10 @@ import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 
 // 사용자 데이터 및 컬럼 정의
 
+const store = useStore();
+const router = useRouter();
 const OrderData = ref([]);
+const isLoggedIn = computed(() => !!store.state.user);
 
 // 주문 목록
 const OrderColumns = [
@@ -150,6 +154,12 @@ const OrderColumns = [
   { title: "상태", field: "status", width: 100, hozAlign: "center",}
 ];
 onMounted(async () => {
+  if (!isLoggedIn.value) {
+    alert('로그인이 필요합니다.');
+    router.push('/login');
+    return;
+  }
+
   try {
     const res = await axios.get('/api/orderList'); // ✅ 백엔드 API 호출
 
@@ -170,11 +180,10 @@ onMounted(async () => {
     }));
 
     console.log('📦 DB에서 받아온 데이터:', OrderData.value);
-} catch (error) {
-  console.error('❌ 주문 목록 로딩 실패:', error.message);
-}
+  } catch (error) {
+    console.error('❌ 주문 목록 로딩 실패:', error.message);
+  }
 });
-
 // 주문 상세 정보
 // const ordercurrentOrder = ref({});
 
