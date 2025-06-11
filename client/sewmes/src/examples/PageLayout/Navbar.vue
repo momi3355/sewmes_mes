@@ -69,7 +69,7 @@ defineProps({
               Profile
             </router-link>
           </li>
-          <li class="nav-item">
+          <!-- <li class="nav-item">
             <router-link class="nav-link me-2" to="/signup">
               <i
                 class="fas fa-user-circle opacity-6 me-1"
@@ -78,7 +78,8 @@ defineProps({
               ></i>
               Sign Up
             </router-link>
-          </li>
+          </li> -->
+          <div v-if="!isLoggedIn">
           <li class="nav-item">
             <router-link class="nav-link me-2" to="/signin">
               <i
@@ -86,9 +87,22 @@ defineProps({
                 aria-hidden="true"
                 :class="isBlur ? 'text-dark' : 'text-white'"
               ></i>
-              Sign In
+              Login
             </router-link>
           </li>
+          </div>
+          <div v-else>
+          <li class="nav-item">
+            <router-link class="nav-link me-2" to="/logout">
+              <i
+                class="fas fa-key opacity-6 me-1"
+                aria-hidden="true"
+                :class="isBlur ? 'text-dark' : 'text-white'"
+              ></i>
+              Logout
+            </router-link>
+          </li>
+          </div>
         </ul>
         <ul class="navbar-nav d-lg-block d-none">
           <li class="nav-item">

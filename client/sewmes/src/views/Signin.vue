@@ -14,10 +14,11 @@
                     <div class="mb-3">
                       <argon-input
                         id="empnum"
-                        type="empnum"
+                        type="text"
                         placeholder="사원번호"
                         name="empnum"
                         size="lg"
+                        v-model="empnum"
                       />
                     </div>
                     <div class="mb-3">
@@ -27,6 +28,7 @@
                         placeholder="비밀번호"
                         name="password"
                         size="lg"
+                        v-model="password"
                       />
                     </div>
                     <p>{{error}}</p>
@@ -37,7 +39,8 @@
                         color="success"
                         fullWidth
                         size="lg"
-                        :onclick="handleLogin"
+                        type="button"
+                        @click="handleLogin"
                         >Sign in</argon-button
                       >
                     </div>
@@ -94,18 +97,40 @@ const empnum = ref('')
 const password = ref('')
 const error = ref('')
 
+async function handleLogin() {
+  // 프론트단 유효성 검사
+  if (!empnum.value) {
+    error.value = '사원번호를 입력하세요.';
+    return;
+  }
 
-const handleLogin = async () => {
-  const success = await store.dispatch('login', {
-    name: empnum.value,
-    password: password.value
-  })
+  if (!password.value) {
+    error.value = '비밀번호를 입력하세요.';
+    return;
+  }
 
-  if (success) {
-    router.push('/api/dashboard')
-  } else {
-    error.value = '이름 또는 코드가 잘못되었습니다.'
-    // alert(error);
+  // 서버에 요청
+  // 로그인 정보 필요할시 아래 코드 user.value 로 접근가능
+  //import { useStore } from 'vuex';
+  // const store = useStore();
+  // const user = computed(() => store.getters.getUser);
+  try {
+    const response = await axios.post('/api/login', {
+      emp_num: empnum.value,
+      login_pw: password.value
+    });
+
+    if (response.data.success) {
+      const userData = response.data.user;
+      store.dispatch('saveUser', response.data.user);
+      localStorage.setItem('user', JSON.stringify(userData));
+      router.push('/');
+    } else {
+      error.value = response.data.message;
+    }
+  } catch (err) {
+    console.error('로그인 오류:', err);
+    error.value = '사원번호와 비밀번호를 확인해주세요.';
   }
 }
 
