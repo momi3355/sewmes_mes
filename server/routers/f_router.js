@@ -44,9 +44,9 @@ router.get('/quality/img/:filename', (req, res) => {
 });
 
 //등록
-router.put('/quality', upload.single('image'), async(req, res) => {
+router.post('/quality', upload.single('image'), async(req, res) => {
   let qualityInfo = req.body;
-
+  console.log(qualityInfo);
   if(req.file){
     qualityInfo.fileName = req.file.filename;
     qualityInfo.originalName = req.file.originalname;
