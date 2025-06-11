@@ -4,7 +4,14 @@
     <div class="row g-3 align-items-center">
       <div class="col-md-3 fw-bold">업체명:</div>
       <div class="col-md-9">
-        <input type="text" class="form-control" v-model="companyName" />
+        <input 
+  type="text" 
+  class="form-control" 
+  :value="searchTerm" 
+  @input="setSearchTerm" 
+  @blur="() => setListOpen(false)" 
+  @focus="() => setListOpen(true)" 
+/>
       </div>
 
       <div class="col-md-3 fw-bold">업체 연락처:</div>

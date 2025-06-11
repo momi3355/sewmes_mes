@@ -17,6 +17,7 @@ export default createStore({
     showFooter: true,
     showMain: true,
     layout: "default",
+    user: null
   },
   mutations: {
     toggleConfigurator(state) {
@@ -44,11 +45,24 @@ export default createStore({
         state.isNavFixed = false;
       }
     },
+        setUser(state, user) {
+      state.user = user;
+    },
+    logout(state) {
+      state.user = null;
+    }
   },
   actions: {
     toggleSidebarColor({ commit }, payload) {
       commit("sidebarType", payload);
     },
+        saveUser({ commit }, user) {
+      commit('setUser', user);
+    },
+    logoutUser({ commit }) {
+      commit('logout');
+    }
   },
-  getters: {},
+  getters: {    isLoggedIn: (state) => !!state.user,
+    getUser: (state) => state.user},
 });
