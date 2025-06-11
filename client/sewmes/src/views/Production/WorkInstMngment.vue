@@ -43,7 +43,7 @@ const handleSelectedPlans = (plans) => {
         prod_code: plan.prod_code, 
         inst_qty: plan.prod_qty,
         dead_date: plan.dead_date, //주문상세테이블과 조인해서 가져올 납기일자
-        inst_state: '생산 전', //초기상태
+        inst_state: '0s1s', //초기상태
         emp_num: '', // 담당자번호 초기화
         //inst_date: inst_reg_date 저장버튼 누르면 등록일 나오고 지시버튼 누르면 들어가는 내용
     }));

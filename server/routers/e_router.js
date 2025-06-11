@@ -35,7 +35,16 @@ router.get('/production-plans', async (req, res) => {
 router.post('/workInstMngment/save',async(req,res)=>{
 
     try{
-        const workInstructions = req.body.workInstructions;
+
+        console.log('--- Start Request Body Log for /workInstMngment/save ---');
+        console.log('Full req.body:', JSON.stringify(req.body, null, 2)); // req.body 전체를 JSON 형태로 예쁘게 출력
+        console.log('Type of req.body:', typeof req.body);
+        console.log('Is req.body an array?', Array.isArray(req.body));
+        console.log('Value of req.body.workInstructions:', req.body.workInstructions); // 추출하려는 workInstructions 값 확인
+        console.log('Type of req.body.workInstructions:', typeof req.body.workInstructions);
+        console.log('Is req.body.workInstructions an array?', Array.isArray(req.body.workInstructions));
+        console.log('--- End Request Body Log ---');
+        const workInstructions = req.body;
         const result = await workInstService.saveWorkInstructions(workInstructions);
         res.json({
             success:true,

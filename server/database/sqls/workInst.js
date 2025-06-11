@@ -18,6 +18,32 @@ const selectProdPlansList =
         WHERE
             pp.complete = ?`;
 
+            
+// 지시코드 클릭 하지 않고 초기 작업지시의 지시상태가 생산전, 생산중인 경우 작업지시서 다건조회
+
+const selectWorkInstListDefault =
+` SELECT
+            twi.WORK_INST_CODE,
+            twi.PROD_CODE,
+            tp.PROD_NAME,
+            twi.INST_QTY,
+            twi.DEAD_DATE,
+            twi.INST_STATE,
+            twi.EMP_NUM,
+            twi.INST_REG_DATE
+        FROM
+            T_WORK_INST twi
+        JOIN
+            t_product tp ON twi.PROD_CODE = tp.PROD_CODE
+        WHERE
+            twi.INST_STATE IN ('0S1S', '0S2S')
+        ORDER BY twi.INST_REG_DATE DESC` ;
+
+ // 작업지시테이블에 제품코드에 맞는  공정흐름도, 설비 조회      
+
+
+
+
 // 작업지시서 등록(새로운 작업지시 생성)
 const insertWorkInstList =
 `INSERT INTO t_work_inst (
@@ -46,6 +72,7 @@ WHERE work_inst_code LIKE 'I%'
 `;
 module.exports = {
     selectProdPlansList,
+    selectWorkInstListDefault,
     insertWorkInstList,
     selectBomByProdCode,
     selectMaxWorkInstCode,
