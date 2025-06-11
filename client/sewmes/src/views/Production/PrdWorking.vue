@@ -4,14 +4,13 @@ import { ref, onMounted } from "vue";
 import axios from "axios";
 
 import ArgonButton from "@/components/ArgonButton.vue";
-import DefaultInfoCard from "@/examples/Cards/DefaultInfoCard.vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 
 // --- Data for the '작업지시 선택' (Work Order Selection) table ---
 const workOrderData = ref([]); // Empty array
 const workOrderColumns = [
   { title: "지시코드", field: "id", width: 100, hozAlign: "center" },
-  { title: "제품명", field: "productName", minWidth: 150 },
+  { title: "제품명", field: "prod_code", minWidth: 150 },
   { title: "상태", field: "status", width: 100, hozAlign: "center",
     formatter: function(cell) {
       const status = cell.getValue();
@@ -27,8 +26,7 @@ const workOrderColumns = [
 ];
 
 const workOrderTabulatorOptions = {
-  // pagination: 'local', // Paging removed
-  // paginationSize: 7, // Paging size removed
+
   layout: 'fitColumns',
   rowClick: (e, row) => {
     workOrderData.value.forEach(item => item.isSelected = false);
