@@ -155,7 +155,7 @@ onBeforeMount(() => {
 })
 const tabulatorEvent = [
   {
-    eventName: "rowDblClick",
+    eventName: "rowClick",
     eventAction: (e, row) => {
       const rowData = row.getData();
       if (!rowData.processCode) {

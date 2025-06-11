@@ -14,8 +14,10 @@ const workInsstSqls=require('./sqls/workInst.js');
 const baseMaterial = require('./sqls/baseMaterial.js');
 const orderListSql=require('./sqls/orderList.js');
 const companyListSql=require('./sqls/companyList.js');
+const prdPlanMngment = require('./sqls/prdPlanMngment.js');
 const outsouMngment = require('./sqls/outsouMngment.js');
 const outsouRelease = require('./sqls/outsouRelease.js');
+const outsouInbound = require('./sqls/outsouInbound.js');
 const matorderListSql=require('./sqls/matOrder.js')
 const loginSql=require('./sqls/login.js');
 
@@ -25,8 +27,10 @@ module.exports = {
   ...equiMaster,
   ...baseMaterial,
   ...processFlow, // 공정흐름
+  ...prdPlanMngment, // 생산계획
   ...outsouMngment, // 외주발주
   ...outsouRelease, // 외주자재출고
+  ...outsouInbound, // 외주입고 및 검수
   ...workInsstSqls, //정민
   ...orderListSql, // 주문서 관리
   ...companyListSql, // 업체 정보

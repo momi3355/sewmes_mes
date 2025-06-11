@@ -7,6 +7,7 @@ const router = express.Router();
  // 해당 라우터를 통해 제공할 서비스를 가져옴
 const processService =require('../services/BaseInfo/process_service.js');
 const outsouService =require('../services/Production/outsou_service.js');
+const prodPlanService =require('../services/Production/prodPlan_service.js');
 
 // 공정관리 페이지 라우터 =========================================
 router.get('/processList', async (req, res)=>{
@@ -156,6 +157,27 @@ router.get('/flowImage/:flowCode', async (req, res) => {
 });
 // ==============================================================
 
+// 생산계획관리 페이지 라우터 =========================================
+router.get('/prodPlanList', async (req, res)=>{
+  try {
+    const {
+      prodCode, prodName, orderCode, complete, startDateStart,
+      startDateEnd, endDateStart, endDateEnd
+    } = req.query;
+    const result = await prodPlanService.findProdPlanByConditions({
+      prodCode, prodName, orderCode, complete, startDateStart,
+      startDateEnd, endDateStart, endDateEnd
+    });
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "검색 중 오류 발생" });
+  }
+});
+
+
+// ==============================================================
+
 // 외주발주 페이지 라우터 =========================================
 router.get('/outsouOrderList', async (req, res)=>{
   try {
@@ -186,6 +208,44 @@ router.get('/outsouReleaseMaterialList', async (req, res)=>{
     const result = await outsouService.findOutsouReleaseMaterialByConditions({
       outsouOrderCode, materialName, cpName, releaseState, regStartDate,
       regEndDate, deadStartDate, deadEndDate
+    });
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "검색 중 오류 발생" });
+  }
+});
+// ==============================================================
+
+// 외주입고 페이지 라우터 =========================================
+router.get('/outsouInboundReceiveList', async (req, res)=>{
+  try {
+    const {
+      regStart, regEnd, inboundStart, inboundEnd,
+      cpName, prodName, testState
+    } = req.query;
+    const result = await outsouService.findInboundReceiveByConditions({
+      regStart, regEnd, inboundStart, inboundEnd,
+      cpName, prodName, testState
+    });
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "검색 중 오류 발생" });
+  }
+});
+// ==============================================================
+
+// 외주입고불량내역 페이지 라우터 =========================================
+router.get('/outsouInboundDefectList', async (req, res)=>{
+  try {
+    const {
+      regStart, regEnd, inboundStart, inboundEnd,
+      cpName, prodName, inboundCode
+    } = req.query;
+    const result = await outsouService.findInboundDefectByConditions({
+      regStart, regEnd, inboundStart, inboundEnd,
+      cpName, prodName, inboundCode
     });
     res.send(result);
   } catch (err) {
