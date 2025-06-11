@@ -1,17 +1,25 @@
 // 자재 발주 필요한 목록 조회
 const matorderList = `
-  SELECT material_code
-        ,material_name
-        ,material_type
-        ,stock
-  FROM t_material_order
-  WHERE (( ? IS NULL OR ? = '') OR material_name LIKE CONCAT('%', ?, '%'))
-  AND (( ? IS NULL OR ? = '') OR material_code LIKE CONCAT('%', ?, '%'))
+  SELECT
+    material_code,     
+    material_name,     
+    material_type,      
+    stock
+  FROM
+    v_material_order
 `;
 
-const matorderDetail = `
-  SELECT 
-`
+const creatematorder = `
+  INSERT INTO t_material_order(
+    material_order_code,
+    cp_code,
+    material_order_date,
+    deadline,
+    total_price)
+  VALUES
+    (?, ?, NOW(), ?, ?)
+`;
+
 
 // 자재 발주 요청
 // const selectMaterialList = `
