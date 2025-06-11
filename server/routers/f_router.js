@@ -1,6 +1,7 @@
 const express = require('express');
 const multer = require('multer');
 const path = require('path');
+const fs = require('fs');
 const router = express.Router();
 
 const qualityService = require('../services/BaseInfo/quality_service');
@@ -21,7 +22,7 @@ router.get('/quality', async (req, res) => {
                                         .catch(err => console.log(err));
 
   res.send(qualityList);
-})
+});
 
 //단건 조회
 router.get('/quality/:code', async(req, res) => {
@@ -29,25 +30,47 @@ router.get('/quality/:code', async(req, res) => {
   let qualityInfo = await qualityService.qualityOneSelect(qualityCode)
                                         .catch(err => console.log(err));
   res.send(qualityInfo);
-})
+});
+
+// 이미지 파일 직접 제공???
+router.get('/quality/img/:filename', (req, res) => {
+  const filename = req.params.filename;
+  const imagePath = path.join(__dirname, '../uploads', filename);
+
+  if (!fs.existsSync(imagePath)) {
+    return res.send('이미지 파일이 존재하지 않습니다.');
+  }
+  res.sendFile(imagePath);
+});
 
 //등록
 router.put('/quality', upload.single('image'), async(req, res) => {
   let qualityInfo = req.body;
+
+  if(req.file){
+    qualityInfo.fileName = req.file.filename;
+    qualityInfo.originalName = req.file.originalname;
+    qualityInfo.filePath = req.file.filename;
+  }
   let result = await qualityService.qualityAdd(qualityInfo)
                                    .catch(err => console.log(err));
   res.send(result);
-})
+});
 
 //수정
-router.put('/quality/:code', async(req, res) => {
+router.put('/quality/:code', upload.single('image'), async(req, res) => {
   let qualityCode = req.params.code;
   let qualityInfo = req.body;
-
+  
+  if(req.file){
+    qualityInfo.fileName = req.file.filename;
+    qualityInfo.originalName = req.file.originalname;
+    qualityInfo.filePath = req.file.filename;
+  }
   let result = await qualityService.qualityModify(qualityCode, qualityInfo)
                                    .catch(err => console.log(err));
   res.send(result);
-})
+});
 
 //갱신
 router.put('/quality/renew/:code', async(req, res) => {
@@ -56,7 +79,7 @@ router.put('/quality/renew/:code', async(req, res) => {
   let result = await qualityService.qualityRenewal(qualityInfo)
                                    .catch(err => console.log(err));
   res.send(result);
-})
+});
 
 //이력 조회
 router.get('/quality/history/:code', async(req, res) => {
@@ -65,6 +88,6 @@ router.get('/quality/history/:code', async(req, res) => {
   let qualityHistoryList = qualityService.qualityHistoryList(qualityCode)
                                          .catch(err => console.log(err));
   res.send(qualityHistoryList);
-})
+});
 
 module.exports = router;

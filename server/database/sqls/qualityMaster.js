@@ -24,6 +24,9 @@ SELECT quality_code
       , test_standard 
       , test_note
       , use_yn
+      , (SELECT file_path 
+         FROM images 
+         WHERE code = quality_code) AS ref_img
 FROM   t_quality
 WHERE  quality_code = ?
 `;
@@ -78,17 +81,6 @@ INSERT INTO images (code, file_name, original_name, file_path)
 VALUES (?, ?, ?, ?)
 `;
 
-//이미지 조회
-const selectImgInfo = 
-`
-SELECT code
-       , file_name 
-       , original_name 
-       , file_path
-FROM   images
-WHERE  code = ?
-`;
-
 //이미지 수정
 const updateImgInfo = 
 `
@@ -106,6 +98,5 @@ module.exports = {
   , createCodeProc
   , renewQuality
   , insertImages
-  , selectImgInfo
   , updateImgInfo
 }
