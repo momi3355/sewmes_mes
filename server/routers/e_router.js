@@ -5,31 +5,28 @@ const express = require('express');
 const router = express.Router();
 
 // 👈 2단계에서 만든 요리사 파일 (서비스 파일)을 가져와요. (경로가 맞는지 꼭 확인)
-const workInstService = require('../services/Production/workInst'); //
+const workInstService = require('../services/Production/workInst.js'); //
 
 // ... (여기에 다른 메뉴들이 이미 적혀 있을 수 있어요.) ...
 
-// '생산계획 목록 주세요!' 라는 주문을 받는 메뉴
-// (손님이 '/api/production-plans' 또는 '/api/e/production-plans' 라고 말하면 이 메뉴가 선택돼요)
+// 생산계획 목록 
+
 router.get('/production-plans', async (req, res) => {
     try {
-        // (나중에 검색 조건이 필요하면 req.query를 여기서 요리사에게 전달할 수 있어요.)
-        const queryParams = req.query;
+        const params = { complete: req.query.complete };
+        const plans = await workInstService.getProductionPlans(params); // DB 쿼리 결과 (빈 배열일 수 있음)
 
-        // 요리사에게 "생산계획 목록" 요리 좀 해달라고 부탁해요.
-        const productionPlans = await workInstService.getProductionPlans(queryParams);
-
-        // 요리된 음식을 손님에게 예쁜 그릇(JSON)에 담아 전달해요. (success: true는 잘 됐다는 표시)
         res.json({
             success: true,
-            data: productionPlans // 요리된 생산계획 데이터예요.
+            message: plans.length > 0 ? '생산계획 목록 조회 성공' : '조회된 생산계획 데이터가 없습니다.',
+            data: plans // <-- 빈 배열이라도 여기에 담아 보냅니다.
         });
+
     } catch (error) {
-        // 요리사가 "요리 망쳤어요!" 하고 알려주면, 손님에게 "죄송해요, 서버에 문제 있어요."라고 알려줘요.
-        console.error('생산계획 메뉴 준비 중 문제가 발생했어요:', error);
-        res.status(500).json({ // 500은 서버 문제라는 코드예요.
+        console.error('생산계획 목록 API 오류:', error);
+        res.status(500).json({
             success: false,
-            message: '생산계획 조회 중 서버 오류가 발생했습니다.',
+            message: '생산계획 목록을 불러오는 중 서버 오류 발생',
             error: error.message
         });
     }
@@ -56,5 +53,4 @@ router.post('/workInstMngment/save',async(req,res)=>{
         });
     }
 })
-
 module.exports = router;
