@@ -20,6 +20,7 @@ const outsouMngment = require('./sqls/outsouMngment.js');
 const outsouRelease = require('./sqls/outsouRelease.js');
 const outsouInbound = require('./sqls/outsouInbound.js');
 const matorderList=require('./sqls/matOrder.js');
+const matcheckList=require('./sqls/matCheck.js');
 const loginSql=require('./sqls/login.js');
 
 module.exports = {
@@ -36,6 +37,7 @@ module.exports = {
   ...workInsstSqls, //정민
   ...orderListSql, // 주문서 관리
   ...companyListSql, // 업체 정보
-  ...matorderList,
+  ...matorderList, // 자재발주
+  ...matcheckList, // 자재수입검사
   ...loginSql, // 로그인
 }

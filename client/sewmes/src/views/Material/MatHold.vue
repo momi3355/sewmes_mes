@@ -14,33 +14,7 @@ const searchField2 = ref('');
 const searchField3 = ref('');
 const searchMaterialType = ref('');
 
-const materialData = ref([
-  {
-    product_code: "PRD-001",
-    mat_code: "MAT-001",
-    mat_name: "면 원단(화이트)",
-    mat_category: "원자재",
-    company: "원자재공급처",
-    hold_qty: "800",
-    unit: "개",
-    lot: "LOT-20250503-001",
-    inbound_date: "2025-05-03",
-    complete_yn: "N",
-  },
-  {
-    id: 2,
-   product_code: "PRD-002",
-    mat_code: "MAT-002",
-    mat_name: "면 원단(블랙)",
-    mat_category: "원자재",
-    company: "원자재공급처",
-    hold_qty: "800",
-    unit: "개",
-    lot: "LOT-20250503-001",
-    inbound_date: "2025-05-03",
-    complete_yn: "N",
-  },
-]);
+const materialData = ref([]);
 
 
 

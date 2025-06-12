@@ -3,9 +3,9 @@ const mariadb = require("../../database/mapper.js");
 
 
 // 발주 필요자재 조회
-const getMaterialOrderList = async () => {
+const getMaterialCheckList = async () => {
     
-    let list = await mariadb.query("matorderList")
+    let list = await mariadb.query("matcheckList")
     .catch(err => console.log(err));
     return list;
 };
@@ -13,5 +13,5 @@ const getMaterialOrderList = async () => {
 
 
 module.exports = {
-  getMaterialOrderList,
+  getMaterialCheckList,
 };

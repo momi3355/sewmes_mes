@@ -14,17 +14,7 @@ const searchField2 = ref('');
 const searchField3 = ref('');
 const searchMaterialType = ref('');
 
-const userData = ref([
-  {
-    lot: "LOT-20250503001",
-    mat_name: "원단이름",
-    pass_qty: "355",
-    nopass_qty: "1",
-    inbound_date: "2025-05-01",
-    check_date: "2025-05-03",
-    check_result: "합격",
-  },
-]);
+const userData = ref([]);
 
 
 
@@ -39,10 +29,9 @@ const userColumns = [
   },
    width: 1
 },
-  { title: "LOT", field: "lot", width: 150, editor: "input" },
-  { title: "자재명", field: "mat_name", hozAlign: "left", sorter: "number" },
+  { title: "LOT", field: "lot", width: 250, editor: "input" },
+  { title: "자재명", field: "mat_name", width: 250, hozAlign: "left", sorter: "number" },
   { title: "합격수량", field: "pass_qty", hozAlign: "left", formatter: "link" },
-  { title: "불합격수량", field: "nopass_qty", hozAlign: "left"},
   { title: "수입일자", field: "inbound_date", hozAlign: "left"},
   { title: "검사일자", field: "check_date", hozAlign: "left"},
   { title: "검사결과", field: "check_result", hozAlign: "left"}
