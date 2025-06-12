@@ -51,40 +51,24 @@
     </div>
   </div>
               <div class="card-footer d-flex justify-content-end pt-0">
-                <button class="btn btn-outline-secondary btn-sm me-2">제품추가 🧾</button>
+                <button class="btn btn-outline-secondary btn-sm me-2" @click="openModal">제품추가 🧾</button>
               <argon-button color="secondary" variant="gradient" class="me-2" id="arbtn">삭제</argon-button>
               <argon-button color="success" variant="gradient" id="arbtn">저장</argon-button>
             </div>
+            <tabulator-card
+            card-title=""
+            :table-data="ordlist"
+            :table-columns="OrderColumns"
+            :tabulator-options="ordlist"
+            :on="tabulatorEvent"
+            style="height: 400px;"
+          />
 </div>
-<table class="table table-sm product-list-table" id="card">
-    <thead>
-      <tr>
-        <th><input type="checkbox" id="cbox"></th>
-        <th>제품명</th>
-        <th>색상</th>
-        <th>사이즈</th>
-        <th>규격</th>
-        <th>수량</th>
-        <th>총수량</th>
-        <th>단가(box)</th>
-        <th>합계</th>
-        <th>상태</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-for="(item, index) in products" :key="index">
-        <td>
-          <input type="checkbox" v-model="item.checked" />
-        </td>
-        <td>{{ item.name }}</td>
-        <td>{{ item.qty }}</td>
-        <td>{{ item.price }}</td>
-        <td>{{ item.note }}</td>
-      </tr>
-    </tbody>
-
-  </table>
-
+      <prodModal
+      v-bind:isModalOpen="isModalOpen"
+      @selectPlans="getlist"
+      @close-modal="closeModal"
+      />
 </template>
 
 <script setup>
@@ -94,6 +78,59 @@ import axios from "axios";
 import ArgonButton from "@/components/ArgonButton.vue";
 import DefaultInfoCard from "@/examples/Cards/DefaultInfoCard.vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
+import prodModal from "./prodModal.vue";
+
+const isModalOpen = ref(false); //초기상태
+const ordlist = ref([]);
+
+const OrderColumns = [
+  { title: "제품명", field: ordlist.prod_name, width: 100, hozAlign: "center",  },
+  { title: "색상", field: "color", width: 100, hozAlign: "center" },
+  { title: "사이즈", field: "size", width: 100, hozAlign: "center" },
+  { title: "규격", field: "num", width: 150, hozAlign: "center" },
+  { title: "수량", field: "num", width: 100, hozAlign: "center" },
+  { title: "총수량", field: "num", width: 100, hozAlign: "center" },
+  { title: "단가(1box)", field: "unit_price", width: 150, hozAlign: "center" },
+  { title: "합계", field: "num", width: 150, hozAlign: "center" }
+];
+
+onMounted(async () => {
+
+  try {
+    const res = await axios.get('/api/productList'); // ✅ 백엔드 API 호출
+
+    // ✅ 응답 데이터를 OrderData에 넣기
+    OrderData.value = res.data.map((item, ) => ({
+      prod_name: item.prod_name,
+      // ordercode: item.order_code,
+      // companyName: item.cp_name,
+      // totalQty: item.qty,
+      // orderdate: item.order_date,
+      // deaddate: item.dead_date,
+      // companyTel: item.cp_tel,
+      // salesManager: '심재진',
+      // salesTel: '0103213',
+      // address: item.address,
+      // note: item.note,
+      // status: item.state
+    }));
+
+    console.log('📦 DB에서 받아온 데이터:', OrderData.value);
+  } catch (error) {
+    console.error('❌ 주문 목록 로딩 실패:', error.message);
+  }
+});
+const getlist = (asdf) =>{
+  console.log('자식한테 받아온 데이터', asdf)
+  ordlist.value = asdf;
+};
+
+const openModal = () => {
+    isModalOpen.value = true; //isModalOpen 값 true 변경해 모달 열기
+};
+const closeModal = () => {
+    isModalOpen.value = false;
+};
 
 </script>
 
@@ -103,30 +140,13 @@ import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
   width: 1500px;
   margin: auto;
 }
-.product-table {
-  border-top: 1px solid #ddd;
-  padding-top: 1rem;
-  background-color: white; /* ✅ 흰 배경 적용 */
-  border-radius: 8px;
+#tabulator-card{
+    width: 1500px;
+  margin: auto;
 }
 
 /* 테이블 스타일 */
-.product-list-table {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: white; /* ✅ 테이블 배경도 흰색으로 */
-  font-size: 0.875rem;
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
-}
 
-.product-list-table th,
-.product-list-table td {
-  padding: 6px 8px;
-  text-align: center;
-  border-bottom: 1px solid #eee;
-}
 
 #arbtn{
   width: 65px;

@@ -1,12 +1,9 @@
 const express = require('express');
 const router = express.Router();
 
-// const { getOrderList } = require('../services/Sales/orderList.js');
 const orderService = require(`../services/Sales/orderList.js`);
 const companyService = require(`../services/Sales/companyList.js`);
 const loginService = require(`../services/Sales/login.js`);
-// const { loginUser } = require('../services/Sales/login.js');
-
 
 // 주문 전체 조회
 router.get('/orderList', async (req, res) => {
@@ -49,6 +46,36 @@ router.post('/login', async (req, res) => {
   }
 });
 
+// 주문서 등록
+router.post('/orderAdd', async(req, res) => {
+  const newOrder = await orderService.orderAdd(req.body)
+  res.send(newOrder)
+})
+
+// 완제품목록 모달
+router.get('/productList', async (req, res) => {
+  try {
+    const productList = await orderService.prodAll();
+    res.send(productList);
+  } catch (err) {
+    console.error('주문 조회 중 오류 발생:', err);
+    res.status(500).send('서버 오류');
+  }
+});
+
+module.exports = router;
+
+
+
+
+
+
+
+
+
+
+
+
 // // 로그인 정보
 // router.post("/info", (req,res)=>{
 //   res.send( {email : req.session.email})
@@ -70,4 +97,3 @@ router.post('/login', async (req, res) => {
 //   req.session.destroy();
 //   res.send("logout success");
 // })
-module.exports = router;

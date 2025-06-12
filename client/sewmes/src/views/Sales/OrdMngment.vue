@@ -127,13 +127,11 @@
 </template>
 
 <script setup>
-import { TabulatorFull as Tabulator } from "tabulator-tables";
 import { useStore } from 'vuex';
 import { useRouter } from 'vue-router';
 import { ref, onMounted,computed } from "vue"; // Import ref and onMounted
 import axios from "axios";
 import ArgonButton from "@/components/ArgonButton.vue";
-import DefaultInfoCard from "@/examples/Cards/DefaultInfoCard.vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 
 // 사용자 데이터 및 컬럼 정의

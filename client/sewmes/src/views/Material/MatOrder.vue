@@ -172,7 +172,7 @@ const getSelectedRows = (tableRef) => {
               :table-data="materialData"
               :table-columns="materialColumns"
               :tabulator-options="{
-                paginationSize: 7,
+                apginationSize: 7,
                 rowClick: handleMatRowClick,
               }"
             />
