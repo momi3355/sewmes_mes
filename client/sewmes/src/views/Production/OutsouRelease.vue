@@ -159,6 +159,7 @@ const formatInt = (val) => {
       <div class="col-md-12 d-flex flex-column">
         <tabulator-card
           card-title="외주출고자재"
+          :height="650"
           :table-data="outsouReleaseMaterialList"
           :table-columns="outsouReleaseMaterialColumns"
           :on="tabulatorEvent"

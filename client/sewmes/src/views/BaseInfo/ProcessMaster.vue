@@ -222,6 +222,7 @@ const tabulatorEvent = [
         <tabulator-card
           ref="processTableRef"
           card-title="공정 목록"
+          :height="550"
           :table-data="processData"
           :table-columns="processColumns"
           :on="tabulatorEvent"

@@ -1,7 +1,8 @@
 <script setup>
 import axios from 'axios';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
+import OutsouNullDeadListModal from './OutsouNullDeadListModal.vue';
 
 // 검색 객체
 const searchProdName = ref('');
@@ -14,6 +15,7 @@ const searchDeadDateStart = ref('');
 const searchDeadDateEnd = ref('');
 const outsouOrderData = ref([]);
 
+const nullDeadCount = ref(0);
 
 // 제품 목록 조건에 따른 검색
 const searchOutsouOrder = async () => {
@@ -104,6 +106,16 @@ const tabulatorEvent = [
     }
   }
 ];
+
+const fetchNullDeadCount = async () => {
+  try {
+    const result = await axios.get('/api/outsouOrderNullDeadCount');
+    nullDeadCount.value = result.data[0]["COUNT(*)"];
+  } catch (err) {
+    console.error("미등록 외주발주 수 조회 오류:", err);
+  }
+};
+
 // 형태 변환
 const formatDate = (str) => {
   if (!str) return '';
@@ -112,6 +124,21 @@ const formatDate = (str) => {
 const formatInt = (val) => {
   return parseInt(val, 10);
 };
+// 모달 스크립트 영역 ===============================================================
+const isModalOpen = ref(false); //초기상태
+const openModal = () => {
+    isModalOpen.value = true; //isModalOpen 값 true 변경해 모달 열기
+};
+const closeModal = () => {
+    isModalOpen.value = false;
+};
+const handleAfterModalSaved = () => {
+  fetchNullDeadCount(); // 저장 이후 납기 미등록 건수 다시 조회
+  isModalOpen.value = false; // 모달 닫기
+};
+onMounted(() => {
+  fetchNullDeadCount();
+});
 </script>
 
 <template>
@@ -166,9 +193,16 @@ const formatInt = (val) => {
       </div>
     </div>
       <div class="row mt-3">
-          <div class="d-flex justify-content-end">
-              <button class="btn btn-info" style="width: 150px;" @click="openModal">출고 완료</button>
+        <div class="d-flex justify-content-between align-items-center">
+          <!-- 왼쪽: 조회 버튼 -->
+          <div>
+            <button class="btn btn-info" style="width: 250px; font-size: 14px;" @click="openModal">납기일자 미등록 <span>{{ nullDeadCount }}</span> 건 조회</button>
+          </div> 
+          <!-- 오른쪽: 저장 및 삭제 버튼 -->
+          <div>
+            <button class="btn btn-sm btn-success" style="width: 150px; font-size: 14px;" @click="">출고 완료</button>
           </div>
+        </div>
       </div>
     <div class="row">
       <div class="col-md-12 d-flex flex-column">
@@ -177,6 +211,11 @@ const formatInt = (val) => {
           :table-data="outsouOrderData"
           :table-columns="outsouOrderColumns"
           :on="tabulatorEvent"
+        />
+        <OutsouNullDeadListModal
+        v-bind:isModalOpen="isModalOpen"
+        v-on:close-modal="closeModal"
+        @saved="handleAfterModalSaved"
         />
       </div>
     </div>

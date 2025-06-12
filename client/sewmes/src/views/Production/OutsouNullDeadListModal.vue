@@ -7,38 +7,69 @@ const props = defineProps({
     isModalOpen: Boolean
 });
 
-const orderProdList = ref([]); // 주문제품 목록
+const outsouOrderList = ref([]); // 주문제품 목록
 const tabulatorCardRef = ref(null); // TabulatorCard의 getTabulator 메서드에 접근하기 위한 ref
 
 const modalTableColumns = [
     // ... 컬럼 정의 (이전 코드 유지) ...
     { formatter: "rowSelection", titleFormatter: "rowSelection", hozAlign: "center", headerSort: false, width: 40, cssClass: 'tabulator-checkbox-column' },
-    { title: "주문상세코드", field: "orderDetailCode", width: 150 },
-    { title: "품번", field: "prodCode", width: 150 },
-    { title: "품명", field: "prodName", width: 150 },
-    { title: "주문수량", field: "qty", width: 150 },
-    { title: "납기일자", field: "deadDate", width: 150 }
+    { title: "외주발주코드", field: "outsouOrderCode", width: 150 },
+    { title: "작업공정코드", field: "workProcessCode", width: 150 },
+    { title: "품명", field: "prodName", width: 300 },
+    { title: "주문수량", field: "orderQty", width: 150 },
+    { title: "외주업체명", field: "cpName", width: 150 },
+    { title: "등록일자", field: "regDate", width: 150},
+    { title: "납기일자", field: "deadDate", editor: "input", width: 150 }
 ];
 
 const fetchOrderProdList = async () => {
     const params = {};
     params.state = '0n1n';
     try {
-        const result = await axios.get('/api/orderProdList', { params });
+        const result = await axios.get('/api/outsouOrderNotDeadList');
 
-        orderProdList.value = result.data.map((item, idx) => ({
+        outsouOrderList.value = result.data.map((item, idx) => ({
         rowNum: idx + 1,
-        orderDetailCode: item.order_detail_code,
-        prodCode: item.prod_code,
+        outsouOrderCode: item.outsou_order_code,
+        workProcessCode: item.work_process_code,
         prodName: item.prod_name,
-        deadDate: formatDate(item.dead_date),
-        qty: formatInt(item.qty)
+        orderQty: formatInt(item.order_qty),
+        cpName: item.cp_name,
+        regDate: formatDate(item.reg_date),
+        deadDate: formatDate(item.dead_date)
     }));
   } catch (err) {
     console.error("API 호출 오류:", err);
   }
 };
 
+const selectedSave = async () => {
+  const table = tabulatorCardRef.value?.getTabulator?.();
+  if (!table) return;
+
+  const selectedData = table.getSelectedData(); // 선택된 행 가져오기
+  const plansToUpdate = selectedData
+    .filter(row => row.deadDate) // deadDate가 입력된 경우만
+    .map(row => ({
+      outsouOrderCode: row.outsouOrderCode,
+      deadDate: row.deadDate
+    }));
+
+  if (plansToUpdate.length === 0) {
+    alert('선택된 행 중 납기일자가 입력된 행이 없습니다.');
+    return;
+  }
+
+  try {
+    await axios.put('/api/updateOutsouDeadDate', plansToUpdate);
+    alert('납기일자 저장 완료');
+    emit('saved');
+    handleCloseModal(); // 모달 닫기
+  } catch (err) {
+    console.error("납기일자 저장 오류:", err);
+    alert('납기일자 저장 실패');
+  }
+};
 watch(() => props.isModalOpen, (isOpen) => {
     if (isOpen) {
         console.log("모달 열림 감지: 데이터 로드 시작.");
@@ -46,25 +77,10 @@ watch(() => props.isModalOpen, (isOpen) => {
     } else {
         // 이 부분은 현재 문제가 해결될 때까지 주석 처리하는 것을 고려해볼 수 있습니다.
         // productionPlans.value = [];
-        console.log("모달 닫힘 감지: productionPlans 초기화.");
+        console.log("모달 닫힘 감지");
     }
 }, { immediate: true });
-
-const emit = defineEmits(['closeModal', 'selectPlans']);
-
-const handleSelectedPlans = (plans) => {
-    if (tabulatorCardRef.value && tabulatorCardRef.value.getTabulator()) {
-        const selectedData = tabulatorCardRef.value.getTabulator().getSelectedData();
-        if (selectedData.length > 0) {
-            console.log("선택된 주문목록:", selectedData);
-            emit('selectPlans', selectedData);
-            emit('closeModal');
-        } else {
-            alert("주문 목록을 선택해주세요.");
-        }
-    }
-};
-
+const emit = defineEmits(['closeModal']);
 const handleCloseModal = () => {
     emit('closeModal');
 };
@@ -83,8 +99,8 @@ const formatInt = (val) => {
         <div class="modal-content">
             <TabulatorCard
                 ref="tabulatorCardRef"
-                :tableData="orderProdList"
-                cardTitle="주문제품 목록"
+                :tableData="outsouOrderList"
+                cardTitle="납기일자 미등록 목록"
                 :tableColumns="modalTableColumns"
                 :tabulatorOptions="{ pagination: false, selectable: true }" >
                 <template #actions>
@@ -92,7 +108,7 @@ const formatInt = (val) => {
             </TabulatorCard>
 
             <div class="modal-actions">
-                <button class="btn btn-primary" @click="handleSelectedPlans">선택</button>
+                <button class="btn btn-primary" @click="selectedSave">저장</button>
                 <button class="btn btn-secondary ms-2" @click="handleCloseModal">닫기</button>
             </div>
         </div>
@@ -119,7 +135,7 @@ const formatInt = (val) => {
     padding: 20px;
     border-radius: 8px;
     width: 80%; /* 모달 너비 조절 */
-    max-width: 900px; /* 최대 너비 설정 */
+    max-width: 1350px; /* 최대 너비 설정 */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     display: flex;
     flex-direction: column;

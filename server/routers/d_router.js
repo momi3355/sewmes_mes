@@ -178,6 +178,27 @@ router.get('/prodPlanList', async (req, res)=>{
 
 // ==============================================================
 
+// 주문제품목록 모달 라우터 =========================================
+router.get('/orderProdList', async (req, res)=>{
+  try {
+    const {
+      state
+    } = req.query;
+    const result = await prodPlanService.findOrderProdList({
+      state
+    });
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "검색 중 오류 발생" });
+  }
+});
+
+
+
+
+// ==============================================================
+
 // 외주발주 페이지 라우터 =========================================
 router.get('/outsouOrderList', async (req, res)=>{
   try {
@@ -195,6 +216,42 @@ router.get('/outsouOrderList', async (req, res)=>{
     res.status(500).send({ message: "검색 중 오류 발생" });
   }
 });
+
+// 납기일자 미등록 외주발주 건 수 조회
+router.get('/outsouOrderNullDeadCount', async (req, res) => {
+  try {
+    const result = await outsouService.findOutsouOrderNullDeadCount();
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "검색 중 오류 발생" });
+  }
+});
+// ==============================================================
+
+// 외주발주 모달 라우터 =========================================
+router.get('/outsouOrderNotDeadList', async (req, res)=>{
+  try {
+    const result = await outsouService.findOutsouOrderNotDeadList();
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "검색 중 오류 발생" });
+  }
+});
+// 납기일자 등록
+router.put('/updateOutsouDeadDate', async (req, res) => {
+  try {
+    const updates = req.body;
+    await outsouService.updateOutsouDeadDate(updates);
+    res.send({ message: '업데이트 완료' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: '업데이트 실패' });
+  }
+});
+
+
 
 // ==============================================================
 

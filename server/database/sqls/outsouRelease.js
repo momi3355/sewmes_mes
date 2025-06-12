@@ -16,7 +16,7 @@ const selectOutsouReleaseMaterialByConditions = `
   LEFT JOIN t_company c ON o.cp_code = c.cp_code
   WHERE 1 = 1
         /**조건절**/
-  ORDER BY o.reg_date DESC`;
+  ORDER BY CAST(SUBSTRING(l.list_code, 4) AS UNSIGNED) DESC`;
 
 module.exports ={
   selectOutsouReleaseMaterialByConditions
