@@ -3,65 +3,18 @@ import { onMounted, ref } from "vue";
 import axios from "axios";
 
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
+import { typeFormatter } from "@/assets/js/utils/tableFormatter";
 
-const bomtype = ref([
-  {
-    code: "0w1w",
-    name: "자재",
-  },
-  {
-    code: "0w2w",
-    name: "반제품",
-  },
-]);
-const mattype = ref([
-  {
-    code: "0l1l",
-    name: "원자재",
-  },
-  {
-    code: "0l2l",
-    name: "부자재",
-  },
-  {
-    code: "0l3l",
-    name: "소모품",
-  }
-]);
-const prdtype = ref([
-  {
-    code: "0k1k",
-    name: "반제품",
-  },
-  {
-    code: "0k2k",
-    name: "완제품",
-  },
-]);
-const catetype = ref([
-  {
-    code: "0j1j",
-    name: "상의",
-  },
-  {
-    code: "0j2j",
-    name: "하의",
-  },
-]);
+const bomtype = ref([]);
+const mattype = ref([]);
+const prdtype = ref([]);
+const catetype = ref([]);
 
 const item_table = ref(null);
 const bom_table = ref(null);
 
 const itemData = ref([]);
 const bomData = ref([]);
-
-const typeFormatter = (cell, formatterParams) => {
-  const typeArray = formatterParams.typeArray;
-  const code = cell.getValue();
-
-  const foundType = typeArray.find((type) => type.code === code);
-  return foundType ? foundType.name : code;
-};
 
 const itemColumns = [
   { title: "품목코드", field: "code", width: 120 },
@@ -93,8 +46,9 @@ const bomColumns = [
   { title: "소요량", field: "need", editor:"input", editorParams:{
     elementAttributes: {
       placeholder: "소수점을 포함하는 숫자",
+      onfocus: "this.select()",
     },
-  }}, //수정할 수 있도록
+  }},
   { title: "단위", field: "unit", width: 80 },
 ];
 
@@ -119,6 +73,10 @@ const itemEvent = [
     eventAction: (e, row) => {
       const rowData = row.getData();
       const tabulator = bom_table.value.getTabulator();
+      if (tabulator.getData().find(e => e.code === rowData.code)) {
+        alert("동일한 품목을 넣을 수 없습니다.")
+        return;
+      }
       tabulator.addRow(rowData, false);
       // console.log(rowData);
     },
@@ -153,7 +111,7 @@ const searchHandler = async () => {
       return {
         code: e.material_code,
         name: e.material_name,
-        type: mattype.value.find(el => el.code === e.material_type).name,
+        type: mattype.value.find(el => el.detail_code === e.material_type).detail_name,
         info: e.standard,
         unit: e.unit,
       }
@@ -164,8 +122,8 @@ const searchHandler = async () => {
       return {
         code: e.prod_code,
         name: e.prod_name,
-        type: prdtype.value.find(el => el.code === e.prod_type).name,
-        info: catetype.value.find(el => el.code === e.category).name,
+        type: prdtype.value.find(el => el.detail_code === e.prod_type).detail_name,
+        info: catetype.value.find(el => el.detail_code === e.category).detail_name,
         unit: e.unit,
       }
     });
@@ -191,8 +149,7 @@ const bomClickhandler = () => {
     return;
   }
 
-  //단위를 보고 소수점이나 숫자를 유효성검사.
-
+  //TODO: 단위를 보고 소수점이나 숫자를 유효성검사.
   console.log("완성");
 }
 
@@ -204,11 +161,22 @@ const bomResethandler = () => {
 
 const findProd = async () => {
   const code = detailFields.value.prod_code;
-  const product = await axios.get("/api/baseProduct/"+code);
+  const product = await axios.get(`/api/baseProduct/${code}`);
   detailFields.value.prod_name = product.data.prod_name;
 };
 
+//공통코드 조회
+const getGroupCode = async (code) => {
+  return (await axios.get(`/api/groupCode/gc/${code}`)).data;
+}
+
 onMounted(async () => {
+  //공통코드 조회
+  console.log(await getGroupCode("0W"));
+  bomtype.value = await getGroupCode("0W");
+  mattype.value = await getGroupCode("0L");
+  prdtype.value = await getGroupCode("0K");
+  catetype.value = await getGroupCode("0J");
   searchHandler();
 });
 </script>
@@ -229,8 +197,8 @@ onMounted(async () => {
         <div class="col-md-2">
           <label class="form-label">제품유형</label>
           <select class="form-select" v-model="searchData.item_type">
-            <option v-for="type in bomtype" :value="type.code">
-              {{ type.name }}
+            <option v-for="type in bomtype" :value="type.detail_code">
+              {{ type.detail_name }}
             </option>
           </select>
         </div>

@@ -399,7 +399,7 @@ onMounted(() => {
                 <tr>
                   <th>단위</th>
                   <td>
-                    <input type="text" class="form-control form-control-sm" v-model="detailFields.unit"/>
+                    <input type="text" class="form-control form-control-sm" v-model="detailFields.unit" onfocus="this.select()"/>
                   </td>
                 </tr>
                 <tr>
