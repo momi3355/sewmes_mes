@@ -1,5 +1,5 @@
 <script setup>
-import { ref, nextTick, watch} from "vue"; 
+import { ref, nextTick, watch,onMounted} from "vue"; 
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import ProductionPlanModal from "./ProductionPlanModal.vue";
 import axios from 'axios';
@@ -21,7 +21,8 @@ const workInstColumns = [
     { title: "NO", field: "NO", width: 80 },
     { title: "작업지시코드", field: "work_inst_code", width: 180 , visible: false },
     { title: "생산계획코드", field: "prod_plan_code", width: 180, visible: false },
-    { title: "제품코드", field: "prod_code", width: 180, editor: "input" }, // 💡 field: "prdcode" -> field: "prdname"으로 수정
+    {title:"제품코드", field: "prod_code", width: 180, visible: false },
+    { title: "제품명", field: "prod_name", width: 180, editor: "input" }, // 💡 field: "prdcode" -> field: "prdname"으로 수정
     { title: "지시수량", field: "inst_qty", width: 180, editor: "input" },
     { title: "납기일자", field: "dead_date", width: 180 }, // 납기일자 주문테이블에서 백엔드로 가져옴
     { title: "지시상태", field: "inst_state", hozAlign: "center" },
@@ -33,6 +34,41 @@ const tabulatorOptions = {
     selectableRows: true, //행선택가능
     selectableRowsPersistence: false, //페이지변경시 선택상태 유지 안함
 };
+// --- 작업지시 데이터를 백엔드에서 불러오는 함수 정의 ---
+const fetchWorkInstructions = async () => {
+    try {
+        // 백엔드에서 전체 작업지시 목록을 조회하는 API 엔드포인트
+        const response = await axios.get('/api/allworkInst'); // 실제 API 경로로 변경하세요.
+        if (response.data.success) {
+            // 받아온 데이터를 workInstData.value에 할당하여 그리드 갱신
+            workInstData.value = response.data.data.map((item, index) => ({
+                NO: index + 1, // NO 값은 클라이언트에서 다시 부여
+                work_inst_code: item.work_inst_code,
+                prod_plan_code: item.prod_plan_code,
+                prod_code: item.prod_code,
+                prod_name: item.prod_name, // 백엔드에서 가져온 제품명
+                inst_qty: item.inst_qty,
+                dead_date: item.dead_date,
+                inst_state: item.inst_state,
+                emp_num: item.emp_num,
+                inst_reg_date: item.inst_reg_date,
+            }));
+            console.log("작업지시 목록이 성공적으로 로드되었습니다:", workInstData.value);
+        } else {
+            alert(`작업지시 목록 로드 실패: ${response.data.message}`);
+            console.error("작업지시 목록 로드 실패:", response.data.message);
+        }
+    } catch (error) {
+        console.error("작업지시 목록 로드 중 오류 발생:", error);
+        alert("작업지시 목록 로드 중 예상치 못한 오류가 발생했습니다.");
+    }
+};
+
+// 컴포넌트가 마운트될 때 (초기 로딩 시) 작업지시 목록을 불러옵니다.
+onMounted(() => {
+    fetchWorkInstructions();
+});
+
 
 //생산계획 모달에서 데이터받아, 작업지시서 화면의 그리드에 표시될 데이터 추가하는 함수
 const handleSelectedPlans = (plans) => {
@@ -40,7 +76,8 @@ const handleSelectedPlans = (plans) => {
         NO: workInstData.value.length + index + 1,
         work_inst_code: ' ', //지시코드 자동생성 저장전에는 빈값
         prod_plan_code: plan.prod_plan_code,
-        prod_code: plan.prod_code, 
+        prod_code: plan.prod_code,
+        prod_name:plan.prod_name, 
         inst_qty: plan.prod_qty,
         dead_date: plan.dead_date, //주문상세테이블과 조인해서 가져올 납기일자
         inst_state: '0s1s', //초기상태
@@ -76,10 +113,11 @@ const addRow = () => {
         NO: newNo,
         work_inst_code: '',
         prod_plan_code: '',
-        prod_code: '', 
+        prod_code: '',
+        prod_name: '',
         inst_qty: 0, //지시수량 사용자입력
         dead_date: '',
-        inst_state: '생산 전', //초기상태
+        inst_state: '0s1s', //초기상태
         emp_num: '',
     }
     workInstData.value.push(newRow);
@@ -106,7 +144,7 @@ const saveWorkInstructions = async (workInstructionsToSave) => { // 인자 이�
 
         if (response.data.success) {
             alert("작업지시가 성공적으로 저장되었습니다!");
-            // ... (성공 후 로직)
+            await fetchWorkInstructions();
         } else {
             alert(`작업지시 저장 실패: ${response.data.message}`);
         }
