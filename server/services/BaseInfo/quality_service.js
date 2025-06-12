@@ -31,8 +31,9 @@ const qualityOneSelect = async (qualityCode) => {
 // 등록
 const qualityAdd = async (qualityInfo) => {
   // resultSets => multipleStatements로 두개 실행하면 CALL 후 SELECT한게 resultSet으로 넘어온다고...
-  const [resultSets] = await mariadb.query("createCodeProc", [ 't_quality', 'quality_code', 'Q' ]);
-  const newCode = resultSets[1][0].newCode;
+  const [results] = await mariadb.query("createCodeProc", [ 't_quality', 'quality_code', 'Q' ]);
+  console.log(results)
+  const newCode = results[1];
   console.log(newCode);
   qualityInfo.quality_code = newCode;
 
