@@ -44,6 +44,33 @@ const findOutsouOrderByConditions = async ({
 
   return await mariadb.directQuery(finalSql, params);
 };
+// 납기일자 미등록 건 수 조회
+const findOutsouOrderNullDeadCount = async () => {
+  const sql = sqlList.selectOutsouOrderNullDeadCount;
+  return await mariadb.directQuery(sql);
+};
+
+
+// ==============================================================
+
+// 외주발주 모달 서비스 =========================================
+const findOutsouOrderNotDeadList = async () => {
+  const sql = sqlList.selectOutsouOrderNotDeadList;
+  return await mariadb.directQuery(sql);
+};
+
+const updateOutsouDeadDate = async (updates) => {
+  for (const row of updates) {
+    const { outsouOrderCode, deadDate } = row;
+
+    // 납기일자 업데이트
+    await mariadb.query("updateOutsouDeadDate", [deadDate, outsouOrderCode]);
+  
+    // 출고자재 등록 프로시저 실행
+    await mariadb.query("callRegOutsouMaterial", [outsouOrderCode]);
+  }
+};
+
 // ==============================================================
 
 // 외주자재출고 페이지 서비스 =========================================
@@ -184,6 +211,10 @@ const findInboundDefectByConditions = async ({
 module.exports ={
   // 외주발주
   findOutsouOrderByConditions,
+  findOutsouOrderNullDeadCount,
+  // 외주발주 모달
+  findOutsouOrderNotDeadList,
+  updateOutsouDeadDate,
   // 외주출고
   findOutsouReleaseMaterialByConditions,
   // 외주입고

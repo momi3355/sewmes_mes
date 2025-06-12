@@ -3,7 +3,7 @@ import axios from 'axios';
 import { ref } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
 import OrderProdListModal from "./OrderProdListModal.vue";
-
+import ArgonButton from "@/components/ArgonButton.vue";
 // 검색 객체
 const searchProdName = ref('');
 const searchProdCode = ref('');
@@ -136,7 +136,7 @@ const formatInt = (val) => {
   return parseInt(val, 10);
 };
 // 모달 스크립트 영역 ===============================================================
-//생산계획 모달에서 데이터받아, 작업지시서 화면의 그리드에 표시될 데이터 추가하는 함수
+//주문목록 모달에서 데이터받아, 작업지시서 화면의 그리드에 표시될 데이터 추가하는 함수
 const handleSelectedPlans = (plans) => {
     const newWorkInsts = plans.map((plan, index) => ({
         NO: workInstData.value.length + index + 1,
@@ -235,7 +235,13 @@ const closeModal = () => {
           :table-data="prodPlanData"
           :table-columns="prodPlanColumns"
           :on="tabulatorEvent"
-        />
+        >
+          <template #actions>
+            <ArgonButton color="success" variant="gradient" @click="openModal">
+              주문 제품 목록 조회
+            </ArgonButton>
+          </template>
+        </tabulator-card>
       </div>
       <OrderProdListModal
       v-bind:isModalOpen="isModalOpen"

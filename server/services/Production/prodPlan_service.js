@@ -45,6 +45,28 @@ const findProdPlanByConditions = async ({
   return await mariadb.directQuery(finalSql, params);
 };
 
+
+// 주문제품목록 모달 서비스 =========================================
+const findOrderProdList = async ({
+  state
+}) => {
+  let baseSql = sqlList.selectOrderProdList;
+  const whereClauses = [];
+  const params = [];
+
+  if (state) {
+    whereClauses.push("AND od.state = ?");
+    params.push(state);
+  }
+
+  const finalSql = baseSql.replace("/**조건절**/", whereClauses.join("\n"));
+  console.log(finalSql);
+  return await mariadb.directQuery(finalSql, params);
+};
+
+
+
 module.exports ={
-  findProdPlanByConditions
+  findProdPlanByConditions,
+  findOrderProdList
 };

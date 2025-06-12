@@ -296,6 +296,7 @@ const tabulatorEvent = [
         <tabulator-card
           ref="productTableRef"
           card-title="제품목록"
+          :height="670"
           :table-data="prodData"
           :table-columns="productColumns"
           :on="tabulatorEvent"
