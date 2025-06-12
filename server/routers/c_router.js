@@ -16,6 +16,17 @@ router.get("/baseMaterial", async (req, res) => {
   }
 });
 
+router.get("/baseMaterial/:code", async (req, res) => {
+  try {
+    const code = req.params.code;
+    const result = await materialService.getMaterialListByCode(code);
+    res.send(result[0]);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "검색 중 오류 발생" });
+  }
+});
+
 router.post("/baseMaterial", async (req, res) => {
   try {
     const result = await materialService.addMaterial(req.body.data);
@@ -43,6 +54,17 @@ router.get("/baseProduct", async (req, res) => {
   try {
     const result = await productService.getProductList(req.query);
     res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "검색 중 오류 발생" });
+  }
+});
+
+router.get("/baseProduct/:code", async (req, res) => {
+  try {
+    const code = req.params.code;
+    const result = await productService.getProductListByCode(code);
+    res.send(result[0]);
   } catch (err) {
     console.error(err);
     res.status(500).send({ message: "검색 중 오류 발생" });

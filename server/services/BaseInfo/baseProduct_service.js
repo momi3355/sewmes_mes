@@ -40,6 +40,10 @@ getProductList = async ({prod_code, prod_name, prod_type, category, size, use_yn
   return mariadb.directQuery(finalSql, params);
 };
 
+getProductListByCode = async (code) => {
+  return mariadb.query("selectBaseProductListByCode", code);
+};
+
 addProduct = async (params) => {
   return mariadb.query("insertBaseProduct", params);
 };
@@ -51,6 +55,7 @@ setProduct = async (code, params) => {
 
 module.exports = {
   getProductList,
+  getProductListByCode,
   setProduct,
   addProduct
 };

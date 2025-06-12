@@ -260,7 +260,7 @@ onMounted(() => {
           <div class="form-check" v-for="type in usetype">
             <input 
               class="form-check-input"
-              type="radio"
+              type="checkbox"
               v-model="searchData.use_yn"
               :value="type.code"
               :id="'search-'+type.code"
@@ -327,11 +327,11 @@ onMounted(() => {
                 </tr>
                 <tr>
                   <th>단위</th>
-                  <td><input type="text" class="form-control form-control-sm" v-model="detailFields.unit"></td>
+                  <td><input type="text" class="form-control form-control-sm" v-model="detailFields.unit" onfocus="this.select()"></td>
                 </tr>
                 <tr>
                   <th>단가</th>
-                  <td><input type="text" class="form-control form-control-sm" v-model="detailFields.unit_price"></td>
+                  <td><input type="text" class="form-control form-control-sm" v-model="detailFields.unit_price" onfocus="this.select()"></td>
                 </tr>
                 <tr>
                   <th>사용여부</th>
@@ -347,7 +347,7 @@ onMounted(() => {
                 </tr>
                 <tr>
                   <th>안전 재고 수량</th>
-                  <td><input type="text" class="form-control form-control-sm" v-model="detailFields.safe_stock"></td>
+                  <td><input type="text" class="form-control form-control-sm" v-model="detailFields.safe_stock" onfocus="this.select()"></td>
                 </tr>
               </tbody>
             </table>

@@ -3,105 +3,98 @@ import { onMounted, ref } from "vue";
 import axios from "axios";
 
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
+import { typeFormatter } from "@/assets/js/utils/tableFormatter";
 
-const bomtype = ref([
-  {
-    code: "0w1w",
-    name: "자재",
-  },
-  {
-    code: "0w2w",
-    name: "반제품",
-  },
-]);
-const mattype = ref([
-  {
-    code: "0l1l",
-    name: "원자재",
-  },
-  {
-    code: "0l2l",
-    name: "부자재",
-  },
-  {
-    code: "0l3l",
-    name: "소모품",
-  }
-]);
-const prdtype = ref([
-  {
-    code: "0k1k",
-    name: "반제품",
-  },
-  {
-    code: "0k2k",
-    name: "완제품",
-  },
-]);
-const catetype = ref([
-  {
-    code: "0j1j",
-    name: "상의",
-  },
-  {
-    code: "0j2j",
-    name: "하의",
-  },
-]);
+const bomtype = ref([]);
+const mattype = ref([]);
+const prdtype = ref([]);
+const catetype = ref([]);
 
 const item_table = ref(null);
-const materialData = ref([]);
 const bom_table = ref(null);
-const productData = ref([]);
 
-const typeFormatter = (cell, formatterParams) => {
-  const typeArray = formatterParams.typeArray;
-  const code = cell.getValue();
+const itemData = ref([]);
+const bomData = ref([]);
 
-  const foundType = typeArray.find((type) => type.code === code);
-  return foundType ? foundType.name : code;
+const itemColumns = [
+  { title: "품목코드", field: "code", width: 120 },
+  { title: "품목명", field: "name", width: 200 },
+  {
+    title: "품목유형",
+    field: "type",
+    width: 120,
+    formatter: typeFormatter,
+    formatterParams: {
+      typeArray: [],
+    },
+  },
+  { title: "규격", field: "info" },
+];
+
+const bomColumns = [
+  { title: "품목코드", field: "code", width: 120 },
+  { title: "품목명", field: "name", width: 200 },
+  {
+    title: "품목유형",
+    field: "type",
+    width: 120,
+    formatter: typeFormatter,
+    formatterParams: {
+      typeArray: [],
+    },
+  },
+  { title: "소요량", field: "need", editor:"input", editorParams:{
+    elementAttributes: {
+      placeholder: "소수점을 포함하는 숫자",
+      onfocus: "this.select()",
+    },
+  }},
+  { title: "단위", field: "unit", width: 80 },
+];
+
+const initialSearchFields = {
+  code: "",
+  item_type: "0w1w",
+  name: "",
+  type: "",
+  use_yn: "0b1b"
 };
 
-const materialColumns = [
-  { title: "자재코드", field: "material_code", width: 100 },
-  { title: "자재명", field: "material_name", width: 170 },
-  {
-    title: "자재유형",
-    field: "material_type",
-    width: 75,
-    formatter: typeFormatter,
-    formatterParams: {
-      typeArray: mattype.value,
-    },
-  },
-  { title: "규격", field: "standard", width: 160 },
-];
-
-const productColumns = [
-  { title: "제품코드", field: "prod_code", width: 100 },
-  { title: "제품명", field: "prod_name", width: 170 },
-  {
-    title: "제품유형",
-    field: "prod_type",
-    width: 75,
-    formatter: typeFormatter,
-    formatterParams: {
-      typeArray: prdtype.value,
-    },
-  },
-  {
-    title: "카테고리",
-    field: "category",
-    width: 75,
-    formatter: typeFormatter,
-    formatterParams: {
-      typeArray: catetype.value,
-    },
-  },
-];
-
-const searchData = ref({});
+const searchData = ref({ ...initialSearchFields });
 const detailFields = ref({});
+
+const itemOptions = {
+  // selectableRows: 1,
+};
+
+const itemEvent = [
+  {
+    eventName: "rowDblClick",
+    eventAction: (e, row) => {
+      const rowData = row.getData();
+      const tabulator = bom_table.value.getTabulator();
+      if (tabulator.getData().find(e => e.code === rowData.code)) {
+        alert("동일한 품목을 넣을 수 없습니다.")
+        return;
+      }
+      tabulator.addRow(rowData, false);
+      // console.log(rowData);
+    },
+  },
+];
+
+const bomOptions = {
+  // selectableRows: 1,
+};
+
+const bomEvent = [
+  {
+    eventName: "rowDblClick",
+    eventAction: (e, row) => {
+      row.delete();
+    },
+  },
+];
 
 //리셋
 const resetHandler = () => {
@@ -112,34 +105,79 @@ const resetHandler = () => {
 //검색
 const searchHandler = async () => {
   //console.log(tabulator.getColumnDefinitions());
-  if (searchData.value.prod_type === "0w1w") {
-    const item_tabulator = item_table.value.getTabulator();
-    console.log(materialColumns);
-    item_tabulator.setColumns(materialColumns);
-
-    await item_tabulator.setData("/api/baseMaterial");
-    materialData.value = item_tabulator.getData();
-  } else if (searchData.value.prod_type === "0w2w") {
-    const item_tabulator = item_table.value.getTabulator();
-    console.log(productColumns);
-    item_tabulator.setColumns(productColumns);
-
-    await item_tabulator.setData("/api/baseProduct");
-    productData.value = item_tabulator.getData();
+  if (searchData.value.item_type === "0w1w") {
+    const material = await axios.get("/api/baseMaterial");
+    itemData.value = material.data.map(e => {
+      return {
+        code: e.material_code,
+        name: e.material_name,
+        type: mattype.value.find(el => el.detail_code === e.material_type).detail_name,
+        info: e.standard,
+        unit: e.unit,
+      }
+    });
+  } else if (searchData.value.item_type === "0w2w") {
+    const product = await axios.get("/api/baseProduct");
+    itemData.value = product.data.map(e => {
+      return {
+        code: e.prod_code,
+        name: e.prod_name,
+        type: prdtype.value.find(el => el.detail_code === e.prod_type).detail_name,
+        info: catetype.value.find(el => el.detail_code === e.category).detail_name,
+        unit: e.unit,
+      }
+    });
   }
 };
 
 const bomClickhandler = () => {
+  const tabulator = bom_table.value.getTabulator();
+  const prodCode = detailFields.value.prod_code;
+  const prodName = detailFields.value.prod_name;
 
+  if (!prodCode) { //undefined
+    alert("제품번호를 입력하지 않았습니다.");
+    return;
+  } else if (!prodName) {
+    alert("제품이 존재하지 않습니다.");
+    return;
+  } else if (!tabulator.getData().length) {
+    alert("BOM정보가 비어있습니다.");
+    return;
+  } else if (tabulator.getData().find(e => e.need == "")) {
+    alert("BOM소요량의 정보가 없습니다.");
+    return;
+  }
+
+  //TODO: 단위를 보고 소수점이나 숫자를 유효성검사.
+  console.log("완성");
 }
 
 const bomResethandler = () => {
+  detailFields.value.prod_code = "";
+  detailFields.value.prod_name = "";
+  bomData.value = [];
+}
 
+const findProd = async () => {
+  const code = detailFields.value.prod_code;
+  const product = await axios.get(`/api/baseProduct/${code}`);
+  detailFields.value.prod_name = product.data.prod_name;
+};
+
+//공통코드 조회
+const getGroupCode = async (code) => {
+  return (await axios.get(`/api/groupCode/gc/${code}`)).data;
 }
 
 onMounted(async () => {
-  const material = await axios.get("/api/baseMaterial");
-  materialData.value = material.data;
+  //공통코드 조회
+  console.log(await getGroupCode("0W"));
+  bomtype.value = await getGroupCode("0W");
+  mattype.value = await getGroupCode("0L");
+  prdtype.value = await getGroupCode("0K");
+  catetype.value = await getGroupCode("0J");
+  searchHandler();
 });
 </script>
 
@@ -153,15 +191,14 @@ onMounted(async () => {
           <input
             type="text"
             class="form-control"
-            v-model="searchData.prod_code"
+            v-model="searchData.code"
           />
         </div>
         <div class="col-md-2">
           <label class="form-label">제품유형</label>
-          <select class="form-select" v-model="searchData.prod_type">
-            <option selected value="">전체</option>
-            <option v-for="type in bomtype" :value="type.code">
-              {{ type.name }}
+          <select class="form-select" v-model="searchData.item_type">
+            <option v-for="type in bomtype" :value="type.detail_code">
+              {{ type.detail_name }}
             </option>
           </select>
         </div>
@@ -172,15 +209,15 @@ onMounted(async () => {
           <input
             type="text"
             class="form-control"
-            v-model="searchData.prod_name"
+            v-model="searchData.name"
           />
         </div>
         <div class="col-md-2">
-          <label class="form-label">유형</label>
+          <label class="form-label">품목유형</label>
           <input
             type="text"
             class="form-control"
-            v-model="searchData.prod_name"
+            v-model="searchData.type"
           />
         </div>
         <div class="col-md-2">
@@ -212,10 +249,10 @@ onMounted(async () => {
         <tabulator-card
           ref="item_table"
           card-title="품목 리스트"
-          :table-data="materialData"
-          :table-columns="materialColumns"
-          :tabulator-options="tabulatorOptions"
-          :on="tabulatorEvent"
+          :table-data="itemData"
+          :table-columns="itemColumns"
+          :tabulator-options="itemOptions"
+          :on="itemEvent"
         />
       </div>
       <div class="col-md-6 d-flex flex-column">
@@ -233,13 +270,25 @@ onMounted(async () => {
                 <tr>
                   <th style="width: 30%">제품코드</th>
                   <td>
-                    <input type="text" class="form-control form-control-sm" v-model="detailFields.prod_code"/>
+                    <input
+                      type="text"
+                      ref="prod_code"
+                      class="form-control form-control-sm"
+                      @keyup.enter="findProd"
+                      v-model="detailFields.prod_code"
+                    />
                   </td>
                 </tr>
                 <tr>
                   <th>제품명</th>
                   <td>
-                    <input type="text" class="form-control form-control-sm" v-model="detailFields.prod_name"/>
+                    <input
+                      type="text"
+                      ref="prod_name"
+                      class="form-control form-control-sm"
+                      v-model="detailFields.prod_name"
+                      readonly
+                    />
                   </td>
                 </tr>
               </tbody>
@@ -249,11 +298,10 @@ onMounted(async () => {
         <tabulator-card
           ref="bom_table"
           card-title="BOM 상세 정보"
-          :table-data="productData"
-          :table-columns="productColumns"
-          :tabulator-options="tabulatorOptions"
-          :on="tabulatorEvent"
-        />
+          :table-data="bomData"
+          :table-columns="bomColumns"
+          :tabulator-options="bomOptions"
+          :on="bomEvent"/>
       </div>
     </div>
   </div>

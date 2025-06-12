@@ -30,6 +30,10 @@ getMaterialList = async ({material_code, material_name, material_type, use_yn}) 
   return mariadb.directQuery(finalSql, params);
 };
 
+getMaterialListByCode = async (code) => {
+  return mariadb.query("selectBaseMaterialListByCode", code);
+};
+
 addMaterial = async (params) => {
   return mariadb.query("insertBaseMaterial", params);
 };
@@ -41,6 +45,7 @@ setMaterial = async (code, params) => {
 
 module.exports = {
   getMaterialList,
+  getMaterialListByCode,
   setMaterial,
   addMaterial
 };

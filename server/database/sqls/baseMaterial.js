@@ -9,8 +9,21 @@ const selectBaseMaterialList =
      ,color
      ,use_yn
   FROM t_material
- WHERE 1=1
+  WHERE 1=1
  `;
+
+const selectBaseMaterialListByCode = 
+`SELECT material_code
+     ,material_name
+     ,material_type
+     ,standard
+     ,unit
+     ,unit_price
+     ,safe_stock
+     ,color
+     ,use_yn
+  FROM t_material
+  WHERE material_code = ?`;
 
 const insertBaseMaterial = 
 `INSERT INTO t_material
@@ -23,6 +36,7 @@ const updateBaseMaterial =
 
 module.exports = {
   selectBaseMaterialList,
+  selectBaseMaterialListByCode,
   insertBaseMaterial,
   updateBaseMaterial
 }
