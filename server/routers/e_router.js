@@ -13,8 +13,8 @@ const workInstService = require('../services/Production/workInst.js'); //
 
 router.get('/production-plans', async (req, res) => {
     try {
-        const params = { complete: req.query.complete };
-        const plans = await workInstService.getProductionPlans(params); // DB 쿼리 결과 (빈 배열일 수 있음)
+    
+        const plans = await workInstService.getProductionPlans(); // DB 쿼리 결과 (빈 배열일 수 있음)
 
         res.json({
             success: true,
@@ -59,6 +59,24 @@ router.post('/workInstMngment/save',async(req,res)=>{
             success: false,
             message: '작업지시 저장 중 서버 오류가 발생했습니다.',
             error: error.message // 디버깅을 위해 실제 에러 메시지를 포함시키는 것이 좋습니다.
+        });
+    }
+})
+//작업지시 조회
+router.get('/allworkInst',async(req,res)=>{
+    try{
+        const allworkInsts = await workInstService.getWorkInstAll();
+           res.json({
+            success: true,
+            message: allworkInsts.length > 0 ? '생산계획 목록 조회 성공' : '조회된 생산계획 데이터가 없습니다.',
+            data: allworkInsts // <-- 빈 배열이라도 여기에 담아 보냅니다.
+        });
+    }catch(error){
+         console.error('작업지시  목록 API 오류:', error);
+        res.status(500).json({
+            success: false,
+            message: '작업지시 목록을 불러오는 중 서버 오류 발생',
+            error: error.message
         });
     }
 })

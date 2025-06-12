@@ -16,6 +16,7 @@ const modalTableColumns = [
     { title: "생산계획코드", field: "prod_plan_code", width: 150 },
     { title: "제품코드", field: "prod_code", width: 150 },
     { title: "생산계획수량", field: "prod_qty", width: 150 },
+    { title: "잔여지시량", field: "remain_qty", width: 150 },
     { title: "생산계획등록일자", field: "reg_date", width: 150 },
     { title: "납기일자", field: "dead_date", width: 150 }
 ];
@@ -23,9 +24,7 @@ const modalTableColumns = [
 const fetchProductionPlans = async () => {
     console.log("fetchProductionPlans 함수 시작...");
     try {
-        const response = await axios.get('/api/production-plans', {
-            params: { complete: 'N' }
-        });
+        const response = await axios.get('/api/production-plans');
 
         console.log("1. API 응답 전체 (response):", response);
         console.log("2. API 응답 데이터 (response.data):", response.data);

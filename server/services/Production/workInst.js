@@ -10,7 +10,6 @@ const sqlList = require("../../database/sqlList.js");
 // 작업지시코드 생성 함수
 const generateWorkInstCode = async(conn)=>{
     const prefix='I';
-    // 🚨🚨🚨 수정 부분: mariadb.executeTransactionalQuery 대신 conn.query를 직접 사용하고, sqlList에서 쿼리 가져옴 🚨🚨🚨
     const rows = await conn.query(sqlList['selectMaxWorkInstCode']); // SQL Alias를 사용하여 쿼리 가져옴
     let maxCode= rows&& rows.length>0?rows[0].max_code :null;
     let sequence =1;
@@ -30,12 +29,10 @@ const generateWorkInstCode = async(conn)=>{
 
     // 해당 객체에 등록해야지 외부로 노출
     //생산계획목록 
- const    getProductionPlans=async(params)=>{
+ const    getProductionPlans=async()=>{
         
         try {
-                const completeStatus = params.complete || 'N';
-                // const [rows] = await mariadb.query('selectProdPlansList', [completeStatus]); // <--- 이 줄을 변경
-                const rows = await mariadb.query('selectProdPlansList', [completeStatus]); 
+                const rows = await mariadb.query('selectProdPlansList'); 
                 console.log('Extracted rows (after fix):', rows); 
                 return rows;
             } catch (error) {
@@ -43,6 +40,17 @@ const generateWorkInstCode = async(conn)=>{
                 throw error;
             }
 };
+
+//작업지시조회 
+const getWorkInstAll= async()=>{
+    try{
+        const rows = await mariadb.query('allworkInstList');
+        return rows;
+    }catch(error){
+        console.error('작업지시목록 조회 중 문제 발생',error);
+        throw error;
+    }
+}
 //작업지시서 저장 
 const saveWorkInstructions= async (workInstructions) => {
     let conn;
@@ -51,10 +59,30 @@ const saveWorkInstructions= async (workInstructions) => {
             const savedResults = [];
 
             for (const instruction of workInstructions) {
+                 const existingWorkInstCode = instruction.work_inst_code || instruction.work_inst_code; // 프론트엔드에서 어떤 이름으로 보내는지 확인
+                let currentWorkInstCode;
+                if (existingWorkInstCode){
+                    //1. DB에 해당 WORK_INST_CODE가 실제로 존재하는지 확인 
+                    
+                    const checkExistsResult = await mariadb.executeTransactionalQuery(conn,'checkWorkInstCode',[existingWorkInstCode]);
+                    const exists = checkExistsResult && checkExistsResult.length > 0 && checkExistsResult[0].count > 0
+                    if(exists){// 있으면 update
+                        console.log(`[saveWorkInstructions] Updating existing work instruction: ${existingWorkInstCode}`);
+                        currentWorkInstCode = existingWorkInstCode; 
+
+                        const UpdateValues=[
+
+                        ];
+                    }
+
+                }
+                
+
                 // 프론트엔드 데이터 필드명과 DB 컬럼 매핑
                 const work_inst_code = await generateWorkInstCode(conn);
                 const prod_plan_code = instruction.prod_plan_code || null;
                 const prod_code = instruction.prod_code; 
+            
                 const inst_qty = instruction.inst_qty;
 
                 // prodCode를 통해 bom코드조회
@@ -115,4 +143,5 @@ const saveWorkInstructions= async (workInstructions) => {
 module.exports ={
     getProductionPlans,
     saveWorkInstructions,
+    getWorkInstAll,
 };

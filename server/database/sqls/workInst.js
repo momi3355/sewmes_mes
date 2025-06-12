@@ -22,7 +22,50 @@ const selectProdPlansList =
                         WHERE twi.prod_plan_code = pp.prod_plan_code
         )`;
 
+//작업지시코드 전체 조회
+const allworkInstList =
+` SELECT
+            twi.work_inst_code,
+            twi.prod_plan_code,
+            twi.prod_code,
+            tp.prod_name,
+            twi.inst_qty,
+            od.dead_date,
+            twi.inst_state,
+            twi.emp_num,
+            twi.inst_reg_date
+        FROM
+            t_work_inst  twi
+        JOIN
+            t_product tp ON twi.prod_code = tp.prod_code
+LEFT JOIN
+    t_prod_plan tpp ON twi.prod_plan_code = tpp.prod_plan_code	
+LEFT JOIN
+            t_order_detail od ON tpp.order_detail_code = od.order_detail_code`;
+
+//작업지시테이블에 작업지시코드가 있는지 확인
+const checkWorkInstCode=`
+SELECT COUNT(*) FROM t_work_inst
+WHERE work_inst_code=?
+`;
+
+ //작업지시업데이트
+ const updateWorkInstList= `
+    UPDATE t_work_inst
+    SET
+        prod_plan_code=?,
+        prod_code= ?,
+        bom_code= ?,
+        inst_code= ?,
+        inst_date= ?,
+        emp_num= ?,
+        inst_state= ?,
+        inst_reg_date= NOW() 
+    WHERE
+        work_inst_code = ?
+`;  
             
+
 // 지시코드 클릭 하지 않고 초기 작업지시의 지시상태가 생산전, 생산중인 경우 작업지시서 다건조회
 
 const selectWorkInstListDefault =
@@ -36,7 +79,7 @@ const selectWorkInstListDefault =
             twi.EMP_NUM,
             twi.INST_REG_DATE
         FROM
-            T_WORK_INST twi
+            t_work_inst twi
         JOIN
             t_product tp ON twi.PROD_CODE = tp.PROD_CODE
         WHERE
@@ -62,12 +105,16 @@ const insertWorkInstList =
     inst_state    
 )VALUES(?,?,?,?,?,?,?,?,?)`;
 
+
+
+
 // 생산계획없이 작업지시 생성할 때 bom_code를 조회
 const selectBomByProdCode=
 `SELECT bom_code
 FROM t_bom
 WHERE prod_code=?
 `;
+
 
 
 //가장큰 작업지시 코드 조회
@@ -80,6 +127,9 @@ WHERE work_inst_code LIKE 'I%'
 //작업지시 테이블 bom_code로 소요량 조회회
 module.exports = {
     selectProdPlansList,
+    allworkInstList,
+    checkWorkInstCode,
+    updateWorkInstList,
     selectWorkInstListDefault,
     insertWorkInstList,
     selectBomByProdCode,
