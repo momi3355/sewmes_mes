@@ -46,7 +46,7 @@ router.get('/quality/img/:filename', (req, res) => {
 //등록
 router.post('/quality', upload.single('image'), async(req, res) => {
   let qualityInfo = req.body;
-  console.log(qualityInfo);
+  console.log('insert router', qualityInfo);
   if(req.file){
     qualityInfo.fileName = req.file.filename;
     qualityInfo.originalName = req.file.originalname;
@@ -104,5 +104,12 @@ router.get('/groupCode/dc/:code', async(req, res) => {
   let detailCodeInfo = await qualityService.groupCodeDetailInfo(detailCode).catch(err => console.log(err));
   res.send(detailCodeInfo);
 })
+
+//multiplestatements test
+// router.get('/procedure', async(req, res) => {
+//   let newCode = await qualityService.testproc().catch(err => console.log('router: ', err));
+//   console.log('router', newCode);
+//   res.send(newCode);
+// })
 
 module.exports = router;

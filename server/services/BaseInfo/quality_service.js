@@ -30,14 +30,14 @@ const qualityOneSelect = async (qualityCode) => {
 
 // 등록
 const qualityAdd = async (qualityInfo) => {
-  // resultSets => multipleStatements로 두개 실행하면 CALL 후 SELECT한게 resultSet으로 넘어온다고...
-  const [results] = await mariadb.query("createCodeProc", [ 't_quality', 'quality_code', 'Q' ]);
-  console.log(results)
-  const newCode = results[1];
-  console.log(newCode);
+  //코드 생성
+  const results = await mariadb.query("createCodeProc", [ 't_quality', 'quality_code', 'Q' ]);
+  // 결과가 affectedRows, 값 들어있는 배열 두개라서 두번째 배열의 0번째 값을 가져옴
+  const newCode = results[1][0].newCode;
   qualityInfo.quality_code = newCode;
 
-  console.log(qualityInfo);
+  //qualityInfo가 formData라서 객체로 들어가도록 별도 처리
+  qualityInfo = JSON.parse(JSON.stringify(qualityInfo));
   let resInfo = await mariadb.query("insertQualityinfo", qualityInfo)
     .catch(err => console.log(err));
 
@@ -47,7 +47,6 @@ const qualityAdd = async (qualityInfo) => {
   }
 
   let result = null;
-
   if (resInfo.affectedRows > 0) {
     result = {
       isSuccessed: true,
@@ -95,8 +94,8 @@ const qualityRenewal = async (qualityInfo) => {
   try {
     await conn.beginTransaction();
 
-    const [resultSets] = await conn.query("renewQuality", qualityInfo.qualityCode);
-    const msg = resultSets[1][0].msg;
+    const renew = await mariadb.query("renewQuality", qualityInfo.qualityCode);
+    const msg = renew[1][0].msg;
 
     console.log(msg);
 
