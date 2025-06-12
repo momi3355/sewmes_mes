@@ -8,6 +8,7 @@ let qualityInfo = ref({});
 let qualityHistoryList = reactive([]);
 let testTargetCodeList = ref([]);
 let imageInput = ref();
+let useYnDetail = ref('');
 
 //품질기준정보 컬럼
 const qualityColumns = [
@@ -47,6 +48,7 @@ const getQualityList = async () => {
     })
     .catch(err => console.log(err));
   qualityList.value = list.data;
+  getDetailCode(list.data[0].use_yn);
 }
 
 const qualitySearchHandler = async () => {
@@ -67,8 +69,13 @@ const qualitySearchReset = () => {
 };
 
 const getGroupCode = async (groupCode, targetList) => {
-  let list = await axios.get(`/api/groupCode/gc/${groupCode}`)
+  let list = await axios.get(`/api/groupCode/gc/${groupCode}`);
   targetList.value = list.data;
+}
+
+const getDetailCode = async (detailCode) => {
+  let list = await axios.get(`/api/groupCode/dc/${detailCode}`);
+  console.log(list.data.detail_name);
 }
 
 const saveQualityMaster = async () => {
@@ -119,8 +126,12 @@ const tabulatorEvents = [
     eventName: "rowClick",
     eventAction: async (e, row) => {
       const rowData = row.getData();
-        const result = await axios.get(`/api/quality/${rowData.quality_code}`);
-        qualityInfo.value = result.data;      
+        const info = await axios.get(`/api/quality/${rowData.quality_code}`);
+        qualityInfo.value = info.data;
+        const historyList = await axios.get(`/api/quality/history/${rowData.quality_code}`);
+        if(historyList.data.length > 0){
+          qualityHistoryList.push(historyList.data);
+        }
     }
   }
 ];
@@ -226,7 +237,9 @@ onMounted(() => {
                   <th>참고자료</th>
                   <td>
                     <input type="file" ref="imageInput" />
-                    <div class="image-preview" ></div>
+                    <div v-if="qualityInfo.ref_img" class="image-preview">
+                      <img src="/uploads/qualityInfo.ref_img">
+                    </div>
                   </td>
                 </tr>
               </tbody>
