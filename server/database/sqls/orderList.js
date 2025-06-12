@@ -20,27 +20,41 @@ FROM t_order_detail a JOIN t_company b
      ON(a.cp_code = b.cp_code)`
 
 // 주문서 등록
-// `INSERT INTO t_order_detail (
-//   order_detail_code, 
-//   order_code, 
-//   prod_code,
-//   standard, 
-//   qty, 
-//   unit_price,
-//   total_price, 
-//   img, 
-//   state, 
-//   emp_num, 
-//   note, 
-//   order_date, 
-//   dead_date, 
-//   cp_code, 
-//   sel_price
-// ) VALUES (?,?,?,?,?,?,?,?,?,?)`
+const orderAdd =
+`INSERT INTO t_order_detail (
+  order_detail_code, 
+  order_code,
+  prod_code,
+  standard,
+  qty,
+  unit_price,
+  total_price,
+  state, 
+  emp_num, 
+  note, 
+  order_date, 
+  dead_date, 
+  cp_code, 
+  sel_price
+) VALUES (ord1,or1,?,?,?,?,?,?,?,?,?,?,?,?,?)`
 
+// 주문서등록 / 제품모달
+const productList =
+`SELECT prod_code,
+        prod_name,
+        category,
+        color,
+        size,
+        unit_price
+FROM t_product
+WHERE prod_type = '0k2k'`
+
+// 년-월-일 날짜포맷
 // DATE_FORMAT((Now), '%Y-%m-%d')
 
 module.exports = {
   orderListCheck,
-  orderListCheck2
+  orderListCheck2,
+  orderAdd,
+  productList,
 }

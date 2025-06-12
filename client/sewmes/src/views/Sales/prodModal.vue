@@ -1,0 +1,164 @@
+<template>
+  <div v-if="isModalOpen" class="modal-overlay">
+
+    <div class="modal-content">
+      <h3 class="modal-title">제품 선택</h3>
+
+      <div class="search-bar">
+        <div>
+          <label>제품명:</label>
+          <input v-model="productName" placeholder="제품검색" />
+        </div>
+        <div>
+          <label>품목:</label>
+          <input v-model="productCategory" placeholder="품목검색" />
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table class="product-table">
+          <thead>
+            <tr>
+              <th><input type="checkbox" /></th>
+              <th>순번</th>
+              <th>제품코드</th>
+              <th>제품명</th>
+              <th>품목</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="(product, index) in product" :key="index">
+              <td>
+                <input type="checkbox" v-model="selected" :value="product" />
+              </td>
+              <td>{{ product.num }}</td>
+              <td>{{ product.prodcode }}</td>
+              <td>{{ product.prodname }}</td>
+              <td>{{ product.category }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+            <div class="modal-actions">
+                <button class="btn btn-primary" @click="handleSelectedPlans">선택</button>
+                <button class="btn btn-secondary ms-2" @click="handleCloseModal">닫기</button>
+            </div>
+    </div>
+  </div>
+</template>
+
+<script setup>
+import axios from 'axios';
+import { onMounted, ref, defineEmits } from 'vue';
+import { useRouter } from 'vue-router';
+
+const selected = ref([]);
+const product = ref([]);
+const emit = defineEmits(["selectPlans"])
+
+const props = defineProps({
+  isModalOpen: Boolean
+});
+
+// const emit = defineEmits(['closeModal', 'selected']);
+
+
+const handleSelectedPlans = () => {
+  emit('selectPlans', selected.value);
+  emit('closeModal');
+  console.log(selected);
+};
+
+const handleCloseModal = () => {
+  emit('closeModal');
+};
+
+onMounted(async()=>{
+try{
+  const res = await axios.get('/api/productList');
+
+  // 완제품 목록 출력
+    product.value = res.data.map((product, index) => ({
+      num: index +1,
+      prodcode: product.prod_code,
+      prodname: product.prod_name,
+      category: product.category,
+    }));
+
+    console.log('📦 DB에서 받아온 데이터:', product.value);
+  } catch (error) {
+    console.error('❌ 제품 목록 로딩 실패:', error.message);
+  }
+});
+</script>
+
+<style scoped>
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+.modal-content {
+  background: #fff;
+  padding: 24px;
+  border-radius: 12px;
+  width: 800px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.modal-title {
+  font-size: 20px;
+  margin-bottom: 16px;
+  font-weight: bold;
+}
+
+.search-bar {
+  display: flex;
+  gap: 20px;
+  margin-bottom: 16px;
+}
+
+.search-bar label {
+  margin-right: 8px;
+}
+
+.product-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 16px;
+}
+
+.product-table th, .product-table td {
+  border: 1px solid #ddd;
+  padding: 10px;
+  text-align: center;
+}
+
+.product-table th {
+  background: #f5f5f5;
+}
+
+.modal-footer {
+  text-align: center;
+}
+
+.select-btn {
+  background: #4CAF50;
+  color: white;
+  padding: 10px 24px;
+  border: none;
+  border-radius: 8px;
+  font-weight: bold;
+  cursor: pointer;
+}
+.modal-actions {
+    text-align: right;
+}
+</style>
