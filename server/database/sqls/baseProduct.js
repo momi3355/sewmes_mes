@@ -8,9 +8,22 @@ const selectBaseProductList =
       ,color
       ,size
       ,note
-FROM t_product
-WHERE 1=1
+  FROM t_product
+  WHERE 1=1
 `;
+
+const selectBaseProductListByCode = 
+`SELECT prod_code
+      ,prod_name
+      ,prod_type
+      ,category
+      ,use_yn
+      ,unit
+      ,color
+      ,size
+      ,note
+  FROM t_product
+  WHERE prod_code = ?`;
 
 const insertBaseProduct = 
 `INSERT INTO t_product
@@ -23,6 +36,7 @@ const updateBaseProduct =
 
 module.exports = {
   selectBaseProductList,
+  selectBaseProductListByCode,
   insertBaseProduct,
   updateBaseProduct
 }
