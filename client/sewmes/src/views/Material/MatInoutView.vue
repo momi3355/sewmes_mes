@@ -9,18 +9,7 @@ import ArgonButton from "@/components/ArgonButton.vue";
 import DefaultInfoCard from "@/examples/Cards/DefaultInfoCard.vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 
-const userData = ref([
-  {
-    mat_code: "MAT-001",
-    mat_name: "면 원단(화이트)",
-    lot: "LOT-20250503-001",
-    company: "원자재공급처",
-    qty: "200",
-    category: "원자재",
-    inout_date: "2025-05-21",
-    in_out: "출고",
-  },
-]);
+const userData = ref([]);
 
 
 
