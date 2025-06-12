@@ -59,7 +59,7 @@
             card-title=""
             :table-data="ordlist"
             :table-columns="OrderColumns"
-            :tabulator-options="ordlist"
+            :tabulator-options="{}"
             :on="tabulatorEvent"
             style="height: 400px;"
           />
@@ -83,15 +83,17 @@ import prodModal from "./prodModal.vue";
 const isModalOpen = ref(false); //초기상태
 const ordlist = ref([]);
 
+const OrderData = ref([]);
+
 const OrderColumns = [
-  { title: "제품명", field: ordlist.prod_name, width: 100, hozAlign: "center",  },
+  { title: "제품명", field: "prodname", width: 100, hozAlign: "center",  },
   { title: "색상", field: "color", width: 100, hozAlign: "center" },
-  { title: "사이즈", field: "size", width: 100, hozAlign: "center" },
-  { title: "규격", field: "num", width: 150, hozAlign: "center" },
-  { title: "수량", field: "num", width: 100, hozAlign: "center" },
-  { title: "총수량", field: "num", width: 100, hozAlign: "center" },
-  { title: "단가(1box)", field: "unit_price", width: 150, hozAlign: "center" },
-  { title: "합계", field: "num", width: 150, hozAlign: "center" }
+  // { title: "사이즈", field: "size", width: 100, hozAlign: "center" },
+  // { title: "규격", field: "num", width: 150, hozAlign: "center" },
+  // { title: "수량", field: "num", width: 100, hozAlign: "center" },
+  // { title: "총수량", field: "num", width: 100, hozAlign: "center" },
+  // { title: "단가(1box)", field: "unit_price", width: 150, hozAlign: "center" },
+  // { title: "합계", field: "num", width: 150, hozAlign: "center" }
 ];
 
 onMounted(async () => {
@@ -100,29 +102,21 @@ onMounted(async () => {
     const res = await axios.get('/api/productList'); // ✅ 백엔드 API 호출
 
     // ✅ 응답 데이터를 OrderData에 넣기
-    OrderData.value = res.data.map((item, ) => ({
-      prod_name: item.prod_name,
-      // ordercode: item.order_code,
-      // companyName: item.cp_name,
-      // totalQty: item.qty,
-      // orderdate: item.order_date,
-      // deaddate: item.dead_date,
-      // companyTel: item.cp_tel,
-      // salesManager: '심재진',
-      // salesTel: '0103213',
-      // address: item.address,
-      // note: item.note,
-      // status: item.state
-    }));
-
+    OrderData.value = res.data.map((item) => {
+      console.log('item 데이터', item);
+      return{
+      prodname: item.prod_name,
+      color : item.color,
+    }});
     console.log('📦 DB에서 받아온 데이터:', OrderData.value);
   } catch (error) {
     console.error('❌ 주문 목록 로딩 실패:', error.message);
   }
 });
-const getlist = (asdf) =>{
-  console.log('자식한테 받아온 데이터', asdf)
-  ordlist.value = asdf;
+const getlist = (modaldata) =>{
+  console.log('자식한테 받아온 데이터', JSON.stringify(modaldata, null, 2));
+  console.log('자식한테 받아온 데이터', modaldata),
+  ordlist.value = modaldata;
 };
 
 const openModal = () => {

@@ -83,6 +83,7 @@ try{
       prodcode: product.prod_code,
       prodname: product.prod_name,
       category: product.category,
+      color: product.color
     }));
 
     console.log('📦 DB에서 받아온 데이터:', product.value);
