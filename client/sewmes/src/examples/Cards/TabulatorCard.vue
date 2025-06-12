@@ -7,6 +7,10 @@ const tabulatorTableRef = ref(null);
 let tabulatorInstance = null;
 
 const props = defineProps({
+  height: {
+    type: String,
+    default: "350px",
+  },
   cardTitle: {
     type: String,
     default: "데이터 테이블",
@@ -44,7 +48,7 @@ const initializeTabulator = () => {
     }
 
     tabulatorInstance = new Tabulator(tabulatorTableRef.value, {
-      height: "350px",
+      height: props.height,
       data: props.tableData,
       columns: props.tableColumns,
       layout: "fitColumns",
