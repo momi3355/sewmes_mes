@@ -2,12 +2,14 @@
 import { onMounted, reactive, ref } from "vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import axios from "axios";
+import groupcodelist from "../../assets/js/utils/groupcodelist";
 
 let equiList = ref([]);
 let equiInfo = ref({});
 let equiMaintHistoryList = ref([]);
 let equiTypeCodeList = ref([]);
 let equiSchDateList = ref([]);
+
 
 const equiListColumns = [
   { title: "설비코드", field: "equi_code"},
@@ -51,16 +53,6 @@ const saveEquiMaster = () => {
 
 }
 
-const getGroupCode = async (groupCode, targetList) => {
-  let list = await axios.get(`/api/groupCode/gc/${groupCode}`);
-  targetList.value = list.data;
-}
-
-const getDetailCode = async (detailCode) => {
-  let list = await axios.get(`/api/groupCode/dc/${detailCode}`);
-  console.log(list.data.detail_name);
-}
-
 const tabulatorEvents = [
   {
     eventName: "rowClick",
@@ -77,8 +69,8 @@ const tabulatorEvents = [
 ];
 
 onMounted(() => {
-  getGroupCode('1C', equiTypeCodeList);
-  getGroupCode('0V', equiSchDateList)
+  groupcodelist.groupCodeList('1C', equiTypeCodeList);
+  groupcodelist.groupCodeList('0V', equiSchDateList);
 })
 
 </script>
