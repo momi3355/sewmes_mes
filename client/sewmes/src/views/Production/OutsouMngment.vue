@@ -3,7 +3,9 @@ import axios from 'axios';
 import { ref, onMounted } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
 import OutsouNullDeadListModal from './OutsouNullDeadListModal.vue';
+import ArgonButton from "@/components/ArgonButton.vue";
 
+const tabulatorCardRef = ref(null);
 // 검색 객체
 const searchProdName = ref('');
 const searchOutsouCode = ref('');
@@ -42,7 +44,8 @@ const searchOutsouOrder = async () => {
       deadDate: formatDate(item.dead_date),
       cpName: item.cp_name,
       orderQty: formatInt(item.order_qty),
-      releaseState: convertCode(item.release_state)
+      releaseState: item.release_state,                    // 실제 비교용
+      releaseStateLabel: convertCode(item.release_state)   // 보기용
     }));
   } catch (err) {
     console.error("API 호출 오류:", err);
@@ -75,7 +78,7 @@ const outsouOrderColumns = [
   { title: '납기일', field: 'deadDate', width: 200 },
   { title: '외주업체명', field: 'cpName', width: 200 },
   { title: '주문수량', field: 'orderQty', width: 150 },
-  { title: '자재 상태', field: 'releaseState', width: 150 }
+  { title: '자재 상태', field: 'releaseStateLabel', width: 150 }
 ];
 
 // 초기화 버튼 클릭 시 검색조건 입력란 비움움
@@ -116,6 +119,43 @@ const fetchNullDeadCount = async () => {
   }
 };
 
+// 외주발주 출고처리
+const handleReleaseComplete = async () => {
+  const table = tabulatorCardRef.value?.getTabulator?.();
+  if (!table) {
+    alert("테이블이 초기화되지 않았습니다.");
+    return;
+  }
+
+  const selectedRows = table.getSelectedData();
+  if (selectedRows.length === 0) {
+    alert("출고 처리할 외주발주 건을 선택하세요.");
+    return;
+  }
+
+  
+  const toRelease = selectedRows.filter(row => row.releaseState === '0o1o');
+
+  if (toRelease.length === 0) {
+    alert("이미 출고 완료된 건입니다.");
+    return;
+  }
+
+  try {
+    for (const row of toRelease) {
+      await axios.post('/api/outsouReleaseProc', {
+        outsouOrderCode: row.outsouOrderCode
+      });
+    }
+
+    alert("출고 처리 완료");
+    await searchOutsouOrder();  // 목록 재조회
+    await fetchNullDeadCount(); // 미등록건 수 재조회
+  } catch (err) {
+    console.error("출고 처리 실패:", err);
+    alert("출고 처리 중 오류 발생");
+  }
+};
 // 형태 변환
 const formatDate = (str) => {
   if (!str) return '';
@@ -138,6 +178,7 @@ const handleAfterModalSaved = () => {
 };
 onMounted(() => {
   fetchNullDeadCount();
+  openModal();
 });
 </script>
 
@@ -192,26 +233,21 @@ onMounted(() => {
         </div>
       </div>
     </div>
-      <div class="row mt-3">
-        <div class="d-flex justify-content-between align-items-center">
-          <!-- 왼쪽: 조회 버튼 -->
-          <div>
-            <button class="btn btn-info" style="width: 250px; font-size: 14px;" @click="openModal">납기일자 미등록 <span>{{ nullDeadCount }}</span> 건 조회</button>
-          </div> 
-          <!-- 오른쪽: 저장 및 삭제 버튼 -->
-          <div>
-            <button class="btn btn-sm btn-success" style="width: 150px; font-size: 14px;" @click="">출고 완료</button>
-          </div>
-        </div>
-      </div>
     <div class="row">
       <div class="col-md-12 d-flex flex-column">
         <tabulator-card
+          ref="tabulatorCardRef"
           card-title="외주발주"
           :table-data="outsouOrderData"
           :table-columns="outsouOrderColumns"
           :on="tabulatorEvent"
-        />
+        >
+          <template #actions>
+            <ArgonButton color="success" variant="gradient" @click="openModal">
+              외주발주 미등록 <span>{{ nullDeadCount }}</span> 건 조회
+            </ArgonButton>
+          </template>
+        </tabulator-card>
         <OutsouNullDeadListModal
         v-bind:isModalOpen="isModalOpen"
         v-on:close-modal="closeModal"

@@ -4,7 +4,7 @@ import { ref } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
 
 // 검색 객체
-const searchMaterialName = ref('');
+const searchItemName = ref('');
 const searchOutsouCode = ref('');
 const searchCpName = ref('');
 const searchReleaseState = ref('');
@@ -19,7 +19,7 @@ const outsouReleaseMaterialList = ref([]);
 const searchReleaseMaterial = async () => {
   const params = {};
 
-  if (searchMaterialName.value.trim()) params.materialName = searchMaterialName.value.trim();
+  if (searchItemName.value.trim()) params.itemName = searchItemName.value.trim();
   if (searchOutsouCode.value.trim()) params.outsouCode = searchOutsouCode.value.trim();
   if (searchCpName.value.trim()) params.cpName = searchCpName.value.trim();
   if (searchReleaseState.value) params.releaseState = searchReleaseState.value;
@@ -35,7 +35,7 @@ const searchReleaseMaterial = async () => {
       rowNum: idx + 1,
       outsouOrderCode: item.outsou_order_code,
       holdCode: item.hold_id,
-      materialName: item.material_name,
+      itemName: item.item_name, // 자재명, (반)제품명 둘다 포함
       regDate: formatDate(item.reg_date),
       deadDate: formatDate(item.dead_date),
       cpName: item.cp_name,
@@ -58,7 +58,7 @@ const outsouReleaseMaterialColumns = [
   { title: "No", field: "rowNum", width: 80 },
   { title: '외주발주코드', field: 'outsouOrderCode', width: 150 },
   { title: '자재홀드코드', field: 'holdCode', width: 150 },
-  { title: '자재명', field: 'materialName', width: 300 },
+  { title: '명칭', field: 'itemName', width: 300 },
   { title: '등록일', field: 'regDate', width: 200 },
   { title: '납기일', field: 'deadDate', width: 200 },
   { title: '외주업체명', field: 'cpName', width: 200 },
@@ -68,7 +68,7 @@ const outsouReleaseMaterialColumns = [
 
 // 초기화 버튼 클릭 시 검색조건 입력란 비움움
 const resetFilter = () => {
-  searchMaterialName.value = '';
+  searchItemName.value = '';
   searchOutsouCode.value = '';
   searchCpName.value = '';
   searchReleaseState.value = '';
@@ -129,7 +129,7 @@ const formatInt = (val) => {
         </div>
         <div class="col-md-3">
           <label class="form-label">자재명 포함 단어</label>
-          <input type="text" class="form-control" v-model="searchMaterialName">
+          <input type="text" class="form-control" v-model="searchItemName">
         </div>
       </div>
       <div class="row mb-2">
@@ -154,6 +154,9 @@ const formatInt = (val) => {
           <button class="btn btn-secondary" @click="resetFilter">초기화</button>
         </div>
       </div>
+    </div>
+    <div>
+      <button class="btn btn-sm btn-success" style="width: 150px; font-size: 14px;" @click="">출고 완료</button>
     </div>
     <div class="row">
       <div class="col-md-12 d-flex flex-column">
