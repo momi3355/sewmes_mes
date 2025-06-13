@@ -1,9 +1,12 @@
 <script setup>
 import { onMounted, ref } from "vue";
+import { useStore } from "vuex";
 import axios from "axios";
 
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import { typeFormatter } from "@/assets/js/utils/tableFormatter";
+
+const store = useStore();
 
 const bomtype = ref([]);
 const mattype = ref([]);
@@ -74,7 +77,7 @@ const itemEvent = [
       const rowData = row.getData();
       const tabulator = bom_table.value.getTabulator();
       if (tabulator.getData().find(e => e.code === rowData.code)) {
-        alert("동일한 품목을 넣을 수 없습니다.")
+        alert("동일한 품목을 넣을 수 없습니다.");
         return;
       }
       tabulator.addRow(rowData, false);
@@ -130,10 +133,14 @@ const searchHandler = async () => {
   }
 };
 
-const bomClickhandler = () => {
+const bomClickhandler = async () => {
+  const user = store.state.user;
+
   const tabulator = bom_table.value.getTabulator();
   const prodCode = detailFields.value.prod_code;
   const prodName = detailFields.value.prod_name;
+
+  const bomTable = tabulator.getData();
 
   if (!prodCode) { //undefined
     alert("제품번호를 입력하지 않았습니다.");
@@ -141,16 +148,45 @@ const bomClickhandler = () => {
   } else if (!prodName) {
     alert("제품이 존재하지 않습니다.");
     return;
-  } else if (!tabulator.getData().length) {
+  } else if (!bomTable.length) {
     alert("BOM정보가 비어있습니다.");
     return;
-  } else if (tabulator.getData().find(e => e.need == "")) {
+  } else if (bomTable.find(e => !e.need)) {
     alert("BOM소요량의 정보가 없습니다.");
     return;
   }
 
+  // '[
+  //    {"need": 1.500, "item_type": "0w1w", "item_code": "ITEMA001"},
+  //    {"need": 2.250, "item_type": "0w2w", "item_code": "ITEMB002"},
+	//    {"need": 0.750, "item_type": "0w1w", "item_code": "ITEMC003"}
+  // ]';
   //TODO: 단위를 보고 소수점이나 숫자를 유효성검사.
-  console.log("완성");
+  const bomDetailInfo = bomTable.map(e => {
+    return {
+      need: e.need,
+      item_type: e.type.includes("제품") ? bomtype.value[1].detail_code : bomtype.value[0].detail_code,
+      item_code: e.code,
+    };
+  });
+
+  for (const bom of bomDetailInfo) {
+    if (!Number(bom.need)) {
+      alert("BOM소요량이 숫자가 아닙니다.");
+      return;
+    }
+  }  
+
+  const bomInfo = {
+    prod_code: prodCode,
+    user_code: user.emp_num,
+    bom_info: bomDetailInfo,
+  };
+
+  const query = await axios.post("/api/bomDetail", bomInfo);
+  if (query.data.affectedRows) {
+    alert("성공");
+  }
 }
 
 const bomResethandler = () => {
@@ -172,7 +208,6 @@ const getGroupCode = async (code) => {
 
 onMounted(async () => {
   //공통코드 조회
-  console.log(await getGroupCode("0W"));
   bomtype.value = await getGroupCode("0W");
   mattype.value = await getGroupCode("0L");
   prdtype.value = await getGroupCode("0K");
