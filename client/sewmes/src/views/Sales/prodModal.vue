@@ -83,12 +83,14 @@ try{
       prodcode: product.prod_code,
       prodname: product.prod_name,
       category: product.category,
-      color: product.color
+      color: product.color,
+      size: product.size,
+      standard : product.standard
     }));
 
-    console.log('📦 DB에서 받아온 데이터:', product.value);
+    console.log('📦 모달 DB에서 받아온 데이터:', product.value);
   } catch (error) {
-    console.error('❌ 제품 목록 로딩 실패:', error.message);
+    console.error('❌ 모달 제품 목록 로딩 실패:', error.message);
   }
 });
 </script>
