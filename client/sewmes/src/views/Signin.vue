@@ -112,8 +112,6 @@ async function handleLogin() {
   // 서버에 요청
   // 로그인 정보 필요할시 아래 코드 user.value 로 접근가능
   //import { useStore } from 'vuex';
-  // const store = useStore();
-  // const user = computed(() => store.getters.getUser);
   try {
     const response = await axios.post('/api/login', {
       emp_num: empnum.value,
@@ -121,9 +119,9 @@ async function handleLogin() {
     });
 
     if (response.data.success) {
-      const userData = response.data.user;
-      store.dispatch('saveUser', response.data.user);
-      localStorage.setItem('user', JSON.stringify(userData));
+      const userData = response.data.user; // 지역변수
+      store.dispatch('saveUser', response.data.user); // saveUser 액션에 로그인정보 넘겨서 전역 state.user 에 로그인정보 저장
+      localStorage.setItem('user', JSON.stringify(userData)); // 로컬스토리지에 user라는 키 이름으로 저장 (새로고침 시 로그인정보 유지)
       router.push('/');
     } else {
       error.value = response.data.message;
