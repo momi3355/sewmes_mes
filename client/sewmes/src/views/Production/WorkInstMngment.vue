@@ -72,7 +72,9 @@ onMounted(() => {
 
 //생산계획 모달에서 데이터받아, 작업지시서 화면의 그리드에 표시될 데이터 추가하는 함수
 const handleSelectedPlans = (plans) => {
+     console.log("Plans received from modal:", plans); 
     const newWorkInsts = plans.map((plan, index) => ({
+        
         NO: workInstData.value.length + index + 1,
         work_inst_code: ' ', //지시코드 자동생성 저장전에는 빈값
         prod_plan_code: plan.prod_plan_code,
@@ -144,7 +146,7 @@ const saveWorkInstructions = async (workInstructionsToSave) => { // 인자 이�
 
         if (response.data.success) {
             alert("작업지시가 성공적으로 저장되었습니다!");
-            await fetchWorkInstructions();
+            
         } else {
             alert(`작업지시 저장 실패: ${response.data.message}`);
         }

@@ -6,21 +6,31 @@
 //작성할 때 백틱`` 사용.
 //생산계획수량>지시된총수량 모달표시
 const selectProdPlansList =
-`SELECT
-            pp.prod_plan_code,
-            pp.prod_code,
-            pp.prod_qty,
-            pp.reg_date,
-            od.dead_date
-        FROM
-            t_prod_plan pp
-        LEFT JOIN
-            t_order_detail od ON pp.order_detail_code = od.order_detail_code
-        WHERE
-            pp.prod_qty>(SELECT IFNULL(SUM(twi.inst_qty),0)
-                        FROM t_work_inst twi
-                        WHERE twi.prod_plan_code = pp.prod_plan_code
-        )`;
+` SELECT
+    pp.prod_plan_code,
+    pp.prod_code,
+    tp.prod_name,
+    pp.prod_qty,
+    (pp.prod_qty - IFNULL(SUM_TWI.sum_inst_qty, 0)) AS remain_qty, 
+    pp.reg_date,
+    od.dead_date
+FROM
+    t_prod_plan pp
+JOIN
+    t_product tp ON pp.prod_code = tp.prod_code
+LEFT JOIN
+    t_order_detail od ON pp.order_detail_code = od.order_detail_code
+LEFT JOIN (
+    SELECT
+        twi.prod_plan_code,
+        SUM(twi.inst_qty) AS sum_inst_qty
+    FROM
+        t_work_inst twi
+    GROUP BY
+        twi.prod_plan_code
+) AS SUM_TWI ON pp.prod_plan_code = SUM_TWI.prod_plan_code
+WHERE
+    pp.prod_qty > IFNULL(SUM_TWI.sum_inst_qty, 0)`;
 
 //작업지시코드 전체 조회
 const allworkInstList =
@@ -64,7 +74,13 @@ WHERE work_inst_code=?
     WHERE
         work_inst_code = ?
 `;  
-            
+
+
+//작업지시서
+const deleteHoldSql =
+`DELETE FROM t_hold WHERE  work_inst_code=?`;
+
+
 
 // 지시코드 클릭 하지 않고 초기 작업지시의 지시상태가 생산전, 생산중인 경우 작업지시서 다건조회
 
@@ -106,7 +122,7 @@ const insertWorkInstList =
 )VALUES(?,?,?,?,?,?,?,?,?)`;
 
 
-
+const selectBomDetailsByBomCode=` SELECT item_code, need  FROM t_bom_detail WHERE bom_code = ?`;
 
 // 생산계획없이 작업지시 생성할 때 bom_code를 조회
 const selectBomByProdCode=
@@ -128,11 +144,13 @@ WHERE work_inst_code LIKE 'I%'
 module.exports = {
     selectProdPlansList,
     allworkInstList,
+    deleteHoldSql,
     checkWorkInstCode,
     updateWorkInstList,
     selectWorkInstListDefault,
     insertWorkInstList,
     selectBomByProdCode,
     selectMaxWorkInstCode,
+    selectBomDetailsByBomCode,
 }
 

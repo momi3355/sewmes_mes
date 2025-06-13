@@ -55,7 +55,8 @@ const getWorkInstAll= async()=>{
 const saveWorkInstructions= async (workInstructions) => {
     let conn;
         try {
-            conn = await mariadb.beginTransaction(); 
+            conn = await mariadb.getConnection(); 
+            await conn.beginTransaction(); 
             const savedResults = [];
 
             for (const instruction of workInstructions) {
@@ -71,75 +72,108 @@ const saveWorkInstructions= async (workInstructions) => {
                         currentWorkInstCode = existingWorkInstCode; 
 
                         const UpdateValues=[
-
+                            instruction.prod_plan_code || null,
+                            instruction.prod_code,
+                            instruction.inst_qty,
+                            instruction.dead_date || null,
+                            instruction.inst_state || '0s1s',
+                            instruction.emp_num || null,
+                            instruction.inst_date ? new Date(instruction.inst_date) : new Date(),
+                            instruction.inst_reg_date ? new Date(instruction.inst_reg_date) : new Date(),
+                            currentWorkInstCode
                         ];
+                        const updateResult = await mariadb.executeTransactionalQuery(conn,'updateWorkInstList',UpdateValues);
+                        console.log(`작업지시 ${currentWorkInstCode} 업데이트 성공. Affected rows: ${updateResult.affectedRows}`);
+
+                        await mariadb.executeTransactionalQuery(conn, 'deleteHoldSql', [currentWorkInstCode]);
+                        console.log(`기존 자재 홀드 내역 삭제 완료 for ${currentWorkInstCode}.`);
+                    }else{ // 코드값이 넘어왔으나 db에 없는 경우
+                        console.warn(`[saveWorkInstructions] Existing work_inst_code '${existingWorkInstCode}' not found in DB. Treating as new.`);
+                        currentWorkInstCode = await generateWorkInstCode(conn);
                     }
+                }else{ //work_inst_code가 넘어오지 않은 경우 : 신규  INMSERT
+                     currentWorkInstCode = await generateWorkInstCode(conn);
 
                 }
-                
-
-                // 프론트엔드 데이터 필드명과 DB 컬럼 매핑
-                const work_inst_code = await generateWorkInstCode(conn);
-                const prod_plan_code = instruction.prod_plan_code || null;
-                const prod_code = instruction.prod_code; 
-            
-                const inst_qty = instruction.inst_qty;
-
-                // prodCode를 통해 bom코드조회
-                let bom_code= null;
-                if(prod_code){
-                    const bomRows= await mariadb.executeTransactionalQuery(conn,'selectBomByProdCode',[prod_code]);
-                   if(bomRows&&bomRows.length>0){
-                        bom_code =bomRows[0].bom_code;
-                    }else{
-                            console.log(`제품코드 '${prod_code}' 에 해당하는 bom코드를 찾을 수 없습니다`);
+                //( 신규 INSERT인 경우)
+                    if(!existingWorkInstCode || !exists){
+                        const insertValues = [
+                                currentWorkInstCode,
+                                instruction.prod_plan_code,
+                                instruction.prod_code, 
+                                instruction.bom_code,
+                                instruction.inst_qty,
+                                instruction.inst_date,
+                                instruction.emp_num,
+                                instruction.inst_state || '0s1s',
+                                instruction.inst_reg_date
+                            ];
+                        const insertResult = await mariadb.executeTransactionalQuery(conn, 'insertWorkInstList', insertValues); 
+                         console.log(`작업지시 ${currentWorkInstCode} 신규 삽입 성공. Insert ID: ${insertResult.insertId}`);
                     }
+                     // prodCode를 통해 bom코드조회
+                        if (!prod_code || !inst_qty) { // 'prdcode' 대신 'prodCode' 사용
+                            throw new Error("필수 필드(제품코드, 지시수량)가 누락되었습니다.");
+                        }
+                        let bom_code= null;
+                        if(prod_code){
+                            const bomRows= await mariadb.executeTransactionalQuery(conn,'selectBomByProdCode',[prod_code]);
+                        if(bomRows&&bomRows.length>0){
+                                bom_code =bomRows[0].bom_code;
+                            }else{
+                                    console.log(`제품코드 '${prod_code}' 에 해당하는 bom코드를 찾을 수 없습니다`);
+                            }
+                        }
+                if (!bom_code) {
+                await mariadb.rollback(conn); // Rollback the entire transaction if BOM not found
+                throw new Error(`제품코드 '${instruction.prod_code}'에 해당하는 BOM 정보를 찾을 수 없어 자재 홀드 처리 및 작업지시 저장 실패.`);
+            }
+
+            // Get BOM details (materials) for the found BOM_code
+            const bomDetails = await mariadb.executeTransactionalQuery(conn, 'selectBomDetailsByBomCode', [bom_code]);
+
+            if (bomDetails && bomDetails.length > 0) {
+                const holdInsertSqlPrefix = `INSERT INTO t_hold (item_code, hold_qty, work_inst_code) VALUES `;
+                const holdValuePlaceholders = [];
+                const holdValues = [];
+
+                for (const detail of bomDetails) {
+                    const calculatedHoldQty = detail.need * instruction.inst_qty;
+                    holdValuePlaceholders.push(`(?, ?, ?)`);
+                    holdValues.push(detail.item_code, calculatedHoldQty, currentWorkInstCode);
                 }
-                // DB 스키마에 맞춘 추가/변경된 필드 처리
-                
-                const inst_date = instruction.inst_date ? new Date(instruction.inst_date) : new Date();
-                const inst_reg_date = instruction.inst_reg_date ? new Date(instruction.inst_reg_date) : new Date();
 
-                const emp_num = instruction.emp_num || null;
-                 const inst_state = instruction.inst_state || '0s';
-                // 유효성 검사 (NOT NULL 필드 확인)
-                // prodCode가 NOT NULL이므로 검사 유지
-                if (!prod_code || !inst_qty) { // 'prdcode' 대신 'prodCode' 사용
-                    throw new Error("필수 필드(제품코드, 지시수량)가 누락되었습니다.");
+                if (holdValuePlaceholders.length > 0) {
+                    const finalHoldInsertSql = holdInsertSqlPrefix + holdValuePlaceholders.join(', ');
+                    const holdResult = await mariadb.executeTransactionalQuery(conn, finalHoldInsertSql, holdValues);
+                    console.log(`${holdResult.affectedRows} 건의 자재 홀드 성공 for ${currentWorkInstCode}.`);
                 }
-
-               
-                const insertValues = [
-                    work_inst_code,
-                    prod_plan_code,
-                    bom_code,
-                    inst_qty,
-                    inst_date,
-                    prod_code, 
-                    emp_num,
-                    inst_reg_date,
-                    inst_state
-                ];
-                const insertResult = await mariadb.executeTransactionalQuery(conn, 'insertWorkInstList', insertValues); ;
-                savedResults.push({ ...instruction, instcd: work_inst_code, id: insertResult.insertId });
+            } else {
+                console.warn(`BOM 코드 '${bom_code}'에 대한 상세 내역(자재 목록)을 찾을 수 없습니다. 자재 홀드 처리 생략.`);
+                // Depending on your business rule, you might want to throw an error here too if BOM details are mandatory
+                // throw new Error(`BOM 코드 '${bom_code}'에 대한 상세 내역이 없어 자재 홀드 처리 불가.`);
             }
 
-            await mariadb.commit(conn); // ✨ mapper를 통해 트랜잭션 커밋
-            console.log('모든 작업지시 성공적으로 커밋됨.');
-            return { success: true, message: '모든 작업지시가 성공적으로 저장되었습니다.', data: savedResults };
-
-        } catch (error) {
-            if(conn){
-                await mariadb.rollback(conn);
-            }
-             console.error('작업지시 저장 중 오류 발생 및 롤백됨. 오류 상세:', error);
-            return { success: false, message: '작업지시 저장 중 오류가 발생했습니다: ' + error.message };
-        }finally {
-            if (conn) { // 작업이 끝나면 연결을 풀에 반환
-                await mariadb.releaseConnection(conn); // ✨ mapper를 통해 연결 해제
-            }
+            // Add to saved results for the response
+            savedResults.push({ ...instruction, work_inst_code: currentWorkInstCode });
         }
-    };
+
+        await conn.commit();
+        console.log('모든 작업지시 및 관련 자재 홀드 성공적으로 커밋됨.');
+        return { success: true, message: '모든 작업지시가 성공적으로 저장되었습니다.', data: savedResults };
+
+    } catch (error) {
+        if (conn) {
+            await conn.rollback();
+        }
+        console.error('작업지시 저장 중 오류 발생 및 롤백됨. 오류 상세:', error);
+        return { success: false, message: '작업지시 저장 중 오류가 발생했습니다: ' + error.message };
+    } finally {
+        if (conn) {
+            await conn.release(); // <--- 이 라인을 이렇게 변경합니다
+        }
+    }
+};
 module.exports ={
     getProductionPlans,
     saveWorkInstructions,
