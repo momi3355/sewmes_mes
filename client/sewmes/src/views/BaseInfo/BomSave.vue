@@ -1,9 +1,12 @@
 <script setup>
 import { onMounted, ref } from "vue";
+import { useStore } from "vuex";
 import axios from "axios";
 
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import { typeFormatter } from "@/assets/js/utils/tableFormatter";
+
+const store = useStore();
 
 const bomtype = ref([]);
 const mattype = ref([]);
@@ -52,6 +55,8 @@ const bomColumns = [
   { title: "단위", field: "unit", width: 80 },
 ];
 
+//TODO : slq에서 UNISON를 사용하면 2테이블을 병합을 할 수 있다.
+
 const initialSearchFields = {
   code: "",
   item_type: "0w1w",
@@ -74,7 +79,7 @@ const itemEvent = [
       const rowData = row.getData();
       const tabulator = bom_table.value.getTabulator();
       if (tabulator.getData().find(e => e.code === rowData.code)) {
-        alert("동일한 품목을 넣을 수 없습니다.")
+        alert("동일한 품목을 넣을 수 없습니다.");
         return;
       }
       tabulator.addRow(rowData, false);
@@ -130,10 +135,14 @@ const searchHandler = async () => {
   }
 };
 
-const bomClickhandler = () => {
+const bomClickhandler = async () => {
+  const user = store.state.user;
+
   const tabulator = bom_table.value.getTabulator();
   const prodCode = detailFields.value.prod_code;
   const prodName = detailFields.value.prod_name;
+
+  const bomTable = tabulator.getData();
 
   if (!prodCode) { //undefined
     alert("제품번호를 입력하지 않았습니다.");
@@ -141,16 +150,45 @@ const bomClickhandler = () => {
   } else if (!prodName) {
     alert("제품이 존재하지 않습니다.");
     return;
-  } else if (!tabulator.getData().length) {
+  } else if (!bomTable.length) {
     alert("BOM정보가 비어있습니다.");
     return;
-  } else if (tabulator.getData().find(e => e.need == "")) {
+  } else if (bomTable.find(e => !e.need)) {
     alert("BOM소요량의 정보가 없습니다.");
     return;
   }
 
+  // '[
+  //    {"need": 1.500, "item_type": "0w1w", "item_code": "ITEMA001"},
+  //    {"need": 2.250, "item_type": "0w2w", "item_code": "ITEMB002"},
+	//    {"need": 0.750, "item_type": "0w1w", "item_code": "ITEMC003"}
+  // ]';
   //TODO: 단위를 보고 소수점이나 숫자를 유효성검사.
-  console.log("완성");
+  const bomDetailInfo = bomTable.map(e => {
+    return {
+      need: e.need,
+      item_type: e.type.includes("제품") ? bomtype.value[1].detail_code : bomtype.value[0].detail_code,
+      item_code: e.code,
+    };
+  });
+
+  for (const bom of bomDetailInfo) {
+    if (!Number(bom.need)) {
+      alert("BOM소요량이 숫자가 아닙니다.");
+      return;
+    }
+  }  
+
+  const bomInfo = {
+    prod_code: prodCode,
+    user_code: user.emp_num,
+    bom_info: bomDetailInfo,
+  };
+
+  const query = await axios.post("/api/bomDetail", bomInfo);
+  if (query.data.affectedRows) {
+    alert("성공");
+  }
 }
 
 const bomResethandler = () => {
@@ -172,7 +210,6 @@ const getGroupCode = async (code) => {
 
 onMounted(async () => {
   //공통코드 조회
-  console.log(await getGroupCode("0W"));
   bomtype.value = await getGroupCode("0W");
   mattype.value = await getGroupCode("0L");
   prdtype.value = await getGroupCode("0K");
@@ -245,16 +282,6 @@ onMounted(async () => {
     </div>
 
     <div class="row me-3">
-      <div class="col-6 md-3">
-        <tabulator-card
-          ref="item_table"
-          card-title="품목 리스트"
-          :table-data="itemData"
-          :table-columns="itemColumns"
-          :tabulator-options="itemOptions"
-          :on="itemEvent"
-        />
-      </div>
       <div class="col-md-6 d-flex flex-column">
         <div class="card mb-2 flex-grow-1" style="min-height: 180px">
           <div class="card-header pb-0 d-flex justify-content-between align-items-center">
@@ -272,7 +299,6 @@ onMounted(async () => {
                   <td>
                     <input
                       type="text"
-                      ref="prod_code"
                       class="form-control form-control-sm"
                       @keyup.enter="findProd"
                       v-model="detailFields.prod_code"
@@ -284,7 +310,6 @@ onMounted(async () => {
                   <td>
                     <input
                       type="text"
-                      ref="prod_name"
                       class="form-control form-control-sm"
                       v-model="detailFields.prod_name"
                       readonly
@@ -302,6 +327,16 @@ onMounted(async () => {
           :table-columns="bomColumns"
           :tabulator-options="bomOptions"
           :on="bomEvent"/>
+      </div>
+      <div class="col-6 md-3">
+        <tabulator-card
+          ref="item_table"
+          card-title="품목 리스트"
+          :table-data="itemData"
+          :table-columns="itemColumns"
+          :tabulator-options="itemOptions"
+          :on="itemEvent"
+        />
       </div>
     </div>
   </div>

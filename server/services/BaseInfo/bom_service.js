@@ -6,7 +6,12 @@ const addBomDataWithDetails = async (params) => {
 
   try {
     const bomInfo = JSON.stringify(params.bom_info);
-      return mariadb.query("insertBomDataWithDetails", [
+    // console.log([
+    //   params.prod_code,
+    //   params.user_code,
+    //   bomInfo
+    // ]);
+    return mariadb.query("insertBomDataWithDetails", [
       params.prod_code,
       params.user_code,
       bomInfo

@@ -4,6 +4,8 @@ const router = express.Router();
 
 const materialService = require('../services/BaseInfo/baseMaterial_service');
 const productService = require('../services/BaseInfo/baseProduct_service');
+const bomService = require('../services/BaseInfo/bom_service.js');
+const prdReceiveService = require('../services/Production/prdReceive_service.js');
 
 router.get("/baseMaterial", async (req, res) => {
   //query string 사용
@@ -94,6 +96,25 @@ router.put("/baseProduct", async (req, res) => {
   }
 });
 
+router.post("/bomDetail", async (req, res) => {
+  try {
+    const result = await bomService.addBomDataWithDetails(req.body);
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "추가 중 오류 발생" });
+  }
+});
 
+router.get("/prdReceive", async (req, res) => {
+  //getProductReceiveList
+  try {
+    const result = await prdReceiveService.getProductReceiveList();
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "검색 중 오류 발생" });
+  }
+});
 
 module.exports = router;
