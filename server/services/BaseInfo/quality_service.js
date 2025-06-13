@@ -31,21 +31,23 @@ const qualityOneSelect = async (qualityCode) => {
 // 등록
 const qualityAdd = async (qualityInfo) => {
   //코드 생성
-  const results = await mariadb.query("createCodeProc", [ 't_quality', 'quality_code', 'Q' ]);
+  let creCode = await mariadb.query("createCodeProc", [ 't_quality', 'quality_code', 'Q' ]);
   // 결과가 affectedRows, 값 들어있는 배열 두개라서 두번째 배열의 0번째 값을 가져옴
-  const newCode = results[1][0].newCode;
+  let newCode = creCode[1][0].newCode;
   qualityInfo.quality_code = newCode;
 
   //qualityInfo가 formData라서 객체로 들어가도록 별도 처리
   qualityInfo = JSON.parse(JSON.stringify(qualityInfo));
-  let resInfo = await mariadb.query("insertQualityinfo", qualityInfo)
+  const { fileName, originalName, filePath, ...qualityData } = qualityInfo;
+  let resInfo = await mariadb.query("insertQualityinfo", qualityData)
     .catch(err => console.log(err));
 
-  if(qualityInfo.fileName) {
+    if(qualityInfo.fileName) {
     const imgParams = [newCode, qualityInfo.fileName, qualityInfo.originalName, qualityInfo.filePath];
     await mariadb.query("insertImages", imgParams).catch(err => console.log(err));
   }
 
+  console.log(resInfo);
   let result = null;
   if (resInfo.affectedRows > 0) {
     result = {
@@ -61,7 +63,9 @@ const qualityAdd = async (qualityInfo) => {
 
 // 수정
 const qualityModify = async (qualityCode, qualityInfo) => {
-  let data = [qualityInfo, qualityCode];
+  qualityInfo = JSON.parse(JSON.stringify(qualityInfo));
+  const { fileName, originalName, filePath, ...qualityData } = qualityInfo;
+  let data = [qualityData, qualityCode];
 
   let resInfo = await mariadb.query("updateQualityinfo", data)
     .catch(err => console.log(err));
