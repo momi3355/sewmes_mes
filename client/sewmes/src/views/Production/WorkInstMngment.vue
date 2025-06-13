@@ -1,5 +1,5 @@
 <script setup>
-import { ref, nextTick, watch,onMounted} from "vue"; 
+import { ref, nextTick, watch,onMounted} from "vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import ProductionPlanModal from "./ProductionPlanModal.vue";
 import axios from 'axios';
@@ -7,6 +7,12 @@ import axios from 'axios';
 // 실제 작업지시 데이터
 const workInstData = ref([]); //초기에는 빈값
 
+// 공통 코드 -> 사용자 친화적 문구 맵핑 객체
+const instStateMap = {
+    '0s1s': '생산 전',
+    '0s2s': '생산 중',
+    '0s3s': '생산 완료',
+};
 
 // 작업지시컬럼
 const workInstColumns = [
@@ -25,9 +31,18 @@ const workInstColumns = [
     { title: "제품명", field: "prod_name", width: 180, editor: "input" }, // 💡 field: "prdcode" -> field: "prdname"으로 수정
     { title: "지시수량", field: "inst_qty", width: 180, editor: "input" },
     { title: "납기일자", field: "dead_date", width: 180 }, // 납기일자 주문테이블에서 백엔드로 가져옴
-    { title: "지시상태", field: "inst_state", hozAlign: "center" },
+    {
+        title: "지시상태",
+        field: "inst_state",
+        hozAlign: "center",
+        width: 120,
+        formatter:function(cell){
+            const value = cell.getValue();
+            return instStateMap[value] || value;
+        }
+    },
     { title: "담당자", field: "emp_num", width: 120, editor: "input" },
-    { title: "지시서등록일자", field: "inst_reg_date", width: 150, editor: "input" },
+    { title: "지시서등록일자", field: "inst_reg_date", width: 180, editor: "input" },
 ];
 
 const tabulatorOptions = {
@@ -72,14 +87,14 @@ onMounted(() => {
 
 //생산계획 모달에서 데이터받아, 작업지시서 화면의 그리드에 표시될 데이터 추가하는 함수
 const handleSelectedPlans = (plans) => {
-     console.log("Plans received from modal:", plans); 
+      console.log("Plans received from modal:", plans);
     const newWorkInsts = plans.map((plan, index) => ({
-        
+
         NO: workInstData.value.length + index + 1,
         work_inst_code: ' ', //지시코드 자동생성 저장전에는 빈값
         prod_plan_code: plan.prod_plan_code,
         prod_code: plan.prod_code,
-        prod_name:plan.prod_name, 
+        prod_name:plan.prod_name,
         inst_qty: plan.prod_qty,
         dead_date: plan.dead_date, //주문상세테이블과 조인해서 가져올 납기일자
         inst_state: '0s1s', //초기상태
@@ -106,7 +121,7 @@ const searchField3 = ref(''); //지시상태
 const searchField4 = ref(''); //담당자
 
 //행추가 함수(생산계획 목록 없이 작업지시 생성)
-const addRow = () => {    
+const addRow = () => {
     //새로운 행을 위한 NO값 생성
     const newNo = workInstData.value.length > 0 ? Math.max(...workInstData.value.map(item => item.NO || 0)) + 1 : 1;
 
@@ -138,15 +153,15 @@ const saveWorkInstructions = async (workInstructionsToSave) => { // 인자 이�
             alert("저장할 작업지시 데이터가 유효하지 않습니다.");
             return;
         }
-        
+
         console.log("백엔드로 보낼 데이터:", workInstructionsToSave);
 
         // 백엔드 API 호출
-        const response = await axios.post('/api/workInstMngment/save', workInstructionsToSave); 
+        const response = await axios.post('/api/workInstMngment/save', workInstructionsToSave);
 
         if (response.data.success) {
             alert("작업지시가 성공적으로 저장되었습니다!");
-            
+
         } else {
             alert(`작업지시 저장 실패: ${response.data.message}`);
         }
@@ -158,7 +173,6 @@ const saveWorkInstructions = async (workInstructionsToSave) => { // 인자 이�
 };
 
 </script>
-
 <template>
     <div class="container-fluid p-3">
         <div class="row search-color">
@@ -185,23 +199,28 @@ const saveWorkInstructions = async (workInstructionsToSave) => { // 인자 이�
                 </div>
             </div>
         </div>
+
         <div class="row mt-3">
             <div class="col-12">
                 <button class="btn btn-info" @click="openModal">생산계획서 불러오기</button>
-                <button class="btn btn-success ms-2 " @click="saveWorkInstructions(workInstData)">저장</button>
-                <button class="btn btn-secondary ms-2" @click="addRow">행추가</button>
-            </div>
+                </div>
         </div>
 
-        <div class="col-12 mt-4">
-            <tabulator-card
-                ref="tabulatorCardRef"        
-                card-title="작업지시서 작성"
-                :table-data="workInstData"
-                :table-columns="workInstColumns"
-                :tabulatorOptions="tabulatorOptions"
-                
-            />
+  <div class="col-12 mt-4">
+            <div style="max-width: 1200px; margin: 0 auto; overflow-x: auto;"> <tabulator-card
+                    ref="tabulatorCardRef"
+                    card-title="작업지시서"
+                    :table-data="workInstData"
+                    :table-columns="workInstColumns"
+                    :tabulatorOptions="tabulatorOptions"
+                    :body-padding="'5px'"  >
+                    <template #actions>
+                        <button class="btn btn-success me-2" @click="saveWorkInstructions(workInstData)">저장</button>
+                        <button class="btn btn-secondary me-2" @click="addRow">행추가</button>
+                        <button class="btn btn-warning me-2" @click="delete">삭제</button>
+                    </template>
+                </tabulator-card>
+            </div>
         </div>
 
 

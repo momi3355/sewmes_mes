@@ -55,28 +55,30 @@ LEFT JOIN
 
 //작업지시테이블에 작업지시코드가 있는지 확인
 const checkWorkInstCode=`
-SELECT COUNT(*) FROM t_work_inst
-WHERE work_inst_code=?
+SELECT COUNT(*) AS count FROM t_work_inst WHERE work_inst_code=?
 `;
 
  //작업지시업데이트
  const updateWorkInstList= `
     UPDATE t_work_inst
-    SET
-        prod_plan_code=?,
-        prod_code= ?,
-        bom_code= ?,
-        inst_code= ?,
-        inst_date= ?,
-        emp_num= ?,
-        inst_state= ?,
-        inst_reg_date= NOW() 
-    WHERE
-        work_inst_code = ?
+        SET
+            prod_plan_code = ?,
+            prod_code = ?,
+            bom_code = ?,
+            inst_qty = ?,
+            dead_date = ?,
+            inst_state = ?,
+            emp_num = ?,
+            inst_date = CASE
+                            WHEN ? IS NULL OR ? = '' THEN NULL
+                            ELSE ?
+                        END,
+            inst_reg_date = ?
+        WHERE work_inst_code = ?
 `;  
 
 
-//작업지시서
+
 const deleteHoldSql =
 `DELETE FROM t_hold WHERE  work_inst_code=?`;
 
@@ -109,17 +111,20 @@ const selectWorkInstListDefault =
 
 // 작업지시서 등록(새로운 작업지시 생성)
 const insertWorkInstList =
-`INSERT INTO t_work_inst (
-    work_inst_code,                                                                                                                                                                                 
-    prod_plan_code,
-    bom_code,
-    inst_qty,
-    inst_date,
-    prod_code,
-    emp_num,
-    inst_reg_date,
-    inst_state    
-)VALUES(?,?,?,?,?,?,?,?,?)`;
+ `
+        INSERT INTO t_work_inst (
+            work_inst_code, prod_plan_code, prod_code, bom_code,
+            inst_qty, inst_state, emp_num, inst_date, inst_reg_date
+        ) VALUES (
+            ?, ?, ?, ?,
+            ?, ?, ?,
+            CASE
+                WHEN ? IS NULL OR ? = '' THEN NULL
+                ELSE ?
+            END,
+            ?
+        )
+    `;
 
 
 const selectBomDetailsByBomCode=` SELECT item_code, need  FROM t_bom_detail WHERE bom_code = ?`;
@@ -133,11 +138,54 @@ WHERE prod_code=?
 
 
 
-//가장큰 작업지시 코드 조회
+//가장큰 작업지시 코드 조회(작업지시코드생성함수를 위함임)
 const selectMaxWorkInstCode=
 `SELECT MAX(work_inst_code) AS max_code
 FROM t_work_inst
 WHERE work_inst_code LIKE 'I%'
+`;
+//가장큰 자재홀드테이클 홀드코드 조회
+const selectMaxHoldId=
+` SELECT MAX(hold_id) AS max_code
+        FROM t_hold
+        WHERE hold_id LIKE 'H%'
+`;
+
+
+   // 1. 특정 작업지시 코드에 대한 모든 홀드 데이터 조회 (material_code 포함)
+  const  selectHoldsByWorkInstCode= `
+        SELECT hold_id, material_code, hold_qty
+        FROM t_hold
+        WHERE work_inst_code = ?
+    `;
+
+    // 2. 홀드 데이터 업데이트 쿼리 (hold_id 기준)
+   const  updateHold= `
+        UPDATE t_hold
+        SET
+            hold_qty = ?
+        WHERE
+            hold_id = ?
+            AND material_code = ? -- 안전을 위해 material_code도 조건에 추가
+    `;
+
+    // 3. 홀드 데이터 단일 삭제 쿼리 (hold_id 기준)
+  const  deleteHoldById= `
+        DELETE FROM t_hold
+        WHERE hold_id = ?
+    `;
+
+    // (기존 insertHoldList는 그대로 사용)
+    // insertHoldList: `INSERT INTO t_hold (hold_id,material_code, hold_qty, work_inst_code) VALUES (?, ?, ?, ?)`
+    // 위 쿼리를 `sqlList`에 직접 정의하는 대신, `workInst.js`에서 동적으로 생성하는 방식(finalHoldInsertSql)은 유지해도 괜찮습니다.
+    // 하지만 단일 INSERT 쿼리를 미리 정의해두는 것도 좋습니다.
+   const  insertSingleHold= `
+        INSERT INTO t_hold (hold_id, material_code, hold_qty, work_inst_code)
+        VALUES (?, ?, ?, ?)
+    `;
+    const callCreateCodeProcForHoldId = `
+    CALL createcode_proc('t_hold', 'hold_id', 'H', @newHoldId);
+    SELECT @newHoldId AS new_hold_id;
 `;
 
 //작업지시 테이블 bom_code로 소요량 조회회
@@ -152,5 +200,11 @@ module.exports = {
     selectBomByProdCode,
     selectMaxWorkInstCode,
     selectBomDetailsByBomCode,
+    selectMaxHoldId,
+    selectHoldsByWorkInstCode,
+    updateHold,
+    deleteHoldById,
+    insertSingleHold,
+    callCreateCodeProcForHoldId,
 }
 
