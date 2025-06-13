@@ -1,3 +1,5 @@
+import axios from "axios";
+
 const groupCodeList = async (groupCode, targetList) => {
   let list = await axios.get(`/api/groupCode/gc/${groupCode}`);
   targetList.value = list.data;

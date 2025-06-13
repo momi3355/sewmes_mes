@@ -1,7 +1,7 @@
 const mariadb = require("../../database/mapper.js");
 const sqlList = require("../../database/sqlList.js"); 
 
-getProductList = async ({prod_code, prod_name, prod_type, category, size, use_yn}) => {
+const getProductList = async ({prod_code, prod_name, prod_type, category, size, use_yn}) => {
   let baseSql = sqlList.selectBaseProductList;
   const whereClauses = [];
   const params = [];
@@ -40,15 +40,15 @@ getProductList = async ({prod_code, prod_name, prod_type, category, size, use_yn
   return mariadb.directQuery(finalSql, params);
 };
 
-getProductListByCode = async (code) => {
+const getProductListByCode = async (code) => {
   return mariadb.query("selectBaseProductListByCode", code);
 };
 
-addProduct = async (params) => {
+const addProduct = async (params) => {
   return mariadb.query("insertBaseProduct", params);
 };
 
-setProduct = async (code, params) => {
+const setProduct = async (code, params) => {
   // console.log(attr);
   return mariadb.query("updateBaseProduct", [params, code]);
 };

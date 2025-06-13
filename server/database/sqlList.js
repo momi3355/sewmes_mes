@@ -13,6 +13,7 @@ const equiMaster = require('./sqls/equiMaster.js');
 const workInsstSqls=require('./sqls/workInst.js');
 const baseMaterial = require('./sqls/baseMaterial.js');
 const baseProduct = require('./sqls/baseProduct.js');
+const bomMaster = require('./sqls/bomMaster.js');
 const orderListSql=require('./sqls/orderList.js');
 const companyListSql=require('./sqls/companyList.js');
 const prdPlanMngment = require('./sqls/prdPlanMngment.js');
@@ -22,6 +23,7 @@ const outsouInbound = require('./sqls/outsouInbound.js');
 const matorderList=require('./sqls/matOrder.js');
 const matcheckList=require('./sqls/matCheck.js');
 const matCheckView = require('./sqls/matCheckView.js');
+const prdReceive = require('./sqls/prdReceive.js');
 const loginSql=require('./sqls/login.js');
 
 module.exports = {
@@ -30,9 +32,10 @@ module.exports = {
   ...equiMaster,
   ...baseMaterial,
   ...baseProduct, //기준 제품
+  ...bomMaster, //BOM 정보
   ...processFlow, // 공정흐름
   ...prdPlanMngment, // 생산계획
-  ...outsouMngment, // 외주발주
+  ...outsouMngment, // 외주발주 및 외주발주 모달
   ...outsouRelease, // 외주자재출고
   ...outsouInbound, // 외주입고 및 검수
   ...workInsstSqls, //정민
@@ -41,5 +44,6 @@ module.exports = {
   ...matorderList, // 자재발주
   ...matcheckList, // 자재수입검사
   ...matCheckView, // 수입검사자재 상세조회
+  ...prdReceive, //완제품 입고
   ...loginSql, // 로그인
 }
