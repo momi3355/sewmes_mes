@@ -40,14 +40,17 @@ const orderAdd =
 
 // 주문서등록 / 제품모달
 const productList =
-`SELECT prod_code,
-        prod_name,
-        category,
-        color,
-        size,
-        unit_price
-FROM t_product
-WHERE prod_type = '0k2k'`
+`SELECT a.prod_code,
+        a.prod_name,
+        a.category,
+        a.color,
+        a.size,
+        b.standard
+FROM t_product a JOIN t_order_detail b
+     ON (a.prod_code = b.prod_code)
+WHERE a.prod_type = '0k2k'
+AND a.use_yn = '0b1b'`
+
 
 // 년-월-일 날짜포맷
 // DATE_FORMAT((Now), '%Y-%m-%d')
