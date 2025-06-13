@@ -49,7 +49,15 @@ const findOutsouOrderNullDeadCount = async () => {
   const sql = sqlList.selectOutsouOrderNullDeadCount;
   return await mariadb.directQuery(sql);
 };
+// 외주발주 출고처리
+const callOutsouRelease = async (updates) => {
+  for (const row of updates) {
+    const { outsouOrderCode } = req.body;
 
+    // 외주발주 출고처리 프로시저 실행
+    await mariadb.query("callRegOutsouMaterial", [outsouOrderCode]);
+  }
+};
 
 // ==============================================================
 
@@ -212,6 +220,7 @@ module.exports ={
   // 외주발주
   findOutsouOrderByConditions,
   findOutsouOrderNullDeadCount,
+  callOutsouRelease,
   // 외주발주 모달
   findOutsouOrderNotDeadList,
   updateOutsouDeadDate,
