@@ -88,23 +88,19 @@ const saveQualityMaster = async () => {
   formData.append('test_standard', qualityInfo.value.test_standard || '');
   formData.append('test_note', qualityInfo.value.test_note || '');
 
-  if (qualityInfo.value.quality_code) {
-    formData.append('quality_code', qualityInfo.value.quality_code);
-  }
-
   let file = imageInput.value?.files[0];
   if (file) {
     formData.append('image', file);
   }
 
   if (!qualityInfo.value.quality_code) {
-  console.log(formData);
     await axios.post('/api/quality', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     });
   } else {
+    formData.append('quality_code', qualityInfo.value.quality_code);
     await axios.put(`/api/quality/${qualityInfo.value.quality_code}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
