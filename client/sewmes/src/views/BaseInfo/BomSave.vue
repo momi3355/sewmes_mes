@@ -55,6 +55,8 @@ const bomColumns = [
   { title: "단위", field: "unit", width: 80 },
 ];
 
+//TODO : slq에서 UNISON를 사용하면 2테이블을 병합을 할 수 있다.
+
 const initialSearchFields = {
   code: "",
   item_type: "0w1w",
@@ -280,16 +282,6 @@ onMounted(async () => {
     </div>
 
     <div class="row me-3">
-      <div class="col-6 md-3">
-        <tabulator-card
-          ref="item_table"
-          card-title="품목 리스트"
-          :table-data="itemData"
-          :table-columns="itemColumns"
-          :tabulator-options="itemOptions"
-          :on="itemEvent"
-        />
-      </div>
       <div class="col-md-6 d-flex flex-column">
         <div class="card mb-2 flex-grow-1" style="min-height: 180px">
           <div class="card-header pb-0 d-flex justify-content-between align-items-center">
@@ -307,7 +299,6 @@ onMounted(async () => {
                   <td>
                     <input
                       type="text"
-                      ref="prod_code"
                       class="form-control form-control-sm"
                       @keyup.enter="findProd"
                       v-model="detailFields.prod_code"
@@ -319,7 +310,6 @@ onMounted(async () => {
                   <td>
                     <input
                       type="text"
-                      ref="prod_name"
                       class="form-control form-control-sm"
                       v-model="detailFields.prod_name"
                       readonly
@@ -337,6 +327,16 @@ onMounted(async () => {
           :table-columns="bomColumns"
           :tabulator-options="bomOptions"
           :on="bomEvent"/>
+      </div>
+      <div class="col-6 md-3">
+        <tabulator-card
+          ref="item_table"
+          card-title="품목 리스트"
+          :table-data="itemData"
+          :table-columns="itemColumns"
+          :tabulator-options="itemOptions"
+          :on="itemEvent"
+        />
       </div>
     </div>
   </div>
