@@ -21,6 +21,7 @@ const outsouRelease = require('./sqls/outsouRelease.js');
 const outsouInbound = require('./sqls/outsouInbound.js');
 const matorderList=require('./sqls/matOrder.js');
 const matcheckList=require('./sqls/matCheck.js');
+const matCheckView = require('./sqls/matCheckView.js');
 const loginSql=require('./sqls/login.js');
 
 module.exports = {
@@ -39,5 +40,6 @@ module.exports = {
   ...companyListSql, // 업체 정보
   ...matorderList, // 자재발주
   ...matcheckList, // 자재수입검사
+  ...matCheckView, // 수입검사자재 상세조회
   ...loginSql, // 로그인
 }
