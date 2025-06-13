@@ -13,6 +13,7 @@ const equiMaster = require('./sqls/equiMaster.js');
 const workInsstSqls=require('./sqls/workInst.js');
 const baseMaterial = require('./sqls/baseMaterial.js');
 const baseProduct = require('./sqls/baseProduct.js');
+const bomMaster = require('./sqls/bomMaster.js');
 const orderListSql=require('./sqls/orderList.js');
 const companyListSql=require('./sqls/companyList.js');
 const prdPlanMngment = require('./sqls/prdPlanMngment.js');
@@ -29,6 +30,7 @@ module.exports = {
   ...equiMaster,
   ...baseMaterial,
   ...baseProduct, //기준 제품
+  ...bomMaster, //BOM 정보
   ...processFlow, // 공정흐름
   ...prdPlanMngment, // 생산계획
   ...outsouMngment, // 외주발주
