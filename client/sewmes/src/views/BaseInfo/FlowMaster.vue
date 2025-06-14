@@ -23,7 +23,7 @@ const searchProduct = async () => {
   if (searchProdName.value.trim()) params.name = searchProdName.value.trim();
 
   try {
-    const result = await axios.get('/api/productList', { params });
+    const result = await axios.get('/api/flowProductList', { params });
     prodData.value = result.data.map((item, idx) => ({
       rowNum: idx + 1,
       prodCode: item.prod_code,

@@ -8,39 +8,65 @@ import ArgonButton from "@/components/ArgonButton.vue";
 
 import DefaultInfoCard from "@/examples/Cards/DefaultInfoCard.vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
+import MatCheckModal from './MatCheckModal.vue';
 
 const searchField1 = ref('');
 const searchField2 = ref('');
 const searchField3 = ref('');
 const searchMaterialType = ref('');
 
-const userData = ref([]);
+const completedList = ref([]);
+const matCheckModalRef = ref(null);
+const selectedDetail = ref(null);
 
 
 
-const userColumns = [
-  {
-  formatter: "rowSelection",  // 행 선택 체크박스를 생성합니다.
-  // titleFormatter: "rowSelection", // 헤더에 '전체 선택' 체크박스를 생성합니다.
-  hozAlign: "center",
-  headerSort: false,          // 이 열은 정렬 기능을 비활성화합니다.
-  cellClick: function(e, cell) { // 셀의 아무 곳이나 클릭해도 체크되도록 합니다.
-    cell.getRow().toggleSelect();
-  },
-   width: 1
-},
-  { title: "LOT", field: "lot", width: 250, editor: "input" },
-  { title: "자재명", field: "mat_name", width: 250, hozAlign: "left", sorter: "number" },
-  { title: "합격수량", field: "pass_qty", hozAlign: "left", formatter: "link" },
+const completedListColumns = [
+  { title: "검사코드", field: "inbound_check_code" },
+  { title: "자재명", field: "material_name", hozAlign: "left" },
+  { title: "합격수량", field: "pass_qty", hozAlign: "left" },
   { title: "수입일자", field: "inbound_date", hozAlign: "left"},
   { title: "검사일자", field: "check_date", hozAlign: "left"},
-  { title: "검사결과", field: "check_result", hozAlign: "left"}
+  { title: "검사결과", field: "check_status", hozAlign: "left"},
 ];
 
 
 // 선택된 행들을 처리하는 함수
-const handleUserRowClick = (e, row) => {
-  console.log("Row clicked:", row.getData());
+const handleRowClick = async (e, row) => {
+  const rowData = row.getData();
+  console.log("Row clicked:", rowData);
+  try{
+    const response = await axios.get(`/api/material/matcheckdetail/${rowData.inbound_check_code}`);
+    console.log("상세정보: ", response.data);
+  } catch(error){
+    console.error("상세 정보조회 오류", error);
+  }
+};
+
+const fetchCompletedList = async () => {
+  try{
+    const response = await axios.get('/api/material/matcheckview');
+    completedList.value = response.data;
+  } catch(error){
+    console.error("완료 목록 조회 오류: ", error);
+  }
+};
+
+const handleCheckComplete = async (checkData) => {
+  try{
+    console.log('전송된 검사결과', checkData);
+    const response = await axios.post('/api/material/complete-check', checkData);
+
+    if(response.data.success){
+      alert('검사 결과가 저장되었습니다.');
+      fetchCompletedList();
+    } else {
+      alert('저장에 실패했습니다: ' + response.data.message);
+    }
+  } catch(error){
+    console.error('검사 결과 저장 API가 호출되지 않음', error);
+    alert('서버 오류 발생');
+  }
 };
 
 // 선택된 행들을 가져오는 함수
@@ -52,6 +78,9 @@ const getSelectedRows = (tableRef) => {
   }
 };
 
+onMounted(() => {
+  fetchCompletedList();
+});
 </script>
 
 <template>
@@ -91,11 +120,11 @@ const getSelectedRows = (tableRef) => {
           <div class="col-lg-12">
             <tabulator-card
               card-title="수입처리 자재 목록"
-              :table-data="userData"
-              :table-columns="userColumns"
+              :table-data="completedList"
+              :table-columns="completedListColumns"
               :tabulator-options="{
                 paginationSize: 7,
-                rowClick: handleUserRowClick,
+                rowClick: handleRowClick,
               }"
             >
               <!-- 'actions' 슬롯에 버튼을 삽입합니다. -->
@@ -104,9 +133,7 @@ const getSelectedRows = (tableRef) => {
                   color="info" 
                   variant="gradient"
                   @click="saveAsPdf"
-                >
-                  PDF로 저장
-                </ArgonButton>
+                >PDF로 저장</ArgonButton>
               </template>
             </tabulator-card>
           </div>
@@ -153,6 +180,7 @@ const getSelectedRows = (tableRef) => {
       </div> 
     </div>   
   </div>     <!-- "py-4 container-fluid" -->
+  <MatCheckModal ref="matCheckModalRef" @complete="handleCheckComplete" />
 </template>
 <style scoped>
  .col-lg-12{

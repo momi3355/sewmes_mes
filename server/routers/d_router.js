@@ -54,7 +54,7 @@ router.delete('/processDelete/:code', async(req, res) => {
 // ==============================================================
 
 // 공정흐름 페이지 라우터 =========================================
-router.get('/productList', async (req, res)=>{
+router.get('/flowProductList', async (req, res)=>{
   try {
     const { cate, name } = req.query;
     const result = await processService.findProdByConditions(cate, name);
@@ -225,6 +225,17 @@ router.get('/outsouOrderNullDeadCount', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).send({ message: "검색 중 오류 발생" });
+  }
+});
+// 외주발주 출고 처리
+router.post('/outsouReleaseProc', async (req, res) => {
+  try {
+    const updates = req.  body;
+    await outsouService.callOutsouRelease(updates);
+    res.send({ message: '출고처리 완료' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: '출고처리 실패' });
   }
 });
 // ==============================================================

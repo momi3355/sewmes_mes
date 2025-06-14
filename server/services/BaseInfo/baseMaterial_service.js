@@ -1,7 +1,7 @@
 const mariadb = require("../../database/mapper.js");
 const sqlList = require("../../database/sqlList.js"); 
 
-getMaterialList = async ({material_code, material_name, material_type, use_yn}) => {
+const getMaterialList = async ({material_code, material_name, material_type, use_yn}) => {
   let baseSql = sqlList.selectBaseMaterialList;
   const whereClauses = [];
   const params = [];
@@ -30,15 +30,15 @@ getMaterialList = async ({material_code, material_name, material_type, use_yn}) 
   return mariadb.directQuery(finalSql, params);
 };
 
-getMaterialListByCode = async (code) => {
+const getMaterialListByCode = async (code) => {
   return mariadb.query("selectBaseMaterialListByCode", code);
 };
 
-addMaterial = async (params) => {
+const addMaterial = async (params) => {
   return mariadb.query("insertBaseMaterial", params);
 };
 
-setMaterial = async (code, params) => {
+const setMaterial = async (code, params) => {
   // console.log(attr);
   return mariadb.query("updateBaseMaterial", [params, code]);
 };
