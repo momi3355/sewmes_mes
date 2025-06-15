@@ -96,6 +96,16 @@ router.put("/baseProduct", async (req, res) => {
   }
 });
 
+router.get("/bomItem", async (req, res) => {
+  try {
+    const result = await bomService.getBomItemList(req.query);
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "추가 중 오류 발생" });
+  }
+});
+
 router.post("/bomDetail", async (req, res) => {
   try {
     const result = await bomService.addBomDataWithDetails(req.body);
@@ -107,9 +117,8 @@ router.post("/bomDetail", async (req, res) => {
 });
 
 router.get("/prdReceive", async (req, res) => {
-  //getProductReceiveList
   try {
-    const result = await prdReceiveService.getProductReceiveList();
+    const result = await prdReceiveService.getProductReceiveList(req.query);
     res.send(result);
   } catch (err) {
     console.error(err);

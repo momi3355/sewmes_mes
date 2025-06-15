@@ -4,6 +4,7 @@ import { useStore } from "vuex";
 import axios from "axios";
 
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
+import groupcodelist from "@/assets/js/utils/groupcodelist";
 import { typeFormatter } from "@/assets/js/utils/tableFormatter";
 
 const store = useStore();
@@ -11,6 +12,7 @@ const store = useStore();
 const bomtype = ref([]);
 const mattype = ref([]);
 const prdtype = ref([]);
+const itemtype = ref([]);
 const catetype = ref([]);
 
 const item_table = ref(null);
@@ -20,30 +22,37 @@ const itemData = ref([]);
 const bomData = ref([]);
 
 const itemColumns = [
-  { title: "품목코드", field: "code", width: 120 },
-  { title: "품목명", field: "name", width: 200 },
+  { title: "품목코드", field: "item_code", width: 120 },
+  { title: "품목명", field: "item_name", width: 200 },
   {
     title: "품목유형",
-    field: "type",
+    field: "item_type",
     width: 120,
     formatter: typeFormatter,
     formatterParams: {
-      typeArray: [],
+      typeArray: itemtype,
     },
   },
-  { title: "규격", field: "info" },
+  { 
+    title: "규격",
+    field: "item_info",
+    formatter: typeFormatter,
+    formatterParams: {
+      typeArray: catetype,
+    }
+  },
 ];
 
 const bomColumns = [
-  { title: "품목코드", field: "code", width: 120 },
-  { title: "품목명", field: "name", width: 200 },
+  { title: "품목코드", field: "item_code", width: 120 },
+  { title: "품목명", field: "item_name", width: 200 },
   {
     title: "품목유형",
-    field: "type",
+    field: "item_type",
     width: 120,
     formatter: typeFormatter,
     formatterParams: {
-      typeArray: [],
+      typeArray: itemtype,
     },
   },
   { title: "소요량", field: "need", editor:"input", editorParams:{
@@ -55,14 +64,13 @@ const bomColumns = [
   { title: "단위", field: "unit", width: 80 },
 ];
 
-//TODO : slq에서 UNISON를 사용하면 2테이블을 병합을 할 수 있다.
-
 const initialSearchFields = {
-  code: "",
-  item_type: "0w1w",
-  name: "",
-  type: "",
-  use_yn: "0b1b"
+  item_code: "",
+  item_name: "",
+  item_type: "",
+  use_yn: "",
+  use_yse: false,
+  use_no: false,
 };
 
 const searchData = ref({ ...initialSearchFields });
@@ -77,8 +85,9 @@ const itemEvent = [
     eventName: "rowDblClick",
     eventAction: (e, row) => {
       const rowData = row.getData();
+      //console.log(rowData);
       const tabulator = bom_table.value.getTabulator();
-      if (tabulator.getData().find(e => e.code === rowData.code)) {
+      if (tabulator.getData().find(e => e.item_code === rowData.item_code)) {
         alert("동일한 품목을 넣을 수 없습니다.");
         return;
       }
@@ -109,30 +118,25 @@ const resetHandler = () => {
 
 //검색
 const searchHandler = async () => {
-  //console.log(tabulator.getColumnDefinitions());
-  if (searchData.value.item_type === "0w1w") {
-    const material = await axios.get("/api/baseMaterial");
-    itemData.value = material.data.map(e => {
-      return {
-        code: e.material_code,
-        name: e.material_name,
-        type: mattype.value.find(el => el.detail_code === e.material_type).detail_name,
-        info: e.standard,
-        unit: e.unit,
-      }
-    });
-  } else if (searchData.value.item_type === "0w2w") {
-    const product = await axios.get("/api/baseProduct");
-    itemData.value = product.data.map(e => {
-      return {
-        code: e.prod_code,
-        name: e.prod_name,
-        type: prdtype.value.find(el => el.detail_code === e.prod_type).detail_name,
-        info: catetype.value.find(el => el.detail_code === e.category).detail_name,
-        unit: e.unit,
-      }
-    });
+  const search = searchData.value;
+  if (!search.use_yse && !search.use_no) {
+    search.use_yn = "";
+  } else if (search.use_yse && search.use_no) {
+    search.use_yn = "0b1b&0b2b";
+  } else if (search.use_yse) {
+    search.use_yn = "0b1b";
+  } else if (search.use_no) {
+    search.use_yn = "0b2b";
   }
+  
+  const tabulator = item_table.value.getTabulator();
+  await tabulator.setData("/api/bomItem", {
+    item_code: search.item_code,
+    item_name: search.item_name,
+    item_type: search.item_type,
+    use_yn: search.use_yn
+  });
+  itemData.value = tabulator.getData();
 };
 
 const bomClickhandler = async () => {
@@ -158,6 +162,13 @@ const bomClickhandler = async () => {
     return;
   }
 
+  for (const bom of bomDetailInfo) {
+    if (!Number(bom.need)) {
+      alert("BOM소요량이 숫자가 아닙니다.");
+      return;
+    }
+  } 
+
   // '[
   //    {"need": 1.500, "item_type": "0w1w", "item_code": "ITEMA001"},
   //    {"need": 2.250, "item_type": "0w2w", "item_code": "ITEMB002"},
@@ -167,17 +178,10 @@ const bomClickhandler = async () => {
   const bomDetailInfo = bomTable.map(e => {
     return {
       need: e.need,
-      item_type: e.type.includes("제품") ? bomtype.value[1].detail_code : bomtype.value[0].detail_code,
-      item_code: e.code,
+      item_type: e.item_type.includes("0k") ? bomtype.value[1].detail_code : bomtype.value[0].detail_code,
+      item_code: e.item_code,
     };
   });
-
-  for (const bom of bomDetailInfo) {
-    if (!Number(bom.need)) {
-      alert("BOM소요량이 숫자가 아닙니다.");
-      return;
-    }
-  }  
 
   const bomInfo = {
     prod_code: prodCode,
@@ -203,18 +207,18 @@ const findProd = async () => {
   detailFields.value.prod_name = product.data.prod_name;
 };
 
-//공통코드 조회
-const getGroupCode = async (code) => {
-  return (await axios.get(`/api/groupCode/gc/${code}`)).data;
-}
-
 onMounted(async () => {
   //공통코드 조회
-  bomtype.value = await getGroupCode("0W");
-  mattype.value = await getGroupCode("0L");
-  prdtype.value = await getGroupCode("0K");
-  catetype.value = await getGroupCode("0J");
-  searchHandler();
+  await groupcodelist.groupCodeList("0W", bomtype);
+  await groupcodelist.groupCodeList("0L", mattype);
+  await groupcodelist.groupCodeList("0K", prdtype);
+  await groupcodelist.groupCodeList("0J", catetype);
+  mattype.value.pop();
+  prdtype.value.pop();
+  itemtype.value = mattype.value.concat(prdtype.value);
+
+  const bomItem = await axios.get("/api/bomItem");
+  itemData.value = bomItem.data;
 });
 </script>
 
@@ -228,13 +232,14 @@ onMounted(async () => {
           <input
             type="text"
             class="form-control"
-            v-model="searchData.code"
+            v-model="searchData.item_code"
           />
         </div>
         <div class="col-md-2">
-          <label class="form-label">제품유형</label>
+          <label class="form-label">품목유형</label>
           <select class="form-select" v-model="searchData.item_type">
-            <option v-for="type in bomtype" :value="type.detail_code">
+            <option selected value="">전체</option>
+            <option v-for="type in itemtype" :value="type.detail_code">
               {{ type.detail_name }}
             </option>
           </select>
@@ -246,29 +251,31 @@ onMounted(async () => {
           <input
             type="text"
             class="form-control"
-            v-model="searchData.name"
-          />
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">품목유형</label>
-          <input
-            type="text"
-            class="form-control"
-            v-model="searchData.type"
+            v-model="searchData.item_name"
           />
         </div>
         <div class="col-md-2">
           <label class="form-label">사용여부</label>
-          <div class="form-check" v-for="type in usetype">
-            <input
+          <div class="form-check">
+            <input 
               class="form-check-input"
-              type="radio"
-              v-model="searchData.use_yn"
-              :value="type.code"
-              :id="'search-'+type.code"
+              type="checkbox"
+              v-model="searchData.use_yse"
+              id="search-use-yse"
             />
-            <label class="form-check-label" :for="'search-'+type.code">
-              {{ type.name }}
+            <label class="form-check-label" for="search-use-yse">
+              사용
+            </label>
+          </div>
+          <div class="form-check">
+            <input 
+              class="form-check-input"
+              type="checkbox"
+              v-model="searchData.use_no"
+              id="search-use-no"
+            />
+            <label class="form-check-label" for="search-use-no">
+              비사용
             </label>
           </div>
         </div>

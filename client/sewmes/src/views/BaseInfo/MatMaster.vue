@@ -3,80 +3,15 @@ import { onMounted, ref } from "vue";
 import axios from "axios";
 
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
+import groupcodelist from "@/assets/js/utils/groupcodelist";
+import { typeFormatter } from "@/assets/js/utils/tableFormatter";
 
-const mattype = ref([
-  {
-    code: "0l1l",
-    name: "원자재",
-  },
-  {
-    code: "0l2l",
-    name: "부자재",
-  },
-  {
-    code: "0l3l",
-    name: "소모품",
-  }
-]);
-const usetype = ref([
-  {
-    code: "0b1b",
-    name: "사용",
-  },
-  {
-    code: "0b2b",
-    name: "비사용",
-  }
-]);
-const colortype = ref([
-  {
-    code: "0i1i",
-    name: "빨",
-  },
-  {
-    code: "0i2i",
-    name: "주",
-  },
-  {
-    code: "0i3i",
-    name: "노",
-  },
-    {
-    code: "0i4i",
-    name: "초",
-  },
-  {
-    code: "0i5i",
-    name: "파",
-  },
-  {
-    code: "0i6i",
-    name: "남",
-  },
-  {
-    code: "0i7i",
-    name: "보",
-  },
-  {
-    code: "0i8i",
-    name: "흰",
-  },
-  {
-    code: "0i9i",
-    name: "검",
-  }
-]);
+const mattype = ref([]);
+const usetype = ref([]);
+const colortype = ref([]);
 
 const table = ref(null);
 const materialData = ref([]);
-
-const typeFormatter = (cell, formatterParams) => {
-  const typeArray = formatterParams.typeArray;
-  const code = cell.getValue();
-
-  const foundType = typeArray.find((type) => type.code === code);
-  return foundType ? foundType.name : code;
-};
 
 const materialColumns = [
   { title: "자재코드", field: "material_code", width: 100 },
@@ -87,7 +22,7 @@ const materialColumns = [
     width: 75,
     formatter: typeFormatter,
     formatterParams: {
-      typeArray: mattype.value,
+      typeArray: mattype,
     },
   },
   { title: "규격", field: "standard", width: 160 },
@@ -98,7 +33,7 @@ const materialColumns = [
     width: 105,
     formatter: typeFormatter,
     formatterParams: {
-      typeArray: usetype.value,
+      typeArray: usetype,
     },
   },
   { title: "단가", field: "unit_price", width: 70, hozAlign: "right" },
@@ -109,7 +44,7 @@ const materialColumns = [
     width: 70,
     formatter: typeFormatter,
     formatterParams: {
-      typeArray: colortype.value,
+      typeArray: colortype,
     },
   }
 ];
@@ -130,7 +65,9 @@ const initialSearchFields = {
   material_code: "",
   material_name: "",
   material_type: "",
-  use_yn: "0b1b"
+  use_yn: "",
+  use_yse: false,
+  use_no: false,
 };
 
 const detailFields = ref({ ...initialDetailFields });
@@ -169,8 +106,24 @@ const resetHandler = () => {
 
 //검색
 const searchHandler = async () => {
+  const search = searchData.value;
+  if (!search.use_yse && !search.use_no) {
+    search.use_yn = "";
+  } else if (search.use_yse && search.use_no) {
+    search.use_yn = "0b1b&0b2b";
+  } else if (search.use_yse) {
+    search.use_yn = "0b1b";
+  } else if (search.use_no) {
+    search.use_yn = "0b2b";
+  }
+
   const tabulator = table.value.getTabulator();
-  await tabulator.setData("/api/baseMaterial" , searchData.value);
+  await tabulator.setData("/api/baseMaterial", {
+    material_code: search.material_code,
+    material_name: search.material_name,
+    material_type: search.material_type,
+    use_yn: search.use_yn
+  });
   materialData.value = tabulator.getData();
 };
 
@@ -230,7 +183,10 @@ const getBaseMaterial = async() => {
   materialData.value = material.data;
 }
 
-onMounted(() => {
+onMounted(async () => {
+  await groupcodelist.groupCodeList("0l", mattype);
+  await groupcodelist.groupCodeList("0b", usetype);
+  await groupcodelist.groupCodeList("0i", colortype);
   getBaseMaterial();
 });
 </script>
@@ -252,21 +208,31 @@ onMounted(() => {
           <label class="form-label">자재유형</label>
           <select class="form-select" v-model="searchData.material_type">
             <option selected value="">전체</option>
-            <option v-for="type in mattype" :value="type.code">{{ type.name }}</option>
+            <option v-for="type in mattype" :value="type.detail_code">{{ type.detail_name }}</option>
           </select>
         </div>
         <div class="col-md-2">
           <label class="form-label">사용여부</label>
-          <div class="form-check" v-for="type in usetype">
+          <div class="form-check">
             <input 
               class="form-check-input"
               type="checkbox"
-              v-model="searchData.use_yn"
-              :value="type.code"
-              :id="'search-'+type.code"
+              v-model="searchData.use_yse"
+              id="search-use-yse"
             />
-            <label class="form-check-label" :for="'search-'+type.code">
-              {{ type.name }}
+            <label class="form-check-label" for="search-use-yse">
+              사용
+            </label>
+          </div>
+          <div class="form-check">
+            <input 
+              class="form-check-input"
+              type="checkbox"
+              v-model="searchData.use_no"
+              id="search-use-no"
+            />
+            <label class="form-check-label" for="search-use-no">
+              비사용
             </label>
           </div>
         </div>
@@ -309,7 +275,7 @@ onMounted(() => {
                   <th>자재유형</th>
                   <td>
                     <select class="form-select form-select-sm" v-model="detailFields.material_type">
-                      <option v-for="type in mattype" :value="type.code" :selected="type.code == detailFields.material_type">{{ type.name }}</option>
+                      <option v-for="type in mattype" :value="type.detail_code" :selected="type.detail_code == detailFields.material_type">{{ type.detail_name }}</option>
                     </select>
                   </td>
                 </tr>
@@ -317,7 +283,7 @@ onMounted(() => {
                   <th>색상</th>
                   <td>
                     <select class="form-select form-select-sm" v-model="detailFields.color">
-                      <option v-for="type in colortype" :value="type.code" :selected="type.code == detailFields.color">{{ type.name }}</option>
+                      <option v-for="type in colortype" :value="type.detail_code" :selected="type.detail_code == detailFields.color">{{ type.detail_name }}</option>
                     </select>
                   </td>
                 </tr>
@@ -337,10 +303,10 @@ onMounted(() => {
                   <th>사용여부</th>
                   <td>
                     <div class="form-check use-radio" v-for="type in usetype">
-                      <input class="form-check-input" type="radio" :id="'form-'+type.code" 
-                        v-model=detailFields.use_yn :value="type.code" :checked="type.code == detailFields.use_yn">
-                      <label class="form-check-label" :for="'form-'+type.code">
-                      {{ type.name }}
+                      <input class="form-check-input" type="radio" :id="'form-'+type.detail_code" 
+                        v-model=detailFields.use_yn :value="type.detail_code" :checked="type.detail_code == detailFields.use_yn">
+                      <label class="form-check-label" :for="'form-'+type.detail_code">
+                      {{ type.detail_name }}
                       </label>
                     </div>
                   </td>
