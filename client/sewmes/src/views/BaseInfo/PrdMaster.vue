@@ -24,7 +24,7 @@ const productColumns = [
     width: 75,
     formatter: typeFormatter,
     formatterParams: {
-      typeArray: [],
+      typeArray: prdtype,
     },
   },
   {
@@ -33,7 +33,7 @@ const productColumns = [
     width: 75,
     formatter: typeFormatter,
     formatterParams: {
-      typeArray: [],
+      typeArray: catetype,
     },
   },
   { title: "단위", field: "unit", width: 50 },
@@ -43,7 +43,7 @@ const productColumns = [
     width: 90,
     formatter: typeFormatter,
     formatterParams: {
-      typeArray: [],
+      typeArray: sizetype,
     },
   },
   {
@@ -52,7 +52,7 @@ const productColumns = [
     width: 70,
     formatter: typeFormatter,
     formatterParams: {
-      typeArray: [],
+      typeArray: colortype,
     },
   },
   {
@@ -61,7 +61,7 @@ const productColumns = [
     width: 105,
     formatter: typeFormatter,
     formatterParams: {
-      typeArray: [],
+      typeArray: usetype,
     },
   },
   { title: "비고", field: "note", width: 130, hozAlign: "right" },
@@ -138,7 +138,14 @@ const searchHandler = async () => {
   }
 
   const tabulator = table.value.getTabulator();
-  await tabulator.setData("/api/baseProduct", searchData.value);
+  await tabulator.setData("/api/baseProduct", {
+    prod_code: search.prod_code,
+    prod_name: search.prod_name,
+    prod_type: search.prod_type,
+    size: search.size,
+    category: search.category,
+    use_yn: search.use_yn
+  });
   productData.value = tabulator.getData();
 };
 
@@ -201,15 +208,10 @@ const getBaseProduct = async () => {
 
 onMounted(async() => {
   await groupcodelist.groupCodeList("0k", prdtype);
-  productColumns[2].formatterParams.typeArray = prdtype.value;
   await groupcodelist.groupCodeList("0j", catetype);
-  productColumns[3].formatterParams.typeArray = catetype.value;
   await groupcodelist.groupCodeList("0h", sizetype);
-  productColumns[5].formatterParams.typeArray = sizetype.value;
   await groupcodelist.groupCodeList("0i", colortype);
-  productColumns[6].formatterParams.typeArray = colortype.value;
   await groupcodelist.groupCodeList("0b", usetype);
-  productColumns[7].formatterParams.typeArray = usetype.value;
   getBaseProduct();
 });
 </script>

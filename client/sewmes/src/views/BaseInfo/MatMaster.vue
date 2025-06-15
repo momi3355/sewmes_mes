@@ -22,7 +22,7 @@ const materialColumns = [
     width: 75,
     formatter: typeFormatter,
     formatterParams: {
-      typeArray: [],
+      typeArray: mattype,
     },
   },
   { title: "규격", field: "standard", width: 160 },
@@ -33,7 +33,7 @@ const materialColumns = [
     width: 105,
     formatter: typeFormatter,
     formatterParams: {
-      typeArray: [],
+      typeArray: usetype,
     },
   },
   { title: "단가", field: "unit_price", width: 70, hozAlign: "right" },
@@ -44,7 +44,7 @@ const materialColumns = [
     width: 70,
     formatter: typeFormatter,
     formatterParams: {
-      typeArray: [],
+      typeArray: colortype,
     },
   }
 ];
@@ -118,7 +118,12 @@ const searchHandler = async () => {
   }
 
   const tabulator = table.value.getTabulator();
-  await tabulator.setData("/api/baseMaterial" , search);
+  await tabulator.setData("/api/baseMaterial", {
+    material_code: search.material_code,
+    material_name: search.material_name,
+    material_type: search.material_type,
+    use_yn: search.use_yn
+  });
   materialData.value = tabulator.getData();
 };
 
@@ -180,11 +185,8 @@ const getBaseMaterial = async() => {
 
 onMounted(async () => {
   await groupcodelist.groupCodeList("0l", mattype);
-  materialColumns[2].formatterParams.typeArray = mattype.value;
   await groupcodelist.groupCodeList("0b", usetype);
-  materialColumns[5].formatterParams.typeArray = usetype.value;
   await groupcodelist.groupCodeList("0i", colortype);
-  materialColumns[8].formatterParams.typeArray = colortype.value;
   getBaseMaterial();
 });
 </script>
