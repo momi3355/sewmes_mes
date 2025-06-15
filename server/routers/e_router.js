@@ -80,4 +80,28 @@ router.get('/allworkInst',async(req,res)=>{
         });
     }
 })
+
+// 작업지시 삭제
+router.post('/workInstMngment/delete', async (req, res) => {
+    try {
+        const { workInstCodes } = req.body; // 프론트에서 보낸 workInstCodes 배열을 받음
+
+        // 유효성 검사 (프론트에서 1차로 하지만, 백엔드에서도 반드시 검증해야 함)
+        if (!workInstCodes || !Array.isArray(workInstCodes) || workInstCodes.length === 0) {
+            return res.status(400).json({ success: false, message: "삭제할 작업지시 코드가 제공되지 않았습니다." });
+        }
+
+        console.log(`Deleting work instructions with codes: ${workInstCodes.join(', ')}`);
+        const result = await workInstService.deleteWorkInstructions(workInstCodes);
+
+        res.json(result); // workInstService에서 반환하는 { success: boolean, message: string, ... } 객체를 그대로 전달
+    } catch (error) {
+        console.error('작업지시 삭제 API 오류:', error);
+        // 서비스 함수에서 이미 구체적인 메시지를 반환하도록 되어 있다면, 그대로 사용하거나 추가 메시지
+        res.status(500).json({
+            success: false,
+            message: `작업지시 삭제 중 서버 오류 발생: ${error.message}`
+        });
+    }
+});
 module.exports = router;

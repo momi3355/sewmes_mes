@@ -1,7 +1,7 @@
 // C:\2.document\한땀한땀\sewmes_mes\server\services\Production\workInst.js
 
 // Service에서 필요하면 DB에 접속할 수 있도록 mapper를 가져옴
-const { query, getConnection } = require("../../database/mapper.js");
+const { query, directQuery,getConnection } = require("../../database/mapper.js");
 const { convertObjToAry } = require('../../utils/converts.js');
 const sqlList = require("../../database/sqlList.js");
 
@@ -37,13 +37,49 @@ const getProductionPlans=async()=>{
     }
 };
 
-//작업지시조회
-const getWorkInstAll= async()=>{
+//작업지시조회 (여기 수정)
+const getWorkInstAll= async(searchParams = {}) => { // searchParams를 인자로 받도록 수정
     try{
-        const rows = await query('allworkInstList', []);
+        let sql = sqlList['allworkInstList']; // sqlList에서 기본 SQL 쿼리 가져옴
+        //sql += ` WHERE 1=1 `; // WHERE 절 시작
+
+        const queryParams = [];
+
+        // 프론트엔드에서 넘어온 검색 파라미터들을 구조 분해 할당
+        // 이 이름들은 프론트엔드에서 axios.get('/api/allworkInst', { params: validParams })로 보낸 파라미터 이름과 일치해야 합니다.
+        const {  prodName, instState, empNum } = searchParams;
+
+       
+        // 2. 제품명 (prodName) 검색 조건 추가 (tp.prod_name 컬럼)
+        if (prodName) {
+            sql += ` AND tp.prod_name LIKE ?`;
+            queryParams.push(`%${prodName}%`); // %를 사용하여 부분 일치 검색
+        }
+
+        // 3. 지시상태 (instState) 검색 조건 추가 (twi.inst_state 컬럼)
+        if (instState) {
+            sql += ` AND twi.inst_state = ?`;
+            queryParams.push(instState);
+        }
+
+        // 4. 담당자 (empNum) 검색 조건 추가 (twi.emp_num 컬럼)
+        if (empNum) {
+            sql += ` AND twi.emp_num = ?`;
+            queryParams.push(empNum);
+        }
+
+        //sql += ` ORDER BY twi.inst_reg_date DESC`; // 최신 작업지시가 먼저 오도록 정렬 (선택 사항)
+
+        console.log('백엔드: 최종 SQL 쿼리:', sql); // 최종 SQL 쿼리 로깅
+        console.log('백엔드: SQL 쿼리 파라미터:', queryParams);
+
+        // **여기서 중요한 변경: query 함수 대신 directQuery 함수 사용**
+        const rows = await directQuery(sql, queryParams);
+        console.log('백엔드: DB에서 조회된 레코드 수:', rows.length); // DB에서 실제로 가져온 레코드 개수
+        console.log('백엔드: DB에서 조회된 데이터 예시 (첫 3개):', rows.slice(0, 4)); // 데이터의 앞부분 예시
         return rows;
     }catch(error){
-        console.error('작업지시목록 조회 중 문제 발생',error);
+        console.error('백엔드: 작업지시목록 조회 중 문제 발생', error);
         throw error;
     }
 }
@@ -111,7 +147,7 @@ const saveWorkInstructions= async (workInstructions) => {
                 isNewInstruction = true;
             }
 
-            // 4. 신규 작업지시인 경우만 t_work_inst 테이블에 INSERT 실행 (변경 없음)
+            // 4. 신규 작업지시인 경우만 t_work_inst 테이블에 INSERT 실행 
             if (isNewInstruction) {
                 const bomRows = await conn.query(sqlList['selectBomByProdCode'], [p_prod_code]);
                 if (bomRows && bomRows.length > 0) {
@@ -129,7 +165,7 @@ const saveWorkInstructions= async (workInstructions) => {
                 console.log(`작업지시 ${currentWorkInstCode} 신규 삽입 성공. Insert ID: ${insertResult.insertId}`);
             }
 
-            // ⭐️⭐️⭐️ 5. 자재 홀드 처리  ⭐️⭐️⭐️
+            //  5. 자재 홀드 처리  
             const bomDetails = await conn.query(sqlList['selectBomDetailsByBomCode'], [current_bom_code]);
             const existingHolds = await conn.query(sqlList['selectHoldsByWorkInstCode'], [currentWorkInstCode]);
             const existingHoldsMap = new Map();
@@ -157,7 +193,7 @@ const saveWorkInstructions= async (workInstructions) => {
                         }
                     } else {
                         // 5-4-2. 기존 홀드 데이터가 없는 경우: INSERT (DB 프로시저를 통해 홀드 ID 생성)
-                        // ⭐️⭐️⭐️ 스토어드 프로시저 호출로 ID 얻기 ⭐️⭐️⭐️
+                        //  스토어드 프로시저 호출로 ID 얻기 
                         const holdIdResultRows = await conn.query(sqlList['callCreateCodeProcForHoldId'], []);
                         const newHoldId = holdIdResultRows && holdIdResultRows.length > 1 && holdIdResultRows[1].length > 0
                             ? holdIdResultRows[1][0].new_hold_id : null;
@@ -211,10 +247,72 @@ const saveWorkInstructions= async (workInstructions) => {
     }
 };
 
+// 작업지시서 삭제
+const deleteWorkInstructions = async (workInstCodes) => {
+    let conn; // 데이터베이스 연결 변수
+    try {
+        conn = await getConnection(); // 연결 획득
+        await conn.beginTransaction(); // 트랜잭션 시작
+
+        // 1. 입력 유효성 검사
+        if (!workInstCodes || !Array.isArray(workInstCodes) || workInstCodes.length === 0) {
+            throw new Error('삭제할 작업지시 코드가 제공되지 않았습니다.');
+        }
+
+        const deletedCount = { workInstructions: 0, materialHolds: 0 }; // 삭제된 개수 추적
+
+        // 각 작업지시 코드에 대해 반복 처리
+        for (const code of workInstCodes) {
+            // 2. 작업지시 상태 재확인 (백엔드에서 다시 검증)
+            
+            const checkStatusResult = await conn.query(sqlList['selectWorkInstState'], [code]);
+            if (!checkStatusResult || checkStatusResult.length === 0 || checkStatusResult[0].inst_state !== '0s1s') {
+                // '생산 전' 상태가 아니면 롤백하고 오류 메시지 반환
+                await conn.rollback();
+                throw new Error(`작업지시코드 '${code}'는 '생산 전' 상태가 아니므로 삭제할 수 없습니다.`);
+            }
+
+            // 3. 해당 작업지시와 관련된 자재 홀드 먼저 삭제
+            
+            const deleteHoldsResult = await conn.query(sqlList['deleteHoldsByWorkInstCode'], [code]);
+            deletedCount.materialHolds += deleteHoldsResult.affectedRows;
+            console.log(`작업지시 ${code} 관련 자재 홀드 ${deleteHoldsResult.affectedRows}개 삭제.`);
+
+            // 4. 작업지시 삭제
+            
+            const deleteInstResult = await conn.query(sqlList['deleteWorkInst'], [code]);
+            if (deleteInstResult.affectedRows === 0) {
+                console.warn(`작업지시코드 '${code}'를 찾을 수 없거나 이미 삭제되었습니다.`);
+            } else {
+                deletedCount.workInstructions += deleteInstResult.affectedRows;
+                console.log(`작업지시 ${code} 삭제 성공.`);
+            }
+        }
+
+        await conn.commit(); // 모든 작업 성공 시 커밋
+        console.log(`총 ${deletedCount.workInstructions}개의 작업지시와 ${deletedCount.materialHolds}개의 자재 홀드 삭제 완료.`);
+        return { success: true, message: '선택된 작업지시가 성공적으로 삭제되었습니다.', data: deletedCount };
+
+    } catch (error) {
+        // 오류 발생 시 롤백
+        if (conn) {
+            await conn.rollback();
+        }
+        console.error('작업지시 삭제 중 오류 발생 및 롤백됨. 오류 상세:', error);
+        throw new Error('작업지시 삭제 중 오류가 발생했습니다: ' + error.message);
+    } finally {
+        // 연결 해제
+        if (conn) {
+            conn.release();
+        }
+    }
+};
+
+
 module.exports ={
     getProductionPlans,
     saveWorkInstructions,
     getWorkInstAll,
     generateWorkInstCode,
-
+    deleteWorkInstructions,
 };

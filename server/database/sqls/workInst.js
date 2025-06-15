@@ -35,23 +35,26 @@ WHERE
 //작업지시코드 전체 조회
 const allworkInstList =
 ` SELECT
-            twi.work_inst_code,
-            twi.prod_plan_code,
-            twi.prod_code,
-            tp.prod_name,
-            twi.inst_qty,
-            od.dead_date,
-            twi.inst_state,
-            twi.emp_num,
-            twi.inst_reg_date
-        FROM
-            t_work_inst  twi
-        JOIN
-            t_product tp ON twi.prod_code = tp.prod_code
-LEFT JOIN
-    t_prod_plan tpp ON twi.prod_plan_code = tpp.prod_plan_code	
-LEFT JOIN
-            t_order_detail od ON tpp.order_detail_code = od.order_detail_code`;
+        twi.work_inst_code,
+        twi.prod_plan_code,
+        twi.prod_code,
+        tp.prod_name,
+        twi.inst_qty,
+        od.dead_date,
+        twi.inst_state,
+        twi.emp_num,
+        twi.inst_reg_date
+    FROM
+        t_work_inst twi
+    LEFT JOIN  -- <<-- 여기를 LEFT JOIN으로 변경!
+        t_product tp ON twi.prod_code = tp.prod_code
+    LEFT JOIN
+        t_prod_plan tpp ON twi.prod_plan_code = tpp.prod_plan_code
+    LEFT JOIN
+        t_order_detail od ON tpp.order_detail_code = od.order_detail_code
+    WHERE 1=1
+    ORDER BY twi.inst_reg_date DESC
+`;
 
 //작업지시테이블에 작업지시코드가 있는지 확인
 const checkWorkInstCode=`
@@ -188,6 +191,24 @@ const selectMaxHoldId=
     SELECT @newHoldId AS new_hold_id;
 `;
 
+const selectWorkInstState = `
+    SELECT inst_state
+    FROM t_work_inst
+    WHERE work_inst_code = ?
+`;
+
+// 2. 특정 작업지시와 관련된 자재 홀드 삭제
+const deleteHoldsByWorkInstCode = `
+    DELETE FROM t_hold
+    WHERE work_inst_code = ?
+`;
+
+// 3. 작업지시 자체 삭제
+const deleteWorkInst = `
+    DELETE FROM t_work_inst
+    WHERE work_inst_code = ?
+`;
+
 //작업지시 테이블 bom_code로 소요량 조회회
 module.exports = {
     selectProdPlansList,
@@ -206,5 +227,8 @@ module.exports = {
     deleteHoldById,
     insertSingleHold,
     callCreateCodeProcForHoldId,
+    selectWorkInstState,
+    deleteHoldsByWorkInstCode,
+    deleteWorkInst
 }
 

@@ -9,55 +9,61 @@ import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 // --- Data for the '작업지시 선택' (Work Order Selection) table ---
 const workOrderData = ref([]); // Empty array
 const workOrderColumns = [
-  { title: "지시코드", field: "id", width: 100, hozAlign: "center" },
-  { title: "제품명", field: "prod_code", minWidth: 150 },
-  { title: "상태", field: "status", width: 100, hozAlign: "center",
-    formatter: function(cell) {
-      const status = cell.getValue();
-      let colorClass = '';
-      if (status === '지시완료') {
-        colorClass = 'text-success';
-      } else if (status === '지시중') {
-        colorClass = 'text-warning';
-      }
-      return `<span class="${colorClass}">${status}</span>`;
-    }
-  },
+  { title: "지시코드", field: "work_inst_code", width: 200, hozAlign: "center" }, // <-- 이 부분이 백엔드 데이터의 키와 일치해야 함
+  { title: "제품명", field: "prod_name", width: 200 }, // <-- 이 부분이 백엔드 데이터의 키와 일치해야 함
+  { title: "지시수량", field: "inst_qty", width: 200, hozAlign: "right" },
 ];
 
-const workOrderTabulatorOptions = {
 
-  layout: 'fitColumns',
-  rowClick: (e, row) => {
-    workOrderData.value.forEach(item => item.isSelected = false);
-    row.getData().isSelected = true;
-    currentWorkOrder.value = { ...row.getData() }; // Update detailed view
-  },
-  rowFormatter: function(row) {
-    if (row.getData().isSelected) {
-      row.getElement().classList.add("selected-row");
+
+const fetchWorkOrders = async () => {
+  console.log('fetchWorkOrders 함수 실행');
+  try {
+    const response = await axios.get('/api/allworkInst'); // 이 URL이 실제 백엔드 URL과 일치하는지 다시 확인!
+    console.log('Axios 응답 (response):', response); // 전체 응답 객체 확인
+    console.log('Axios 응답 데이터 (response.data):', response.data); // 응답 본문 데이터 확인
+
+    if (response.data.success) {
+      // 중요: response.data.data에 배열이 들어있는지 확인!
+      if (Array.isArray(response.data.data)) {
+        workOrderData.value = response.data.data.map(item => ({
+            ...item,
+            isSelected: false
+        }));
+        console.log('workOrderData.value 업데이트됨:', workOrderData.value);
+        if (workOrderData.value.length === 0) {
+          console.warn('백엔드에서 데이터가 왔으나, workOrderData.value가 비어있습니다. DB에 데이터가 있는지 확인하세요.');
+        }
+      } else {
+        console.error('API 응답의 "data" 필드가 배열이 아닙니다:', response.data.data);
+      }
     } else {
-      row.getElement().classList.remove("selected-row");
+      console.error('작업지시 목록 불러오기 실패 (success: false):', response.data.message);
     }
+  } catch (error) {
+    console.error('API 호출 중 오류 발생:', error);
   }
 };
 
+onMounted(() => {
+  fetchWorkOrders();
+
+});
 
 // --- Data for the '공정 흐름도' (Process Flow) table ---
 const processFlowData = ref([]); // Empty array
 const processFlowColumns = [
   { title: "공정코드", field: "id", width: 100, hozAlign: "center" },
-  { title: "공정명", field: "name", minWidth: 150 },
-  { title: "상세", field: "details", minWidth: 200, hozAlign: "left" },
+  { title: "공정명", field: "name", minWidth: 100 },
+  { title: "상세", field: "details", minWidth: 100, hozAlign: "left" },
 ];
 
 const processFlowTabulatorOptions = {
-  // pagination: 'local', // Paging removed
-  // paginationSize: 7, // Paging size removed
   layout: 'fitColumns',
   rowClick: (e, row) => {
     processFlowData.value.forEach(item => item.isSelected = false);
     row.getData().isSelected = true;
+    console.log('선택된공정:',row.getData());
   },
   rowFormatter: function(row) {
     if (row.getData().isSelected) {
@@ -154,7 +160,6 @@ onMounted(() => {
 });
 
 </script>
-
 <template>
   <div class="py-4 container-fluid">
     <div class="row">
@@ -166,7 +171,7 @@ onMounted(() => {
               :table-data="workOrderData"
               :table-columns="workOrderColumns"
               :tabulator-options="workOrderTabulatorOptions"
-              style="height: 250px;"
+              style="height: 450px;"
             />
 
             <tabulator-card
@@ -175,7 +180,7 @@ onMounted(() => {
               :table-columns="processFlowColumns"
               :tabulator-options="processFlowTabulatorOptions"
               class="mt-4"
-              style="height: 250px;"
+              :disabled="!isProcessGridEnabled" style="height: 250px;"
             />
 
             <tabulator-card
@@ -184,7 +189,7 @@ onMounted(() => {
               :table-columns="equipmentColumns"
               :tabulator-options="equipmentTabulatorOptions"
               class="mt-4"
-              style="height: 250px;"
+              :disabled="!isEquipmentGridEnabled" style="height: 250px;"
             />
           </div>
 
@@ -194,206 +199,13 @@ onMounted(() => {
                 <h6>작업지시 상세</h6>
               </div>
               <div class="card-body">
-                <form>
-                  <div class="row mb-3">
-                    <div class="col-md-6">
-                      <div class="form-group">
-                        <label for="productName">제품명</label>
-                        <input
-                          type="text"
-                          class="form-control"
-                          id="productName"
-                          v-model="currentWorkOrder.productName"
-                          readonly
-                        />
-                      </div>
-                    </div>
-                    <div class="col-md-6">
-                      <div class="form-group">
-                        <label for="orderQuantity">지시수량</label>
-                        <input
-                          type="number"
-                          class="form-control"
-                          id="orderQuantity"
-                          v-model="currentWorkOrder.orderQuantity"
-                          readonly
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="row mb-3">
-                    <div class="col-md-6">
-                      <div class="form-group">
-                        <label for="dueDate">납기일자</label>
-                        <input
-                          type="text"
-                          class="form-control"
-                          id="dueDate"
-                          v-model="currentWorkOrder.dueDate"
-                          readonly
-                        />
-                      </div>
-                    </div>
-                    <div class="col-md-6">
-                      <div class="form-group">
-                        <label for="lot">LOT</label>
-                        <input
-                          type="text"
-                          class="form-control"
-                          id="lot"
-                          v-model="currentWorkOrder.lot"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="row mb-3">
-                    <div class="col-md-6">
-                      <div class="form-group">
-                        <label for="partNumber">품번</label>
-                        <input
-                          type="text"
-                          class="form-control"
-                          id="partNumber"
-                          v-model="currentWorkOrder.partNumber"
-                        />
-                      </div>
-                    </div>
-                    <div class="col-md-6">
-                      <div class="form-group">
-                        <label for="material">소재</label>
-                        <input
-                          type="text"
-                          class="form-control"
-                          id="material"
-                          v-model="currentWorkOrder.material"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="row mb-3">
-                    <div class="col-md-4">
-                      <div class="form-group">
-                        <label for="width">폭</label>
-                        <input
-                          type="number"
-                          class="form-control"
-                          id="width"
-                          v-model="currentWorkOrder.width"
-                        />
-                      </div>
-                    </div>
-                    <div class="col-md-4">
-                      <div class="form-group">
-                        <label for="length">길이</label>
-                        <input
-                          type="number"
-                          class="form-control"
-                          id="length"
-                          v-model="currentWorkOrder.length"
-                        />
-                      </div>
-                    </div>
-                    <div class="col-md-4">
-                      <div class="form-group">
-                        <label for="color">색상</label>
-                        <input
-                          type="text"
-                          class="form-control"
-                          id="color"
-                          v-model="currentWorkOrder.color"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="row mb-3">
-                    <div class="col-12">
-                      <label>옵션</label>
-                      <div class="form-check">
-                        <input
-                          class="form-check-input"
-                          type="checkbox"
-                          id="optionButton"
-                          v-model="currentWorkOrder.options.button"
-                        />
-                        <label class="form-check-label" for="optionButton"
-                          >단추</label
-                        >
-                      </div>
-                      <div class="form-check">
-                        <input
-                          class="form-check-input"
-                          type="checkbox"
-                          id="optionEmbroidery"
-                          v-model="currentWorkOrder.options.embroidery"
-                        />
-                        <label class="form-check-label" for="optionEmbroidery"
-                          >자수</label
-                        >
-                      </div>
-                      <div class="form-check">
-                        <input
-                          class="form-check-input"
-                          type="checkbox"
-                          id="optionZipper"
-                          v-model="currentWorkOrder.options.zipper"
-                        />
-                        <label class="form-check-label" for="optionZipper"
-                          >지퍼</label
-                        >
-                      </div>
-                      <div class="form-check">
-                        <input
-                          class="form-check-input"
-                          type="checkbox"
-                          id="optionPrinting"
-                          v-model="currentWorkOrder.options.printing"
-                        />
-                        <label class="form-check-label" for="optionPrinting"
-                          >프린팅</label
-                        >
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="row mb-3">
-                    <div class="col-md-6">
-                      <div class="form-group">
-                        <label for="workStart">작업시작</label>
-                        <input
-                          type="text"
-                          class="form-control"
-                          id="workStart"
-                          v-model="currentWorkOrder.workStartTime"
-                          readonly
-                        />
-                      </div>
-                    </div>
-                    <div class="col-md-6">
-                      <div class="form-group">
-                        <label for="workEnd">작업종료</label>
-                        <input
-                          type="text"
-                          class="form-control"
-                          id="workEnd"
-                          v-model="currentWorkOrder.workEndTime"
-                          readonly
-                        />
-                      </div>
-                    </div>
-                  </div>
-                </form>
-              </div>
-              <div class="card-footer d-flex justify-content-end pt-0">
-                <argon-button color="secondary" variant="gradient" class="me-2" @click="endWork"
-                  >작업종료</argon-button
-                >
-                <argon-button color="success" variant="gradient" @click="startWork"
-                  >작업시작</argon-button
-                >
+                <div class="form-group">
+                    <label for="productName">제품명</label>
+                    <input type="text" class="form-control" id="productName" v-model="currentWorkOrder.productName" :disabled="!currentWorkOrder.id">
+                </div>
+                <div class="d-flex justify-content-end mt-4">
+                  <material-button class="me-2" variant="outline">작업종료</material-button>
+                  <material-button @click="startWork" :disabled="!isStartButtonEnabled">작업시작</material-button> </div>
               </div>
             </div>
           </div>
