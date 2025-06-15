@@ -6,7 +6,7 @@ const router = express.Router();
 
 // 👈 2단계에서 만든 요리사 파일 (서비스 파일)을 가져와요. (경로가 맞는지 꼭 확인)
 const workInstService = require('../services/Production/workInst.js'); //
-
+const ProductionService= require('../services/Production/PrdWorkingService.js');
 // ... (여기에 다른 메뉴들이 이미 적혀 있을 수 있어요.) ...
 
 // 생산계획 목록 
@@ -104,4 +104,40 @@ router.post('/workInstMngment/delete', async (req, res) => {
         });
     }
 });
+
+// 공정 흐름도 가져오는 라우터
+// 공정 흐름도 가져오기
+router.get('/workInst/:workInstCode/processes', async (req, res) => {
+    const { workInstCode } = req.params;
+    console.log('Received workInstCode in router:', workInstCode);
+    try {
+        const data = await ProductionService.getProcessFlowByWorkInst(workInstCode);
+        if (data.length > 0) {
+            res.json({ success: true, data });
+        } else {
+            res.status(404).json({ success: false, message: '해당 작업지시에 대한 공정 흐름도를 찾을 수 없습니다.' });
+        }
+    } catch (error) {
+        console.error(`Error fetching processes for workInst ${workInstCode}:`, error);
+        res.status(500).json({ success: false, message: '공정 흐름도를 불러오는 데 실패했습니다.', error: error.message });
+    }
+});
+
+router.get('/processes/:processCode/equipment', async (req, res) => {
+    const { processCode } = req.params;
+    console.log('Received processCode in router for equipment:', processCode);
+    try {
+        // ⭐ 수정: ProductionService 객체를 통해 getEquipmentByProcess 호출 ⭐
+        const data = await ProductionService.getEquipmentByProcess(processCode);
+        if (data.length > 0) {
+            res.json({ success: true, data });
+        } else {
+            res.status(404).json({ success: false, message: '해당 공정에 연결된 설비를 찾을 수 없습니다.' });
+        }
+    } catch (error) {
+        console.error(`Error fetching equipment for process ${processCode}:`, error);
+        res.status(500).json({ success: false, message: '설비 목록을 불러오는 데 실패했습니다.', error: error.message });
+    }
+});
+
 module.exports = router;

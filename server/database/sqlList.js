@@ -25,7 +25,7 @@ const matcheckList=require('./sqls/matCheck.js');
 const matCheckView = require('./sqls/matCheckView.js');
 const prdReceive = require('./sqls/prdReceive.js');
 const loginSql=require('./sqls/login.js');
-
+const workProcessSql=require('./sqls/workProcess.js');
 module.exports = {
   ...processMaster, // 공정관리
   ...qualityMaster,
@@ -46,4 +46,5 @@ module.exports = {
   ...matCheckView, // 수입검사자재 상세조회
   ...prdReceive, //완제품 입고
   ...loginSql, // 로그인
+  ...workProcessSql,//작업공정
 }
