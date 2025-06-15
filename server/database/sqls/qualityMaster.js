@@ -10,7 +10,6 @@ FROM t_quality
 WHERE ((? IS NULL OR ? = '') OR test_name LIKE CONCAT('%', ?, '%'))
 AND ((? IS NULL OR ? = '') OR test_target LIKE CONCAT('%', ?, '%'))
 AND ((? IS NULL OR ? = '') OR test_ref LIKE CONCAT('%', ?, '%'))
-AND ((? IS NULL OR ? = '') OR use_yn LIKE CONCAT('%', ?, '%'))
 `;
 
 //단건조회

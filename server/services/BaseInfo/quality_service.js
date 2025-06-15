@@ -71,8 +71,8 @@ const qualityModify = async (qualityCode, qualityInfo) => {
     .catch(err => console.log(err));
 
   if(qualityInfo.fileName) {
-    const imgParams = [generatedCode, qualityInfo.fileName, qualityInfo.originalName, qualityInfo.filePath];
-    await mariadb.query("insertImages", imgParams).catch(err => console.log(err));
+    const imgParams = [qualityCode, qualityInfo.fileName, qualityInfo.originalName, qualityInfo.filePath];
+    await mariadb.query("updateImgInfo", imgParams).catch(err => console.log(err));
   }
 
   let result = null;

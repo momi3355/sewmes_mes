@@ -15,10 +15,13 @@ const storage = multer.diskStorage({
     cb(null, path.join(__dirname, '../uploads/'));
   },
   filename: (req, file, cb) => {
-    cb(null, Date.now() + '-' + Buffer.from(file.originalname, 'ascii').toString('utf8' ));
+    const ext = path.extname(file.originalname); 
+    const basename = path.basename(file.originalname, ext);
+    const safeFilename = Date.now() + '-' + basename.replace(/\s/g, '_') + ext;
+    cb(null, safeFilename);
   }
 });
-const upload = multer({ storage : storage });
+const upload = multer({ storage });
 
 // ----------------------------------------------------------품질
 
@@ -40,12 +43,12 @@ router.get('/quality/:code', async(req, res) => {
 });
 
 // 이미지 파일 직접 제공???
-router.get('/quality/img/:filename', (req, res) => {
+router.get('/getimgs/:filename', (req, res) => {
   const filename = req.params.filename;
   const imagePath = path.join(__dirname, '../uploads', filename);
-
+  console.log('이미지 요청:', filename);
   if (!fs.existsSync(imagePath)) {
-    return res.send('이미지 파일이 존재하지 않습니다.');
+    return res.status(404).send('이미지 파일이 존재하지 않습니다.');
   }
   res.sendFile(imagePath);
 });
@@ -152,7 +155,7 @@ router.put('/equipment/:code', upload.single('image'), async(req, res) => {
     equiInfo.originalName = req.file.originalname;
     equiInfo.filePath = req.file.filename;
   }
-  let result = await qualityService.qualityModify(equiCode, equiInfo)
+  let result = await equipmentService.equiModify(equiCode, equiInfo)
                                    .catch(err => console.log(err));
   res.send(result);
 });

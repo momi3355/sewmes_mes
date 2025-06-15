@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, reactive, ref } from "vue";
+import { onMounted, reactive, ref, computed } from "vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import axios from "axios";
 import groupcodelist from "../../assets/js/utils/groupcodelist.js";
@@ -19,7 +19,15 @@ let imageInput = ref();
 const equiListColumns = [
   { title: "설비코드", field: "equi_code"},
   { title: "설비명", field: "equi_name"},
-  { title: "사용여부", field: "use_yn"},
+  {
+    title: "사용여부",
+    field: "use_yn",
+    formatter: (cell) => {
+      const code = cell.getValue();
+      const matched = equiuseYn.value.find(item => item.detail_code == code);
+      return matched ? matched.detail_name : code;
+    }
+  },
   { title: "비고", field: "equi_note"},
 ];
 
@@ -39,8 +47,8 @@ const equiSch = {
   equiType: '',
   schDate: '',
   startDate: '',
-  endDate: '',
-  useYn: '0b1b',
+  endDate: '',  
+  useYn: ['0b1b'],
 }
 
 const equiSchData = ref({
@@ -56,12 +64,25 @@ const getEquiList = async () => {
   equiList.value = list.data;
 }
 
-const EquiSearchHandler = () => {
-  
+const EquiSearchHandler = async () => {
+  const params = {
+    ...equiSchData.value,
+    useYn: equiSchData.value.useYn.length ? equiSchData.value.useYn.join(',') : null,
+    startDate: equiSchData.value.startDate ? moment(equiSchData.value.startDate).format('YYYY-MM-DD') : '',
+    endDate: equiSchData.value.endDate ? moment(equiSchData.value.endDate).format('YYYY-MM-DD') : '',
+  };
+  const res = await axios.get('/api/equipment', {
+    params
+  }).catch(err => console.log(err));
+  equiList.value = res.data;
+
 }
 
 const EquiSearchReset = () => {
-
+  equiSchData.value = {
+    ...equiSch
+  };
+  getEquiList();
 }
 
 const saveEquiMaster = async () => {
@@ -71,8 +92,8 @@ const saveEquiMaster = async () => {
   formData.append('use_yn', equiInfo.value.use_yn || '');
   formData.append('model_name', equiInfo.value.model_name || '');
   formData.append('maker', equiInfo.value.maker || '');
-  formData.append('make_date', equiInfo.value.make_date || '');
-  formData.append('install_date', equiInfo.value.install_date || '');
+  formData.append('make_date', moment(equiInfo.value.make_date).format('YYYY-MM-DD HH:mm:ss') || '');
+  formData.append('install_date', moment(equiInfo.value.install_date).format('YYYY-MM-DD HH:mm:ss') || '');
   formData.append('equi_type', equiInfo.value.equi_type || '');
   formData.append('check_interval', equiInfo.value.check_interval || '');
   formData.append('equi_note', equiInfo.value.equi_note || '');
@@ -100,6 +121,27 @@ const saveEquiMaster = async () => {
     });
     console.log(updateResult);
   }
+
+  await getEquiList();
+  equiInfo.value = {};
+  equiMaintHistoryList.value = []
+  equiInfo.value = {
+    equi_name: '',
+    use_yn: '',
+    model_name: '',
+    maker: '',
+    make_date: '',
+    install_date: '',
+    equi_type: '',
+    check_interval: '',
+    equi_note: '',
+    check_date: '',
+    equi_img: '',
+    last_check: ''
+  };
+  if (imageInput.value) {
+    imageInput.value.value = ''
+  };
   
 }
 
@@ -117,6 +159,21 @@ const tabulatorEvents = [
     }
   }
 ];
+
+const makeDateStr = computed({
+  get() { return equiInfo.value.make_date ? moment(equiInfo.value.make_date).format('YYYY-MM-DD') : ''; },
+  set(val) { equiInfo.value.make_date = val; }
+});
+
+const installDateStr = computed({
+  get() { return equiInfo.value.install_date ? moment(equiInfo.value.install_date).format('YYYY-MM-DD') : ''; },
+  set(val) { equiInfo.value.install_date = val; }
+});
+
+const checkDateStr = computed({
+  get() { return equiInfo.value.check_date ? moment(equiInfo.value.check_date).format('YYYY-MM-DD') : ''; },
+  set(val) { equiInfo.value.check_date = val; }
+});
 
 onMounted(() => {
   groupcodelist.groupCodeList('1C', equiTypeCodeList);
@@ -143,29 +200,36 @@ onMounted(() => {
             <option v-for="target in equiTypeCodeList" :key="target.detail_code" value="target.detail_code">{{ target.detail_name }}</option>
            </select>
         </div>
-        <div class="col-md-2">
+        <div class="col-md-4">
           <label class="form-label">조회 기간</label>
-          <input type="text" class="form-control" v-model="equiSchData.startDate" /> ~ <input type="text" class="form-control" v-model="equiSchData.endDate" />
-           <select class="form-select" v-model="equiSchData.schDate">
-            <option value="">-</option>
-            <option v-for="target in equiSchDateList" :key="target.detail_code" value="target.detail_code">{{ target.detail_name }}</option>
-           </select>
+          <div class="row g-1">
+            <div class="col-md-4">
+              <input type="date" class="form-control" v-model="equiSchData.startDate" />
+            </div>
+            <div class="col-md-1 text-center">
+              <span class="mt-2 d-inline-block">~</span>
+            </div>
+            <div class="col-md-4">
+              <input type="date" class="form-control" v-model="equiSchData.endDate" />
+            </div>
+            <div class="col-md-3">
+              <select class="form-select" v-model="equiSchData.schDate">
+                <option value="">-</option>
+                <option v-for="target in equiSchDateList" :key="target.detail_code" :value="target.detail_code">
+                  {{ target.detail_name }}
+                </option>
+              </select>
+            </div>
+          </div>
         </div>
         <div class="col-md-2">
-          <label class="form-label d-block">사용여부</label>
-          <div class="form-check form-check-inline">
-            <div class="form-check">
-  <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
-  <label class="form-check-label" for="flexCheckDefault">
-    Default checkbox
-  </label>
-</div>
-            <!-- <input class="form-check-input" type="radio" id="0b1b" value="0b1b" v-model="equiSchData.useYn" />
-            <label class="form-check-label" for="0b1b">사용</label>
-          </div>
-          <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" id="0b2b" value="0b2b" v-model="equiSchData.useYn" />
-            <label class="form-check-label" for="0b2b">비사용</label> -->
+          <label class="form-label">사용여부</label>
+          <div class="form-check" v-for="yn in equiuseYn">
+            <input class="form-check-input" type="checkbox" v-model="equiSchData.useYn" :value="yn.detail_code"
+              :id="yn.detail_code" />
+            <label class="form-check-label" :for="yn.detail_code">
+              {{ yn.detail_name }}
+            </label>
           </div>
         </div>
         <div class="col-md-2">
@@ -204,46 +268,55 @@ onMounted(() => {
             <table class="table table-bordered table-sm align-middle mb-2">
               <tbody>
                 <tr>
-                  <th style="width: 30%;">설비명</th>
-                  <td><input type="text" :key="equiInfo.equi_code" class="form-control form-control-sm"
-                      v-model="equiInfo.equi_name"></td>
-                  <th>사용여부</th>
-                  <td>
-                    <div v-for="yn in equiuseYn" :key="yn.detail_code"  class="form-check form-check-inline">
-                      <input type="radio" :value="yn.detail_code" :id="yn.detail_code" v-model="equiInfo.use_yn" class="form-check-input" >
-                      <label :for="yn.detail_code" class="form-check-label" >{{ yn.detail_name }}</label>
+                  <th style="width: 15%;">설비명</th>
+                  <td style="width: 35%;">
+                    <input type="text" class="form-control form-control-sm" v-model="equiInfo.equi_name">
+                  </td>
+                  <th style="width: 15%;">사용여부</th>
+                  <td style="width: 35%;">
+                    <div v-for="yn in equiuseYn" :key="yn.detail_code" class="form-check form-check-inline">
+                      <input type="radio" :value="yn.detail_code" :id="yn.detail_code" v-model="equiInfo.use_yn"
+                        class="form-check-input">
+                      <label :for="yn.detail_code" class="form-check-label">{{ yn.detail_name }}</label>
                     </div>
                   </td>
                 </tr>
                 <tr>
                   <th>모델명</th>
-                  <td colspan="3"><input type="text" class="form-control form-control-sm" v-model="equiInfo.model_name"></td>
-                </tr>
-                <tr>
+                  <td><input type="text" class="form-control form-control-sm" v-model="equiInfo.model_name"></td>
                   <th>제조사</th>
-                  <td><input type="text" class="form-control form-control-sm" v-model="equiInfo.maker"></td> 
-                   <th>제조일</th>
-                   <td><input type="text" class="form-control form-control-sm" v-model="equiInfo.make_date"></td>
+                  <td><input type="text" class="form-control form-control-sm" v-model="equiInfo.maker"></td>
                 </tr>
                 <tr>
+                  <th>제조일</th>
+                  <td><input type="date" class="form-control form-control-sm" v-model="makeDateStr"></td>
                   <th>설비 설치일</th>
-                  <td><input type="text" class="form-control form-control-sm" v-model="equiInfo.install_date"></td>
+                  <td><input type="date" class="form-control form-control-sm" v-model="installDateStr"></td>
+                </tr>
+                <tr>
                   <th>설비유형</th>
-                  <td><select class="form-select" v-model="equiInfo.equi_type">
+                  <td>
+                    <select class="form-select form-select-sm" v-model="equiInfo.equi_type">
                       <option value="">-</option>
                       <option v-for="target in equiTypeCodeList" :key="target.detail_code" :value="target.detail_code">
-                        {{ target.detail_name }}</option>
-                    </select></td>
-                </tr>
-                <tr>
+                        {{ target.detail_name }}
+                      </option>
+                    </select>
+                  </td>
                   <th>마지막 점검일</th>
-                  <td colspan="3">{{equiInfo.last_check}}</td>
+                  <td>{{ equiInfo.last_check ? moment(equiInfo.last_check).format('YYYY-MM-DD HH:mm:ss') : '' }}</td>
                 </tr>
                 <tr>
                   <th>점검 예정일</th>
-                  <td><input type="text" class="form-control form-control-sm" v-model="equiInfo.check_date"></td>
-                   <th>점검 간격</th>
-                   <td><input type="text" class="form-control form-control-sm" v-model="equiInfo.check_interval">일</td>
+                  <td><input type="date" class="form-control form-control-sm" v-model="checkDateStr"></td>
+                  <th>점검 간격</th>
+                  <td>
+                    <div class="d-flex align-items-center">
+                      <input type="number" class="form-control form-control-sm me-1" style="width: 80%;"
+                        v-model="equiInfo.check_interval">
+                      <span>일</span>
+                    </div>
+                  </td>
                 </tr>
                 <tr>
                   <th>비고</th>
@@ -251,11 +324,14 @@ onMounted(() => {
                 </tr>
                 <tr>
                   <th>이미지</th>
-                  <td>
+                  <td colspan="3">
                     <input type="file" ref="imageInput" />
-                    <!-- <div v-if="qualityInfo.ref_img" class="image-preview">
-                      <img src="/uploads/qualityInfo.ref_img">
-                    </div> -->
+                    <div v-if="equiInfo.equi_img" class="image-preview mt-2">
+                      <img :src="`/api/getimgs/${equiInfo.equi_img}`" style="max-height: 150px;" />
+                    </div>
+                    <div v-else>
+                      <span class="text-muted">참고 이미지가 없습니다.</span>
+                    </div>
                   </td>
                 </tr>
               </tbody>

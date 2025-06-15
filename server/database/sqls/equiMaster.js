@@ -31,13 +31,12 @@ SELECT equi_code
        , equi_status 
        , use_yn 
        , equi_note 
-
+       , (SELECT file_path 
+         FROM images 
+         WHERE code = equi_code) AS equi_img
 FROM   t_equipment 
 WHERE  equi_code = ?
 `;
-`       , (SELECT file_path 
-         FROM images 
-         WHERE code = equi_code) AS equi_img`;
 
 //설비 등록
 const insertEquiInfo = 

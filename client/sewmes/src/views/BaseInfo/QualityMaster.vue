@@ -2,21 +2,38 @@
 import { onMounted, reactive, ref } from "vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import axios from "axios";
+import groupcodelist from "../../assets/js/utils/groupcodelist";
 
 let qualityList = ref([]);
 let qualityInfo = ref({});
 let qualityHistoryList = reactive([]);
 let testTargetCodeList = ref([]);
 let imageInput = ref();
-let useYnDetail = ref('');
+let useYnDetail = ref([]);
 
 //품질기준정보 컬럼
 const qualityColumns = [
   { title: "품질코드", field: "quality_code"},
   { title: "검사명", field: "test_name"}, 
-  { title: "대상 품목", field: "test_target"},
+  {
+    title: "대상품목",
+    field: "test_target",
+    formatter: (cell) => {
+      const code = cell.getValue();
+      const matched = testTargetCodeList.value.find(item => item.detail_code == code);
+      return matched ? matched.detail_name : code;
+    }
+  },
   { title: "참조", field: "test_ref"},
-  { title: "사용 여부", field: "use_yn"},
+  {
+    title: "사용여부",
+    field: "use_yn",
+    formatter: (cell) => {
+      const code = cell.getValue();
+      const matched = useYnDetail.value.find(item => item.detail_code == code);
+      return matched ? matched.detail_name : code;
+    }
+  },
 ];
 
 //품질기준정보 이력 컬럼
@@ -32,7 +49,7 @@ const qualitySch = {
   testName: '',
   testTarget: '', 
   testRef: '',
-  useYn: '0b1b'
+  useYn: ['0b1b']
 };
 
 const qualSchData = ref({
@@ -48,7 +65,7 @@ const getQualityList = async () => {
     })
     .catch(err => console.log(err));
   qualityList.value = list.data;
-  getDetailCode(list.data[0].use_yn);
+  groupcodelist.detailCodeInfo(list.data[0].use_yn);
 }
 
 const qualitySearchHandler = async () => {
@@ -67,16 +84,6 @@ const qualitySearchReset = () => {
   };
   getQualityList();
 };
-
-const getGroupCode = async (groupCode, targetList) => {
-  let list = await axios.get(`/api/groupCode/gc/${groupCode}`);
-  targetList.value = list.data;
-}
-
-const getDetailCode = async (detailCode) => {
-  let list = await axios.get(`/api/groupCode/dc/${detailCode}`);
-  console.log(list.data.detail_name);
-}
 
 const saveQualityMaster = async () => {
   const formData = new FormData();
@@ -133,7 +140,8 @@ const tabulatorEvents = [
 ];
 
 onMounted(() => {
-  getGroupCode('1B', testTargetCodeList);
+  groupcodelist.groupCodeList('1B', testTargetCodeList);
+  groupcodelist.groupCodeList('0B', useYnDetail);
   getQualityList();
 })
 
@@ -158,14 +166,13 @@ onMounted(() => {
           <input type="text" class="form-control" v-model="qualSchData.testRef" />
         </div>
         <div class="col-md-2">
-          <label class="form-label d-block">사용여부</label>
-          <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" id="0b1b" value="0b1b" v-model="qualSchData.useYn" />
-            <label class="form-check-label" for="0b1b">사용</label>
-          </div>
-          <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" id="0b2b" value="0b2b" v-model="qualSchData.useYn" />
-            <label class="form-check-label" for="0b2b">비사용</label>
+          <label class="form-label">사용여부</label>
+          <div class="form-check" v-for="yn in useYnDetail">
+            <input class="form-check-input" type="checkbox" v-model="qualSchData.useYn" :value="yn.detail_code"
+              :id="'sch'+yn.detail_code" />
+            <label class="form-check-label" :for="'sch'+yn.detail_code">
+              {{ yn.detail_name }}
+            </label>
           </div>
         </div>
         <div class="col-md-2 d-flex align-items-end gap-2">
@@ -192,56 +199,79 @@ onMounted(() => {
       <div class="col-md-5 d-flex flex-column overflow-hidden">
         <!-- 상세 카드 -->
         <div class="card mb-2 detail-card">
-          <div class="card-header header-fixed mb-3 mt-3">
-            <span>검사항목 상세</span>
-            <button class="btn btn-sm btn-success" @click="saveQualityMaster">저장</button>
-          </div>
-          <div class="card-body detail-body">
-            <table class="table table-bordered table-sm align-middle mb-2">
-              <tbody>
-                <tr>
-                  <th style="width: 30%;">검사명</th>
-                  <td><input type="text" :key="qualityInfo.quality_code" class="form-control form-control-sm" v-model="qualityInfo.test_name"><span>{{ qualityInfo.use_yn }}</span></td>
-                </tr>
-                <tr>
-                  <th>대상품목</th>
-                  <td><select class="form-select" v-model="qualityInfo.test_target">
-                      <option value="">선택하세요</option>
-                      <option v-for="target in testTargetCodeList" :key="target.detail_code" :value="target.detail_code">
-                        {{ target.detail_name }}
-                      </option>
-                      </select>
-                  </td>
-                </tr>
-                <tr>
-                  <th>검사방법</th>
-                  <td><input type="text" class="form-control form-control-sm" v-model="qualityInfo.test_method"></td>
-                </tr>
-                <tr>
-                  <th>참조</th>
-                  <td><input type="text" class="form-control form-control-sm" v-model="qualityInfo.test_ref"></td>
-                </tr>
-                <tr>
-                  <th>검사기준</th>
-                  <td><input type="text" class="form-control form-control-sm" v-model="qualityInfo.test_standard"></td>
-                </tr>
-                <tr>
-                  <th>비고</th>
-                  <td><textarea class="form-control" v-model="qualityInfo.test_note"></textarea></td>
-                </tr>
-                <tr>
-                  <th>참고자료</th>
-                  <td>
-                    <input type="file" ref="imageInput" />
-                    <div v-if="qualityInfo.ref_img" class="image-preview">
-                      <img src="/uploads/qualityInfo.ref_img">
-                    </div>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+  <div class="card-header header-fixed mb-3 mt-3">
+    <span>검사항목 상세</span>
+    <button class="btn btn-sm btn-success" @click="saveQualityMaster">저장</button>
+  </div>
+  <div class="card-body detail-body">
+    <table class="table table-bordered table-sm align-middle mb-2">
+      <tbody>
+        <tr>
+          <th style="width: 15%;">검사명</th>
+          <td style="width: 35%;">
+            <input type="text" :key="qualityInfo.quality_code" class="form-control form-control-sm" v-model="qualityInfo.test_name">
+          </td>
+          <th style="width: 15%;">사용여부</th>
+          <td style="width: 35%;">
+            <div class="d-flex align-items-center">
+              <div v-for="yn in useYnDetail" :key="yn.detail_code" class="form-check form-check-inline me-2">
+                <input type="radio" :value="yn.detail_code" :id="'info'+yn.detail_code" v-model="qualityInfo.use_yn" class="form-check-input">
+                <label :for="'info'+yn.detail_code" class="form-check-label">{{ yn.detail_name }}</label>
+              </div>
+            </div>
+          </td>
+        </tr>
+        <tr>
+          <th>대상품목</th>
+          <td colspan="3">
+            <select class="form-select form-select-sm" v-model="qualityInfo.test_target">
+              <option value="">선택하세요</option>
+              <option v-for="target in testTargetCodeList" :key="target.detail_code" :value="target.detail_code">
+                {{ target.detail_name }}
+              </option>
+            </select>
+          </td>
+        </tr>
+        <tr>
+          <th>검사방법</th>
+          <td colspan="3">
+            <input type="text" class="form-control form-control-sm" v-model="qualityInfo.test_method">
+          </td>
+        </tr>
+        <tr>
+          <th>참조</th>
+          <td colspan="3">
+            <input type="text" class="form-control form-control-sm" v-model="qualityInfo.test_ref">
+          </td>
+        </tr>
+        <tr>
+          <th>검사기준</th>
+          <td colspan="3">
+            <input type="text" class="form-control form-control-sm" v-model="qualityInfo.test_standard">
+          </td>
+        </tr>
+        <tr>
+          <th>비고</th>
+          <td colspan="3">
+            <textarea class="form-control" v-model="qualityInfo.test_note"></textarea>
+          </td>
+        </tr>
+        <tr>
+          <th>참고자료</th>
+          <td colspan="3">
+            <input type="file" ref="imageInput" />
+            <div v-if="qualityInfo.ref_img" class="image-preview mt-2">
+              <img :src="`/api/getimgs/${qualityInfo.ref_img}`" style="max-height: 150px;" />
+            </div>
+            <div v-else>
+              <span class="text-muted">참고 이미지가 없습니다.</span>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
 
         <!-- 이력 카드 -->
         <div class="card flex-grow-1 overflow-auto">
