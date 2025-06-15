@@ -15,6 +15,7 @@ const modalTableColumns = [
     { formatter: "rowSelection", titleFormatter: "rowSelection", hozAlign: "center", headerSort: false, width: 40, cssClass: 'tabulator-checkbox-column' },
     { title: "생산계획코드", field: "prod_plan_code", width: 150 },
     { title: "제품코드", field: "prod_code", width: 150 },
+    { title: "제품명", field: "prod_name", width: 180 },
     { title: "생산계획수량", field: "prod_qty", width: 150 },
     { title: "잔여지시량", field: "remain_qty", width: 150 },
     { title: "생산계획등록일자", field: "reg_date", width: 150 },
