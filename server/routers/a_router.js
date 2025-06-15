@@ -62,7 +62,16 @@ router.get('/productList', async (req, res) => {
     res.status(500).send('서버 오류');
   }
 });
-
+// 업체명 드롭다운
+router.get('/companyDropDown', async (req, res) => {
+  try {
+    const orderList = await companyService.findAll2();
+    res.send(orderList);
+  } catch (err) {
+    console.error('주문 조회 중 오류 발생:', err);
+    res.status(500).send('서버 오류');
+  }
+});
 module.exports = router;
 
 

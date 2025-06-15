@@ -14,7 +14,14 @@ const companyListCheck =
         use_yn
 FROM t_company`
 
+const companyDropDown =
+`SELECT cp_name,
+        cp_tel,
+        address
+FROM t_company
+WHERE cls = "0g3g"`
+
 module.exports = {
   companyListCheck,
-
+  companyDropDown
 }
