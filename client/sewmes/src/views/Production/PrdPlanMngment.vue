@@ -209,8 +209,8 @@ const closeModal = () => {
           </select>
         </div>
         <div class="col-md-3 d-flex align-items-end">
-          <button class="btn btn-primary me-2" @click="searchProdPlan">조회</button>
-          <button class="btn btn-secondary" @click="resetFilter">초기화</button>
+          <button class="btn btn-secondary me-2" @click="resetFilter">초기화</button>
+          <button class="btn btn-primary" @click="searchProdPlan">조회</button>
         </div>
       </div>
     </div>
