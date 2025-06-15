@@ -23,20 +23,21 @@ FROM t_order_detail a JOIN t_company b
 const orderAdd =
 `INSERT INTO t_order_detail (
   order_detail_code, 
-  order_code,
-  prod_code,
-  standard,
-  qty,
-  unit_price,
-  total_price,
+  order_code, 
+  prod_code, 
+  standard, 
+  qty, 
+  unit_price, 
+  total_price, 
   state, 
   emp_num, 
   note, 
   order_date, 
   dead_date, 
   cp_code, 
-  sel_price
-) VALUES (ord1,or1,?,?,?,?,?,?,?,?,?,?,?,?,?)`
+  sel_price 
+) 
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
 
 // 주문서등록 / 제품모달
 const productList =

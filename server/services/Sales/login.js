@@ -9,7 +9,6 @@ async function loginCheck(emp_num, login_pw) {
     conn = await mariadb.getConnection();
 
     const rows = await conn.query(sql.loginCheck, [emp_num, login_pw]);
-
     // mariadb 드라이버는 기본적으로 rows[0]이 meta라서 rows.length >= 1 확인
     if (rows.length > 0) {
       return {
