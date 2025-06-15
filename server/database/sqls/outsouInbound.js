@@ -18,6 +18,12 @@ const selectOutsouInboundByConditions = `
   WHERE 1 = 1
     /**조건절**/
   ORDER BY r.reg_date DESC`;
+// 외주입고검사 모달 품질 검사 리스트 불러오기
+const getSemiProductQualityTest = `
+  SELECT quality_code, test_name, test_method
+  FROM t_quality
+  WHERE test_target = '1b3b' AND use_yn = '0b1b'`;
+
 // =========================================
 
 // 외주입고불량내역 조건 검색 ========================
@@ -42,5 +48,6 @@ const selectInboundDefectByConditions = `
 
 module.exports ={
   selectOutsouInboundByConditions,
+  getSemiProductQualityTest,
   selectInboundDefectByConditions
 };

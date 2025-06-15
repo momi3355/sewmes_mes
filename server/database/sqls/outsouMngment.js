@@ -20,9 +20,6 @@ const selectOutsouOrderByConditions = `
 const selectOutsouOrderNullDeadCount = `
   SELECT COUNT(*) FROM t_outsou_order WHERE dead_date IS NULL`;
 
-// 외주발주 출고처리
-const callOutsouRelease = `CALL proc_outsou_release(?)`;
-
 // 외주발주 납기 미등록 검색
 const selectOutsouOrderNotDeadList =`
   SELECT
@@ -53,7 +50,6 @@ const callRegOutsouMaterial = `CALL auto_reg_outsou_material(?)`;
 module.exports ={
   selectOutsouOrderByConditions,
   selectOutsouOrderNullDeadCount,
-  callOutsouRelease,
   selectOutsouOrderNotDeadList,
   updateOutsouDeadDate,
   callRegOutsouMaterial

@@ -2,6 +2,10 @@
 import axios from 'axios';
 import { ref } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
+import OutsouInboundTestModal from './OutsouInboundTestModal.vue';
+import ArgonButton from "@/components/ArgonButton.vue";
+
+const productTableRef = ref(null);
 
 // 검색 객체
 const searchProdName = ref('');
@@ -13,6 +17,10 @@ const searchInboundDateStart = ref('');
 const searchInboundDateEnd = ref('');
 
 const outsouReceiveList = ref([]);
+
+// 외주입고검수 페이지 출력을 위한 객체
+const selectedOutsouInboundCode = ref(null);
+const isTestModalOpen = ref(false);
 
 // 제품 목록 조건에 따른 검색
 const searchOutsouReceive = async () => {
@@ -79,7 +87,18 @@ const outsouReceiveColumns = [
   { title: '외주발주코드', field: 'outsouOrderCode', width: 150 },
   { title: '외주입고코드', field: 'outsouInboundCode', width: 150 }
 ];
-
+const tabulatorOptions = {
+  selectableRows: 1,
+  rowFormatter: function(row) {
+    const rowData = row.getData();
+    // selectedOutsouInboundCode가 객체이고, 그 객체의 outsouInboundCode와 현재 행의 코드가 일치하는지 확인
+    if (selectedOutsouInboundCode.value && rowData.outsouInboundCode === selectedOutsouInboundCode.value.outsouInboundCode) {
+      row.getElement().classList.add("selected-row");
+    } else {
+      row.getElement().classList.remove("selected-row");
+    }
+  }
+};
 // 초기화 버튼 클릭 시 검색조건 입력란 비움움
 const resetFilter = () => {
   searchProdName.value = '';
@@ -90,15 +109,18 @@ const resetFilter = () => {
   searchInboundDateStart.value = '';
   searchInboundDateEnd.value = '';
 };
+// 외주입고검수 페이지 출력
+const openModal = () => {
+  if (!selectedOutsouInboundCode.value) return alert("외주입고 건을 먼저 선택하세요.");
+  isTestModalOpen.value = true;
+};
 const tabulatorEvent = [
   {
-    eventName: "rowDblClick",
+    eventName: "rowClick",
     eventAction: 
       async (e, row) => {
       const data = row.getData();
-      selectedProdCode.value = data.prodCode;
-      selectedProdName.value = data.prodName;
-      await loadProcesses();
+      selectedOutsouInboundCode.value = data;
 
       const tableInstance = productTableRef.value?.$el?.querySelector('.tabulator')?.__tabulator__;
       if (tableInstance) {
@@ -166,18 +188,30 @@ const formatInt = (val) => {
         </div>
       </div>
     </div>
-    <div class="row mt-3">
-      <div class="d-flex justify-content-end">
-          <button class="btn btn-info" style="width: 150px;" @click="openModal">검수 진행</button>
-      </div>
-    </div>
     <div class="row">
       <div class="col-md-12 d-flex flex-column">
         <tabulator-card
+          ref="productTableRef"
           card-title="외주입고목록"
+          :height="450"
           :table-data="outsouReceiveList"
           :table-columns="outsouReceiveColumns"
+          :tabulator-options="tabulatorOptions"
           :on="tabulatorEvent"
+        >
+          <template #actions>
+            <ArgonButton style="width: 150px;" color="success" variant="gradient" @click="openModal">
+              검수 진행
+            </ArgonButton>
+          </template>
+        </tabulator-card>
+        <OutsouInboundTestModal
+          :isOpen="isTestModalOpen"
+          :prodName="selectedOutsouInboundCode?.prodName"
+          :outsouInboundCode="selectedOutsouInboundCode?.outsouInboundCode"
+          :inboundQty="selectedOutsouInboundCode?.inboundQty"
+          @close="isTestModalOpen = false"
+          @saved="handleAfterTestSaved"
         />
       </div>
     </div>
@@ -193,5 +227,10 @@ const formatInt = (val) => {
   padding: 20px;
   border-radius: 15px;
   background-color: #FFF;
+}
+/* 선택된 행의 스타일 */
+.selected-row {
+  background-color: #e0e0e0 !important; /* 원하는 강조 색상으로 변경 */
+  font-weight: bold; /* 선택된 행의 텍스트를 굵게 */
 }
 </style>

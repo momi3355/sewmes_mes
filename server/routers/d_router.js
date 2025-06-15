@@ -227,17 +227,7 @@ router.get('/outsouOrderNullDeadCount', async (req, res) => {
     res.status(500).send({ message: "검색 중 오류 발생" });
   }
 });
-// 외주발주 출고 처리
-router.post('/outsouReleaseProc', async (req, res) => {
-  try {
-    const updates = req.  body;
-    await outsouService.callOutsouRelease(updates);
-    res.send({ message: '출고처리 완료' });
-  } catch (err) {
-    console.error(err);
-    res.status(500).send({ message: '출고처리 실패' });
-  }
-});
+
 // ==============================================================
 
 // 외주발주 모달 라우터 =========================================
@@ -283,9 +273,35 @@ router.get('/outsouReleaseMaterialList', async (req, res)=>{
     res.status(500).send({ message: "검색 중 오류 발생" });
   }
 });
+// outsou_order_code 기준으로 외주자재출고 목록 가져오기
+router.get('/releaseMaterialList', async (req, res) => {
+  try {
+    const outsouOrderCode = req.query.outsouOrderCode;
+    if (!outsouOrderCode) return res.status(400).send('outsouOrderCode is required');
+
+    const result = await outsouService.getReleaseMaterialByOutsouOrderCode(outsouOrderCode);
+    res.json(result);
+  } catch (err) {
+    console.error('공정 흐름 조회 오류:', err);
+    res.status(500).send('Server Error');
+  }
+});
+// 외주발주 출고 처리
+router.post('/outsouReleaseProc', async (req, res) => {
+  try {
+    const updates = req.body;
+    await outsouService.callOutsouRelease(updates);  // 배열이든 단일값이든 처리 가능
+    res.send({ message: '출고처리 완료' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: '출고처리 실패' });
+  }
+});
+
 // ==============================================================
 
 // 외주입고 페이지 라우터 =========================================
+// 외주입고 목록 조건에 따라 가져오기
 router.get('/outsouInboundReceiveList', async (req, res)=>{
   try {
     const {
@@ -302,6 +318,16 @@ router.get('/outsouInboundReceiveList', async (req, res)=>{
     res.status(500).send({ message: "검색 중 오류 발생" });
   }
 });
+// 외주입고 품질 검사 목록 가져오기
+router.get('/semiProductQualityTest', async (req, res) => {
+  try {
+    const result = await outsouService.getSemiProductQualityTest();
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: '조회 실패', error: err.message });
+  }
+});
+
 // ==============================================================
 
 // 외주입고불량내역 페이지 라우터 =========================================

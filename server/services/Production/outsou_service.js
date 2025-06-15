@@ -2,7 +2,8 @@ const mariadb = require("../../database/mapper.js");
 const sqlList = require("../../database/sqlList.js"); 
 
 // 외주발주 페이지 서비스 =========================================
-const findOutsouOrderByConditions = async ({
+// 조건에 따른 외주발주 건 조회, 외주자재출고 페이지에서도 사용용
+const findOutsouOrderByConditions = async ({ 
   outsouOrderCode, prodName, cpName, releaseState, regStartDate,
   regEndDate, deadStartDate, deadEndDate
 }) => {
@@ -49,15 +50,6 @@ const findOutsouOrderNullDeadCount = async () => {
   const sql = sqlList.selectOutsouOrderNullDeadCount;
   return await mariadb.directQuery(sql);
 };
-// 외주발주 출고처리
-const callOutsouRelease = async (updates) => {
-  for (const row of updates) {
-    const { outsouOrderCode } = req.body;
-
-    // 외주발주 출고처리 프로시저 실행
-    await mariadb.query("callRegOutsouMaterial", [outsouOrderCode]);
-  }
-};
 
 // ==============================================================
 
@@ -81,7 +73,25 @@ const updateOutsouDeadDate = async (updates) => {
 
 // ==============================================================
 
-// 외주자재출고 페이지 서비스 =========================================
+// 외주자재출고 관리 페이지 서비스 =========================================
+// outsou_order_code를 기준으로 외주자재출고 목록록 가져오기
+const getReleaseMaterialByOutsouOrderCode = async (outsouOrderCode) => {
+  const rows = await mariadb.directQuery(sqlList.getReleaseMaterial, [outsouOrderCode]);
+return rows;
+};
+// 외주발주 출고처리
+const callOutsouRelease = async (updates) => {
+  // 배열이 아닌 단일 객체일 경우 배열로 감쌈
+  const updateList = Array.isArray(updates) ? updates : [updates];
+
+  for (const row of updateList) {
+    const { outsouOrderCode } = row;
+    await mariadb.query("CALL proc_outsou_release(?)", [outsouOrderCode]);
+  }
+};
+// ==============================================================
+
+// 외주자재출고 조회 페이지 서비스 =========================================
 const findOutsouReleaseMaterialByConditions = async ({
   outsouOrderCode, materialName, cpName, releaseState, regStartDate,
   regEndDate, deadStartDate, deadEndDate
@@ -181,6 +191,18 @@ const findInboundReceiveByConditions = async ({
   const finalSql = baseSql.replace("/**조건절**/", whereClauses.join("\n"));
   return await mariadb.directQuery(finalSql, params);
 };
+// 반제품 품질 검사 정보 가져오기
+const getSemiProductQualityTest = async () => {
+  try {
+    const rows = await mariadb.query("getSemiProductQualityTest", []);
+    console.log("쿼리 결과 rows:", rows);
+    return rows;
+  } catch (err) {
+    console.error('품질검사 항목 조회 실패:', err);
+    throw err;
+  }
+};
+
 // ==============================================================
 
 // 외주입고불량내역 페이지 서비스 =========================================
@@ -225,9 +247,11 @@ module.exports ={
   findOutsouOrderNotDeadList,
   updateOutsouDeadDate,
   // 외주출고
-  findOutsouReleaseMaterialByConditions,
+  findOutsouReleaseMaterialByConditions, // 외주자재출고 조회 페이지지
+  getReleaseMaterialByOutsouOrderCode,
   // 외주입고
   findInboundReceiveByConditions,
+  getSemiProductQualityTest,
   // 외주입고불량
   findInboundDefectByConditions
 };

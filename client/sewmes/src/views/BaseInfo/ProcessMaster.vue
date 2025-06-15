@@ -203,8 +203,8 @@ const tabulatorEvent = [
         <input type="text" class="form-control" v-model="searchEquiType">
       </div>
       <div class="col-md-4 d-flex align-items-end">
-        <button class="btn btn-primary me-2" @click="searchProcess" style="margin-right: 10px;">조회</button>
-        <button class="btn btn-secondary" @click="resetSearch">초기화</button>
+        <button class="btn btn-secondary me-2" @click="resetSearch">초기화</button>
+        <button class="btn btn-primary" @click="searchProcess" style="margin-right: 10px;">조회</button>
       </div>
     </div>
     </div>

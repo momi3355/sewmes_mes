@@ -1,13 +1,10 @@
 <script setup>
 import axios from 'axios';
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
-import OutsouNullDeadListModal from './OutsouNullDeadListModal.vue';
-import ArgonButton from "@/components/ArgonButton.vue";
 
-const tabulatorCardRef = ref(null);
 // 검색 객체
-const searchProdName = ref('');
+const searchItemName = ref('');
 const searchOutsouCode = ref('');
 const searchCpName = ref('');
 const searchReleaseState = ref('');
@@ -15,15 +12,14 @@ const searchRegDateStart = ref('');
 const searchRegDateEnd = ref('');
 const searchDeadDateStart = ref('');
 const searchDeadDateEnd = ref('');
-const outsouOrderData = ref([]);
+const outsouReleaseMaterialList = ref([]);
 
-const nullDeadCount = ref(0);
 
 // 제품 목록 조건에 따른 검색
-const searchOutsouOrder = async () => {
+const searchReleaseMaterial = async () => {
   const params = {};
 
-  if (searchProdName.value.trim()) params.prodName = searchProdName.value.trim();
+  if (searchItemName.value.trim()) params.itemName = searchItemName.value.trim();
   if (searchOutsouCode.value.trim()) params.outsouCode = searchOutsouCode.value.trim();
   if (searchCpName.value.trim()) params.cpName = searchCpName.value.trim();
   if (searchReleaseState.value) params.releaseState = searchReleaseState.value;
@@ -34,18 +30,17 @@ const searchOutsouOrder = async () => {
   if (searchDeadDateEnd.value) params.deadEnd = searchDeadDateEnd.value;
 
   try {
-    const result = await axios.get('/api/outsouOrderList', { params });
-    outsouOrderData.value = result.data.map((item, idx) => ({
+    const result = await axios.get('/api/outsouReleaseMaterialList', { params });
+    outsouReleaseMaterialList.value = result.data.map((item, idx) => ({
       rowNum: idx + 1,
       outsouOrderCode: item.outsou_order_code,
-      workProcessCode: item.work_process_code,
-      prodName: item.prod_name,
+      holdCode: item.hold_id,
+      itemName: item.item_name, // 자재명, (반)제품명 둘다 포함
       regDate: formatDate(item.reg_date),
       deadDate: formatDate(item.dead_date),
       cpName: item.cp_name,
-      orderQty: formatInt(item.order_qty),
-      releaseState: item.release_state,                    // 실제 비교용
-      releaseStateLabel: convertCode(item.release_state)   // 보기용
+      releaseQty: formatInt(item.release_qty),
+      releaseState: convertCode(item.release_state)
     }));
   } catch (err) {
     console.error("API 호출 오류:", err);
@@ -59,21 +54,21 @@ const convertCode = (code) => {
     default: return code;
   }
 };
-const outsouOrderColumns = [
+const outsouReleaseMaterialColumns = [
   { title: "No", field: "rowNum", width: 80 },
-  { title: '외주발주코드', field: 'outsouOrderCode', width: 200 },
-  { title: '작업공정코드', field: 'workProcessCode', width: 200 },
-  { title: '품명', field: 'prodName', width: 300 },
+  { title: '외주발주코드', field: 'outsouOrderCode', width: 150 },
+  { title: '자재홀드코드', field: 'holdCode', width: 150 },
+  { title: '명칭', field: 'itemName', width: 300 },
   { title: '등록일', field: 'regDate', width: 200 },
   { title: '납기일', field: 'deadDate', width: 200 },
   { title: '외주업체명', field: 'cpName', width: 200 },
-  { title: '주문수량', field: 'orderQty', width: 150 },
-  { title: '자재 상태', field: 'releaseStateLabel', width: 150 }
+  { title: '출고수량', field: 'releaseQty', width: 150 },
+  { title: '자재 상태', field: 'releaseState', width: 150 }
 ];
 
 // 초기화 버튼 클릭 시 검색조건 입력란 비움움
-const resetOutsouOrderFilter = () => {
-  searchProdName.value = '';
+const resetFilter = () => {
+  searchItemName.value = '';
   searchOutsouCode.value = '';
   searchCpName.value = '';
   searchReleaseState.value = '';
@@ -82,18 +77,23 @@ const resetOutsouOrderFilter = () => {
   searchDeadDateStart.value = '';
   searchDeadDateEnd.value = '';
 };
-const fetchNullDeadCount = async () => {
-  try {
-    const result = await axios.get('/api/outsouOrderNullDeadCount');
-    const count = result.data[0]["COUNT(*)"];
-    nullDeadCount.value = count;
-    return count;
-  } catch (err) {
-    console.error("미등록 외주발주 수 조회 오류:", err);
+const tabulatorEvent = [
+  {
+    eventName: "rowDblClick",
+    eventAction: 
+      async (e, row) => {
+      const data = row.getData();
+      selectedProdCode.value = data.prodCode;
+      selectedProdName.value = data.prodName;
+      await loadProcesses();
+
+      const tableInstance = productTableRef.value?.$el?.querySelector('.tabulator')?.__tabulator__;
+      if (tableInstance) {
+        tableInstance.redraw(true);
+      }
+    }
   }
-};
-
-
+];
 // 형태 변환
 const formatDate = (str) => {
   if (!str) return '';
@@ -102,24 +102,6 @@ const formatDate = (str) => {
 const formatInt = (val) => {
   return parseInt(val, 10);
 };
-// 모달 스크립트 영역 ===============================================================
-const isModalOpen = ref(false); //초기상태
-const openModal = () => {
-    isModalOpen.value = true; //isModalOpen 값 true 변경해 모달 열기
-};
-const closeModal = () => {
-    isModalOpen.value = false;
-};
-const handleAfterModalSaved = () => {
-  fetchNullDeadCount(); // 저장 이후 납기 미등록 건수 다시 조회
-  isModalOpen.value = false; // 모달 닫기
-};
-onMounted(async () => {
-  const count = await fetchNullDeadCount();
-  if (count > 0) {
-    openModal();
-  }
-});
 </script>
 
 <template>
@@ -146,8 +128,8 @@ onMounted(async () => {
           </div>
         </div>
         <div class="col-md-3">
-          <label class="form-label">품명 포함 단어</label>
-          <input type="text" class="form-control" v-model="searchProdName">
+          <label class="form-label">자재명 포함 단어</label>
+          <input type="text" class="form-control" v-model="searchItemName">
         </div>
       </div>
       <div class="row mb-2">
@@ -168,30 +150,22 @@ onMounted(async () => {
           </select>
         </div>
         <div class="col-md-3 d-flex align-items-end">
-          <button class="btn btn-secondary me-2" @click="resetOutsouOrderFilter">초기화</button>
-          <button class="btn btn-primary" @click="searchOutsouOrder">조회</button>
+          <button class="btn btn-primary me-2" @click="searchReleaseMaterial">조회</button>
+          <button class="btn btn-secondary" @click="resetFilter">초기화</button>
         </div>
       </div>
+    </div>
+    <div>
+      <button class="btn btn-sm btn-success" style="width: 150px; font-size: 14px;" @click="">출고 완료</button>
     </div>
     <div class="row">
       <div class="col-md-12 d-flex flex-column">
         <tabulator-card
-          ref="tabulatorCardRef"
-          card-title="외주발주 목록"
+          card-title="외주출고자재"
           :height="650"
-          :table-data="outsouOrderData"
-          :table-columns="outsouOrderColumns"
-        >
-          <template #actions>
-            <ArgonButton color="success" variant="gradient" @click="openModal">
-              외주발주 미등록 <span>{{ nullDeadCount }}</span> 건 조회
-            </ArgonButton>
-          </template>
-        </tabulator-card>
-        <OutsouNullDeadListModal
-        v-bind:isModalOpen="isModalOpen"
-        v-on:close-modal="closeModal"
-        @saved="handleAfterModalSaved"
+          :table-data="outsouReleaseMaterialList"
+          :table-columns="outsouReleaseMaterialColumns"
+          :on="tabulatorEvent"
         />
       </div>
     </div>
