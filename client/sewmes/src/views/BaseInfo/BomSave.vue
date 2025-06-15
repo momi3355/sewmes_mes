@@ -4,6 +4,7 @@ import { useStore } from "vuex";
 import axios from "axios";
 
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
+import groupcodelist from "@/assets/js/utils/groupcodelist";
 import { typeFormatter } from "@/assets/js/utils/tableFormatter";
 
 const store = useStore();
@@ -62,7 +63,9 @@ const initialSearchFields = {
   item_type: "0w1w",
   name: "",
   type: "",
-  use_yn: "0b1b"
+  use_yn: "",
+  use_yse: false,
+  use_no: false,
 };
 
 const searchData = ref({ ...initialSearchFields });
@@ -203,17 +206,12 @@ const findProd = async () => {
   detailFields.value.prod_name = product.data.prod_name;
 };
 
-//공통코드 조회
-const getGroupCode = async (code) => {
-  return (await axios.get(`/api/groupCode/gc/${code}`)).data;
-}
-
 onMounted(async () => {
   //공통코드 조회
-  bomtype.value = await getGroupCode("0W");
-  mattype.value = await getGroupCode("0L");
-  prdtype.value = await getGroupCode("0K");
-  catetype.value = await getGroupCode("0J");
+  await groupcodelist.groupCodeList("0W", bomtype);
+  await groupcodelist.groupCodeList("0L", mattype);
+  await groupcodelist.groupCodeList("0K", prdtype);
+  await groupcodelist.groupCodeList("0J", catetype);
   searchHandler();
 });
 </script>
@@ -259,16 +257,26 @@ onMounted(async () => {
         </div>
         <div class="col-md-2">
           <label class="form-label">사용여부</label>
-          <div class="form-check" v-for="type in usetype">
-            <input
+          <div class="form-check">
+            <input 
               class="form-check-input"
-              type="radio"
-              v-model="searchData.use_yn"
-              :value="type.code"
-              :id="'search-'+type.code"
+              type="checkbox"
+              v-model="searchData.use_yse"
+              id="search-use-yse"
             />
-            <label class="form-check-label" :for="'search-'+type.code">
-              {{ type.name }}
+            <label class="form-check-label" for="search-use-yse">
+              사용
+            </label>
+          </div>
+          <div class="form-check">
+            <input 
+              class="form-check-input"
+              type="checkbox"
+              v-model="searchData.use_no"
+              id="search-use-no"
+            />
+            <label class="form-check-label" for="search-use-no">
+              비사용
             </label>
           </div>
         </div>
