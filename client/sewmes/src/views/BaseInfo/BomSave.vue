@@ -85,7 +85,7 @@ const itemEvent = [
     eventName: "rowDblClick",
     eventAction: (e, row) => {
       const rowData = row.getData();
-      console.log(rowData);
+      //console.log(rowData);
       const tabulator = bom_table.value.getTabulator();
       if (tabulator.getData().find(e => e.item_code === rowData.item_code)) {
         alert("동일한 품목을 넣을 수 없습니다.");

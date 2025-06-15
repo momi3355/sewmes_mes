@@ -10,7 +10,9 @@ const selectPrdReceive =
        cp_name,
        cls,
        address
-FROM v_product_receive`;
+FROM v_product_receive
+WHERE 1 = 1
+`;
 
 module.exports = {
   selectPrdReceive,

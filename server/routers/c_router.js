@@ -117,9 +117,8 @@ router.post("/bomDetail", async (req, res) => {
 });
 
 router.get("/prdReceive", async (req, res) => {
-  //getProductReceiveList
   try {
-    const result = await prdReceiveService.getProductReceiveList();
+    const result = await prdReceiveService.getProductReceiveList(req.query);
     res.send(result);
   } catch (err) {
     console.error(err);
