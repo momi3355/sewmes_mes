@@ -69,7 +69,6 @@ SELECT COUNT(*) AS count FROM t_work_inst WHERE work_inst_code=?
             prod_code = ?,
             bom_code = ?,
             inst_qty = ?,
-            dead_date = ?,
             inst_state = ?,
             emp_num = ?,
             inst_date = CASE
@@ -162,11 +161,25 @@ const selectMaxHoldId=
         WHERE work_inst_code = ?
     `;
 
+// FAB 자재의 재고를 입고일 오름차순으로 가져오는 쿼리 (가장 오래된 재고부터)
+const selectInboundMaterialsForFab=`
+        SELECT
+            inbound_code,
+            lot_code,
+            inbound_qty,
+            stock_status
+        FROM t_material_inbound
+        WHERE material_code = ? AND inbound_qty > 0 
+        ORDER BY inbound_date ASC, inbound_code ASC; 
+
+`;
+
     // 2. 홀드 데이터 업데이트 쿼리 (hold_id 기준)
    const  updateHold= `
         UPDATE t_hold
         SET
             hold_qty = ?
+            ,lot_code = ?
         WHERE
             hold_id = ?
             AND material_code = ? -- 안전을 위해 material_code도 조건에 추가
@@ -178,13 +191,10 @@ const selectMaxHoldId=
         WHERE hold_id = ?
     `;
 
-    // (기존 insertHoldList는 그대로 사용)
-    // insertHoldList: `INSERT INTO t_hold (hold_id,material_code, hold_qty, work_inst_code) VALUES (?, ?, ?, ?)`
-    // 위 쿼리를 `sqlList`에 직접 정의하는 대신, `workInst.js`에서 동적으로 생성하는 방식(finalHoldInsertSql)은 유지해도 괜찮습니다.
-    // 하지만 단일 INSERT 쿼리를 미리 정의해두는 것도 좋습니다.
+
    const  insertSingleHold= `
-        INSERT INTO t_hold (hold_id, material_code, hold_qty, work_inst_code)
-        VALUES (?, ?, ?, ?)
+        INSERT INTO t_hold (hold_id, material_code, hold_qty, work_inst_code,use_yn,lot_code,release_qty)
+        VALUES (?, ?, ?, ?,'0b2b',?,0)
     `;
     const callCreateCodeProcForHoldId = `
     CALL createcode_proc('t_hold', 'hold_id', 'H', @newHoldId);
@@ -229,6 +239,7 @@ module.exports = {
     callCreateCodeProcForHoldId,
     selectWorkInstState,
     deleteHoldsByWorkInstCode,
-    deleteWorkInst
+    deleteWorkInst,
+    selectInboundMaterialsForFab,
 }
 

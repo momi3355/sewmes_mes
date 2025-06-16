@@ -107,10 +107,9 @@ const workOrderOnEvents = [
 ];
 
 const processFlowColumns = [
-  { title: "공정코드", field: "process_code", width: 100 },
-  { title: "공정명", field: "process_name", width: 300 },
-  { title: "상세", field: "detail", width: 250 },
-  { title: "공정순서", field: "process_seq", hozAlign: "right", width: 120 },
+  { title: "공정코드", field: "process_code", width: 200 },
+  { title: "공정명", field: "process_name", width: 380 },
+  { title: "공정순서", field: "process_seq", hozAlign: "right", width: 150 },
 ];
 
 const processFlowTabulatorOptions = {
@@ -135,7 +134,6 @@ const processFlowOnEvents = [
 ];
 
 const equipmentColumns = [
-  { title: "선택", formatter: "rowSelection", titleFormatter: "rowSelection", headerSort: false, hozAlign: "center", width: 60, cssClass: "tabulator-checkbox-column" },
   { title: "설비코드", field: "equi_code", width: 100, hozAlign: "center" },
   { title: "설비명", field: "equi_name", minWidth: 150 },
   { title: "상태", field: "status", width: 100, hozAlign: "center", // ⭐ field: "status"로 변경됨 ⭐
@@ -249,10 +247,7 @@ const selectWorkOrder = async (workOrder) => {
   selectedProcess.value = { process_code: '', process_name: '', detail: '', isSelected: false };
   selectedEquipment.value = { equi_code: '', equi_name: '', equi_status: '', isSelected: false };
 
-  // ⭐⭐⭐ 이 두 줄을 제거하거나 주석 처리해야 합니다. ⭐⭐⭐
-  // processFlowData.value = []; // 공정 데이터 초기화 (삭제 또는 주석 처리!)
-  // equipmentData.value = []; // 설비 데이터 초기화 (삭제 또는 주석 처리!)
-
+ 
 
   if (workOrder && workOrder.work_inst_code) {
     await fetchProcessFlow(workOrder.work_inst_code); // 공정 흐름도 불러오기
@@ -439,10 +434,7 @@ onMounted(() => {
                   <label for="orderQuantity">지시수량</label>
                   <input type="text" class="form-control" id="orderQuantity" v-model="currentWorkOrder.inst_qty" :disabled="!currentWorkOrder.work_inst_code">
                 </div>
-                <div class="form-group">
-                  <label for="dueDate">납기일자</label>
-                  <input type="text" class="form-control" id="dueDate" v-model="currentWorkOrder.inst_date" :disabled="!currentWorkOrder.work_inst_code">
-                </div>
+
                 <div class="form-group">
                    <h6>투입 자재 정보</h6>
                   <label for="lot">LOT</label>
@@ -456,24 +448,21 @@ onMounted(() => {
                   <label for="categoryr">분류</label>
                   <input type="text" class="form-control" id="categoryr" v-model="currentWorkOrder.categoryr" :disabled="!currentWorkOrder.work_inst_code">
                 </div>
-                <div class="form-group">
-                  <label for="material">소재</label>
-                  <input type="text" class="form-control" id="material" v-model="currentWorkOrder.material" :disabled="true">
-                </div>
+             
                 <div class="row">
-                  <div class="col-md-4">
+                  <div class="col-md-2">
                     <div class="form-group">
                       <label for="width">폭</label>
                       <input type="number" class="form-control" id="width" v-model="currentWorkOrder.width" :disabled="true">
                     </div>
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-2">
                     <div class="form-group">
                       <label for="length">길이</label>
                       <input type="number" class="form-control" id="length" v-model="currentWorkOrder.length" :disabled="true">
                     </div>
                   </div>
-                  <div class="col-md-4">
+                  <div class="col-md-2">
                     <div class="form-group">
                       <label for="color">색상</label>
                       <input type="text" class="form-control" id="color" v-model="currentWorkOrder.color" :disabled="true">
