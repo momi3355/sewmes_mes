@@ -51,15 +51,14 @@ const addSelectedMaterials = () => {
     .map(material => ({
       material_code: material.material_code,
       material_name: material.material_name,
-      qty: '',
       unit: material.unit || '',
-      order_qty: '',
-      unit_price: material.unit_price || '',
-      total_price: '',
+      order_qty: 1,
+      unit_price: material.unit_price || '0',
+      total_price: (1 * (material.unit_price || 0)),
       color: material.color || '',
       size: '',
       company: '',
-      order_date: '',
+      order_date: new Date().toISOString().split('T')[0],
       deadline: ''
     }));
     if(newProducts.length > 0){
@@ -105,26 +104,55 @@ const materialColumns = [
 ];
 
 const productColumns = [
-  {
-  formatter: "rowSelection",  // 행 선택 체크박스를 생성합니다.
-  titleFormatter: "rowSelection", // 헤더에 '전체 선택' 체크박스를 생성합니다.
-  hozAlign: "center",
-  headerSort: false,          // 이 열은 정렬 기능을 비활성화합니다.
-  cellClick: function(e, cell) { // 셀의 아무 곳이나 클릭해도 체크되도록 합니다.
-    cell.getRow().toggleSelect();
+  { title: "자재명", field: "material_name", width: 250 },
+  { title: "단위", field: "unit", width: 80 },
+  { 
+    title: "주문수량", 
+    field: "order_qty", 
+    width: 150, hozAlign: "left", 
+    editor: "input",
+    cellEdited: function(cell) {
+      const row = cell.getRow();
+      const data = row.getData();
+      const orderQty = Number(data.order_qty) || 0;
+      const unitPrice = Number(data.unit_price) || 0;
+      row.getCell("total_price").setValue(orderQty * unitPrice);
+    }
   },
-   width: 1
-},
-  { title: "자재명", field: "material_name", width: 150, editor: "input" },
-  { title: "수량", field: "qty", hozAlign: "left", sorter: "number", editor: "input" },
-  { title: "단위", field: "unit", hozAlign: "left", formatter: "link", editor: "input" },
-  { title: "주문수량", field: "order_qty", hozAlign: "left", editor: "input" },
-  { title: "단가", field: "unit_price", hozAlign: "left", editor: "input"},
-  { title: "합계", field: "total_price", hozAlign: "left"},
-  { title: "색상", field: "color", hozAlign: "left", editor: "input"},
-  { title: "공급처", field: "company", hozAlign: "left", editor: "input"},
-  { title: "발주일자", field: "order_date", hozAlign: "left"},
-  { title: "납기일자", field: "deadline", hozAlign: "left", editor: "input"},
+  { 
+    title: "단가", 
+    field: "unit_price", 
+    width: 120, hozAlign: "left", 
+    editor: "input", 
+    formatter:"money", formatterParams:{
+      symbol:"₩",
+      thousand: ",",
+      precision: 0,
+      decimal: ".",
+    },
+    cellEdited: function(cell) {
+      const row = cell.getRow();
+      const data = row.getData();
+      const orderQty = Number(data.order_qty) || 0;
+      const unitPrice = Number(data.unit_price) || 0;
+      row.getCell("total_price").setValue(orderQty * unitPrice);
+    }
+  },
+  { 
+    title: "합계", 
+    field: "total_price", 
+    width: 160, hozAlign: "left", 
+    formatter:"money", formatter:"money", 
+    formatterParams:{
+      symbol:"₩",
+      thousand: ",",
+      precision: 0,
+      decimal: ".",
+    },
+  },
+  { title: "공급처", field: "company", editor: "input" },
+  { title: "발주일자", field: "order_date" },
+  { title: "납기일자", field: "deadline", editor: "date" },
 ];
 
 // 선택된 행들을 처리하는 함수
@@ -141,6 +169,54 @@ const getSelectedRows = (tableRef) => {
   }
 };
 
+// 저장 버튼 클릭 시 실행될 함수 (유효성 검사 강화)
+const saveOrder = async () => {
+  // ✨ 1. 유효성 검사를 함수의 가장 앞으로 이동
+  if (productData.value.length === 0) {
+    alert("저장할 발주 요청서가 없습니다.");
+    return; // 함수 즉시 종료
+  }
+
+  // 필수 입력 항목에 대한 유효성 검사도 추가 (권장)
+  const isInvalid = productData.value.some(p => 
+    !p.order_qty || !p.unit_price || !p.company || !p.deadline
+  );
+  if (isInvalid) {
+    alert("주문수량, 단가, 공급처, 납기일자는 필수 입력 항목입니다.");
+    return;
+  }
+
+  // ✨ 2. 'processedData'를 올바르게 정의
+  // (서버로 보내기 전에 합계 등을 다시 계산하는 안정적인 데이터)
+  const processedData = productData.value.map(p => ({
+    ...p,
+    total_price: Number(p.order_qty) * Number(p.unit_price)
+  }));
+
+  try {
+    // ✨ 3. 백엔드 API 경로 수정 ('/api' 추가) 및 올바른 데이터 전송
+    const response = await axios.post('/api/matorder/save', processedData);
+    
+    // 성공 메시지 출력
+    alert(response.data.message);
+
+    // ✨ 4. orderedMaterialCodes 생성 시 올바른 속성 이름(material_code) 사용
+    const orderedMaterialCodes = processedData.map(p => p.material_code);
+    
+    // 목록에서 저장된 자재 제거
+    materialData.value = materialData.value.filter(material => 
+      !orderedMaterialCodes.includes(material.material_code)
+    );
+    
+    // 발주 요청서 테이블 비우기
+    productData.value = [];
+
+  } catch (error) {
+    // API 호출 실패 시 에러 처리
+    console.error("저장 실패:", error);
+    alert(error.response?.data?.message || "저장에 실패했습니다. 서버 로그를 확인해주세요.");
+  }
+};
 
 
 </script>
@@ -193,11 +269,19 @@ const getSelectedRows = (tableRef) => {
                 :table-data="productData"
                 :table-columns="productColumns"
               >
-                <template #actions>
-                <ArgonButton class="savebtn"color="success" variant="gradient">
-                  저장
-                </ArgonButton>
-              </template>
+               <template #actions>
+  <!-- 기존 ArgonButton은 잠시 주석 처리 -->
+  <!-- 
+  <ArgonButton class="savebtn" color="success" variant="gradient" @click="saveOrder">
+    저장
+  </ArgonButton> 
+  -->
+
+  <!-- ✨ 테스트를 위해 일반 button 태그로 변경 -->
+  <button class="btn btn-success" @click="saveOrder">
+    저장
+  </button>
+</template>
               </tabulator-card>
             </div>
           </div>
