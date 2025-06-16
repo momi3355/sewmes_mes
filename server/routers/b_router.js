@@ -35,14 +35,15 @@ router.get("/matcheckview", async (req, res) => {
   }
 });
 
-router.get("/matcheckdetail/:inbound_check_code", async (req, res) => {
+router.post("/matorder/save", async (req, res) => {
   try {
-    const { inbound_check_code } = req.params;
-    const result = await checkedMatService.getCheckDetails(inbound_check_code);
-    res.send(result);
-  } catch(err) {
+    const orderList = req.body;
+    const result = await matOrderService.saveMaterialOrder(orderList);
+    res.status(200).send(result);
+
+  } catch (err) {
     console.error(err);
-    res.status(500).send({ message: "조회 중 오류 발생"});
+    res.status(500).send({ message: "저장 중 오류 발생" });
   }
 });
 
