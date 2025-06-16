@@ -113,9 +113,14 @@
   const sizeMap = ref({});
   const orderDate = ref("");
   const deadDate = ref("");
+  const note = ref("");
+  const totalPrice = ref("");
+  const totalqty = ref("");
+  const selprice = ref(0);
+
     // 로그인 정보 가져오기
     const store = useStore();
-  const user = computed(() => store.state.user);
+    const user = computed(() => store.state.user);
   // 영업 담당자 연락처와 이름 초기값 바인딩
   const salesTel = ref(""); 
 const salesManager = ref("");
@@ -133,7 +138,7 @@ const address = ref("");
 };
   // 선택시에 동작할것들
   const selectCompany = (company) => {
-  searchTerm.value = company.cp_name;  // 선택한 회사명 input에 바인딩
+  searchTerm.value = company.cp_code;  // 선택한 회사명 input에 바인딩
     companyTel.value = company.cp_tel;     // 업체 연락처
   address.value = company.address;       // 주소
   listOpen.value = false;  // 드롭다운 닫기
@@ -218,7 +223,7 @@ const filteredCompanyList = computed(() => {
         cell.getRow().update(row);
       }
     },
-    { title: "총금액", field: "totalprice", width: 230}
+    { title: "총금액", field: "selprice", width: 230}
   ];
   
   // 데이터 가지고오기
@@ -256,7 +261,8 @@ const filteredCompanyList = computed(() => {
         qty: 0,
         totalqty: 0,
         totalprice: 0,
-        unitprice: 0
+        unitprice: 0,
+        selprice: 0
       }
     });
 
@@ -284,29 +290,45 @@ console.log('🏢 DB에서 받아온 업체 데이터:', companyList.value);
       isModalOpen.value = false;
   
   };
-  
+  // 총 주문금액 계산
+  const calculateTotalOrderPrice = () => {
+  let total = 0;
+  ordlist.value.forEach(item => {
+    total += parseInt(item.selprice || 0);  // 혹은 item.selprice 로 바꿔야 할 수도 있음
+  });
+  return total;
+};
   // 주문 등록
-  const saveOrder = async () => {
+  // 주문 등록
+const saveOrder = async () => {
   try {
+    // 💡 먼저 selprice 계산부터 한다
+    ordlist.value = ordlist.value.map(item => {
+      const qty = parseInt(item.qty || 0);
+      const unitprice = parseInt(item.unitprice || 0);
+      const standardQty = parseInt(item.totalqty || 0);  // 총수량 기준
+      
+      const selprice = standardQty * unitprice;
+      return { ...item, selprice };  // selprice를 새로 계산해서 덮어씌움
+    });
+
+    // 그리고 나서 데이터 전송 준비
     const orderData = {
-      companyName: searchTerm.value,
-      companyTel: companyTel.value,
-      address: address.value,
+      cp_code: searchTerm.value,
+      emp_num: user.value.emp_num,
       orderDate: orderDate.value,
       deadDate: deadDate.value,
-      salesManager: salesManager.value,
-      salesTel: salesTel.value,
-      note: note.value,
+      note: note.value || '',
+      totalprice: calculateTotalOrderPrice(), // 이때는 selprice가 다 들어가있음
       orderDetails: ordlist.value
     };
 
     console.log('보낼 주문 데이터:', orderData);
 
-    const res = await axios.post('/api/saveOrder', orderData);
+    const res = await axios.post('/api/orderAdd', orderData);
 
     if (res.data.success) {
       alert('주문서가 성공적으로 저장되었습니다.');
-      // 저장 후 초기화 또는 페이지 이동 가능
     } else {
       alert('저장에 실패했습니다.');
     }
@@ -315,6 +337,33 @@ console.log('🏢 DB에서 받아온 업체 데이터:', companyList.value);
     alert('저장 중 오류가 발생했습니다.');
   }
 }
+// const saveOrder = async () => {
+//   try {
+//     const orderData = {
+//       cp_code: searchTerm.value,  // 업체코드 (업체명 선택시 cp_code를 받아야 함)
+//       emp_num: user.value.emp_num,       // 로그인 유저 사번
+//       orderDate: orderDate.value,
+//       deadDate: deadDate.value,
+//       note: note.value || '',
+//       totalprice: calculateTotalOrderPrice(),
+//       orderDetails: ordlist.value  // 제품 상세 리스트 (배열)
+
+//     };
+
+//     console.log('보낼 주문 데이터:', orderData);
+
+//     const res = await axios.post('/api/orderAdd', orderData);
+
+//     if (res.data.success) {
+//       alert('주문서가 성공적으로 저장되었습니다.');
+//     } else {
+//       alert('저장에 실패했습니다.');
+//     }
+//   } catch (err) {
+//     console.error('저장 중 오류:', err);
+//     alert('저장 중 오류가 발생했습니다.');  // 👈 이렇게 수정
+//   }
+// }
   </script>
   
   <style>

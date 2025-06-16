@@ -27,7 +27,20 @@ router.get('/companyList', async (req, res) => {
   }
 });
 
-// const result = await loginService.findAll(req.body.data);
+// 외주 업체 목록 가지고오기
+router.get('/companyList2', async (req, res) => {
+  try {
+    const companyOrderList = await companyService.findAll3();
+    res.send(companyOrderList);
+  } catch (err) {
+    console.error('주문 조회 중 오류 발생:', err);
+    res.status(500).send('서버 오류');
+  }
+});
+
+// 외주 제품 가지고오기
+
+
 // 로그인
 router.post('/login', async (req, res) => {
   const { emp_num, login_pw } = req.body;
@@ -47,10 +60,17 @@ router.post('/login', async (req, res) => {
 });
 
 // 주문서 등록
-router.post('/orderAdd', async(req, res) => {
-  const newOrder = await orderService.orderAdd(req.body)
-  res.send(newOrder)
-})
+router.post('/orderAdd', async (req, res) => {
+  console.log("넘어온 데이터:", req.body);
+
+  try {
+    const result = await orderService.orderAdd(req.body);
+    console.log(result);
+    res.send(result);
+  } catch (err) {
+    res.status(500).send({ success: false, message: "등록 실패" });
+  }
+});
 
 // 완제품목록 모달
 router.get('/productList', async (req, res) => {

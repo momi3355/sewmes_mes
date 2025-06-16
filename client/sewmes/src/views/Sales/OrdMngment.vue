@@ -1,8 +1,7 @@
 <template>
   <div class="container-fluid p-3">
-    <div class="row search-color">
     <!-- 상단 검색 영역 -->
-    <div class="row mb-3">
+    <div class="row mb-3 search-color">
       <div class="col-md-2">
         <label class="form-label">검색항목 1</label>
         <input type="text" class="form-control" v-model="searchField1">
@@ -24,7 +23,7 @@
         <button class="btn btn-primary">조회</button>
       </div>
     </div>
-    </div>
+
     <!-- 📦 주문 목록 + 상세 -->
     <div class="container-fluid py-4" id="odlist">
       <div class="row gx-4">
@@ -34,13 +33,13 @@
             card-title="주문서 목록"
             :table-data="OrderData"
             :table-columns="OrderColumns"
-            :tabulator-options="tabulatorEvent"
+            :tabulator-options="tabulatorOptions"
             :on="tabulatorEvent"
             style="height: 800px;"
           />
         </div>
 
-        <!-- 주문 상세 -->
+        <!-- 주문 상세 + 등록 -->
         <div class="col-lg-6 mb-4">
           <div class="card">
             <div class="card-body">
@@ -48,121 +47,229 @@
                 <div class="row g-3">
                   <div class="col-md-6">
                     <label class="form-label">업체명</label>
-                    <input type="text" class="form-control" v-model="detailFields.companyName" readonly />
+                    <div class="position-relative" @focusin="listOpen = true" @focusout="onFocusOut">
+                      <input type="text" class="form-control" v-model="searchTerm">
+                      <ul class="dropdown-menu show" v-if="listOpen" style="position:absolute; top:100%; left:0;">
+                        <li v-for="(company, index) in filteredCompanyList" :key="index">
+                          <a class="dropdown-item" href="#" @mousedown.prevent @click="selectCompany(company)">
+                            {{ company.cp_name }}
+                          </a>
+                        </li>
+                      </ul>
+                    </div>
                   </div>
+
                   <div class="col-md-6">
                     <label class="form-label">업체연락처</label>
-                    <input type="tel" class="form-control" v-model="detailFields.companyTel" readonly />
+                    <input type="tel" class="form-control" v-model="companyTel" readonly />
                   </div>
+
                   <div class="col-12">
                     <label class="form-label">주소</label>
-                    <input type="text" class="form-control" v-model="detailFields.address" readonly />
+                    <input type="text" class="form-control" v-model="address" readonly />
                   </div>
+
                   <div class="col-md-6">
                     <label class="form-label">주문일자</label>
-                    <input type="text" class="form-control" v-model="detailFields.orderdate" />
+                    <input type="date" class="form-control" v-model="orderDate" />
                   </div>
                   <div class="col-md-6">
                     <label class="form-label">납기일자</label>
-                    <input type="text" class="form-control" v-model="detailFields.deaddate" />
+                    <input type="date" class="form-control" v-model="deadDate" />
                   </div>
+
                   <div class="col-md-6">
                     <label class="form-label">영업 담당자</label>
-                    <input type="text" class="form-control" v-model="detailFields.salesManager" />
+                    <input type="text" class="form-control" v-model="salesManager" readonly />
                   </div>
                   <div class="col-md-6">
                     <label class="form-label">영업 담당자 연락처</label>
-                    <input type="tel" class="form-control" v-model="detailFields.salesTel" />
+                    <input type="tel" class="form-control" v-model="salesTel" readonly />
                   </div>
+
                   <div class="col-12">
                     <label class="form-label">비고</label>
-                    <input type="text" class="form-control" v-model="detailFields.note" />
+                    <textarea class="form-control" rows="2" v-model="note"></textarea>
                   </div>
                 </div>
               </form>
             </div>
-            <div class="card-footer d-flex justify-content-end pt-0">
-              <argon-button color="secondary" variant="gradient" class="me-2">삭제</argon-button>
-              <argon-button color="success" variant="gradient">저장</argon-button>
-            </div>
-  <table class="table table-sm product-list-table">
-    <thead>
-      <tr>
-        <th><input type="checkbox" id="cbox"></th>
-        <th>제품명</th>
-        <th>색상</th>
-        <th>사이즈</th>
-        <th>규격</th>
-        <th>수량</th>
-        <th>총수량</th>
-        <th>단가(box)</th>
-        <th>합계</th>
-        <th>상태</th>
-      </tr>
-    </thead>
-    <tbody>
-      <tr v-for="(item, index) in detailFields.products" :key="index">
-        <td>
-          <input type="checkbox" v-model="item.checked" />
-        </td>
-        <td>{{ item.name }}</td>
-        <td>{{ item.qty }}</td>
-        <td>{{ item.price }}</td>
-        <td>{{ item.note }}</td>
-      </tr>
-    </tbody>
 
-  </table>
-              <div class="card-footer d-flex justify-content-end pt-10">
-              <argon-button color="secondary" variant="gradient" class="del">삭제</argon-button>
+            <!-- 버튼 영역 -->
+            <div class="card-footer d-flex justify-content-end pt-0">
+              <button class="btn btn-outline-secondary btn-sm me-2" @click="openModal">제품추가 🧾</button>
+              <argon-button color="secondary" variant="gradient" class="me-2">삭제</argon-button>
+              <argon-button color="success" variant="gradient" @click="saveOrder">저장</argon-button>
             </div>
-</div>
+
+            <!-- 제품 테이블 -->
+            <tabulator-card
+              card-title=""
+              :table-data="ordlist"
+              :table-columns="OrderColumnsDetail"
+              :tabulator-options="tabulatorOptionsDetail"
+              style="height: 400px;"
+            />
           </div>
         </div>
-        <div class="product-table mt-4">
-
       </div>
     </div>
   </div>
+
+  <!-- 제품 추가 모달 -->
+  <prodModal
+    v-bind:isModalOpen="isModalOpen"
+    @selectPlans="getlist"
+    @close-modal="closeModal"
+  />
 </template>
 
 <script setup>
+import { ref, computed, onMounted } from "vue";
 import { useStore } from 'vuex';
-import { useRouter } from 'vue-router';
-import { ref, onMounted,computed } from "vue"; // Import ref and onMounted
 import axios from "axios";
 import ArgonButton from "@/components/ArgonButton.vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
+import prodModal from "./prodModal.vue";
+import groupcodelist from "../../assets/js/utils/groupcodelist.js"
 
-// 사용자 데이터 및 컬럼 정의
+// 공통코드 변환
+const standardlist = ref([]);
+const sizelist = ref([]);
+const colorlist = ref([]);
 
+// 로그인 정보 및 데이터 초기화
 const store = useStore();
-const router = useRouter();
-const OrderData = ref([]);
+const user = computed(() => store.state.user);
 const isLoggedIn = computed(() => !!store.state.user);
 
-// 주문 목록
+const OrderData = ref([]);
+const ordlist = ref([]);
+const isModalOpen = ref(false);
+
+// 등록용 데이터 바인딩
+const searchTerm = ref("");
+const companyTel = ref("");
+const address = ref("");
+const orderDate = ref("");
+const deadDate = ref("");
+const salesTel = ref("");
+const salesManager = ref("");
+const note = ref("");
+
+const companyList = ref([]);
+const listOpen = ref(false);
+
+const onFocusOut = () => {
+  setTimeout(() => listOpen.value = false, 100);
+};
+
+const selectCompany = (company) => {
+  searchTerm.value = company.cp_name;
+  companyTel.value = company.cp_tel;
+  address.value = company.address;
+  listOpen.value = false;
+};
+
+const filteredCompanyList = computed(() => {
+  if (!searchTerm.value) return companyList.value;
+  return companyList.value.filter(company =>
+    company.cp_name.toLowerCase().includes(searchTerm.value.toLowerCase())
+  );
+});
+
+// 주문서 목록 테이블
 const OrderColumns = [
-  { title: "순번", field: "num", width: 79, hozAlign: "center" },
-  { title: "주문코드", field: "ordercode", width: 108, hozAlign: "center" },
-  { title: "업체명", field: "companyName", minWidth: 94, hozAlign: "center"},
-  { title: "총수량", field: "totalQty", width: 94, hozAlign: "center",},
-  { title: "주문일자", field: "orderdate", width: 120, hozAlign: "center",},
-  { title: "납기일자", field: "deaddate", width: 100, hozAlign: "center",},
-  { title: "상태", field: "status", width: 100, hozAlign: "center",}
+  { title: "순번", field: "num", width: 70 },
+  { title: "주문코드", field: "ordercode", width: 100 },
+  { title: "업체명", field: "companyName", width: 130 },
+  { title: "총수량", field: "totalQty", width: 90 },
+  { title: "주문일자", field: "orderdate", width: 100 },
+  { title: "납기일자", field: "deaddate", width: 100 },
+  { title: "상태", field: "status", width: 100 }
 ];
-onMounted(async () => {
-  if (!isLoggedIn.value) {
-    alert('로그인이 필요합니다.');
-    router.push('/login');
-    return;
+
+// 등록 폼 상세 제품 테이블 (임시)
+const OrderColumnsDetail = [
+  { title: "제품명", field: "prodname", width: 150 },
+  { title: "색상", field: "color", width: 80 },
+  { title: "사이즈", field: "size", width: 80 },
+  { title: "규격", field: "standard", width: 100 },
+  { title: "수량", field: "qty", width: 80 },
+  { title: "총수량", field: "totalqty", width: 100 },
+  { title: "단가", field: "unitprice", width: 100 },
+  { title: "합계", field: "totalprice", width: 100 },
+];
+
+// 이벤트 핸들러
+const tabulatorEvent = [
+  {
+    eventName: "rowClick",
+    eventAction: (e, row) => {
+      const rowData = row.getData();
+      console.log(rowData);
+      // 추후 상세조회 기능 구현 가능
+    }
   }
+];
+
+const tabulatorOptions = { selectableRows: 1 };
+const tabulatorOptionsDetail = {};
+
+// 제품 추가 모달 데이터
+const getlist = (modaldata) => {
+  ordlist.value = modaldata;
+};
+
+// 모달창 제어
+const openModal = () => { isModalOpen.value = true };
+const closeModal = () => { isModalOpen.value = false };
+
+// 저장
+const saveOrder = async () => {
+  try {
+    const orderData = {
+      companyName: searchTerm.value,
+      companyTel: companyTel.value,
+      address: address.value,
+      orderDate: orderDate.value,
+      deadDate: deadDate.value,
+      salesManager: salesManager.value,
+      salesTel: salesTel.value,
+      note: note.value,
+      orderDetails: ordlist.value
+    };
+
+    console.log('보낼 주문 데이터:', orderData);
+    const res = await axios.post('/api/saveOrder', orderData);
+    if (res.data.success) {
+      alert('저장 성공');
+    } else {
+      alert('저장 실패');
+    }
+  } catch (err) {
+    console.error(err);
+    alert('저장 중 오류 발생');
+  }
+};
+
+// 데이터 로딩
+onMounted(async () => {
+  if (!isLoggedIn.value) return;
+
+  salesManager.value = user.value.emp_name;
+  salesTel.value = user.value.emp_tel;
 
   try {
-    const res = await axios.get('/api/orderList'); // ✅ 백엔드 API 호출
-
-    // ✅ 응답 데이터를 OrderData에 넣기
-    OrderData.value = res.data.map((item, index) => ({
+    const [resOrder, resCompany] = await Promise.all([
+      axios.get('/api/orderList'),
+      axios.get('/api/companyDropDown')
+    ]);
+    await groupcodelist.groupCodeList('0Z', standardlist);
+    await groupcodelist.groupCodeList('0H', sizelist);
+    await groupcodelist.groupCodeList('0I', colorlist);
+    
+    OrderData.value = resOrder.data.map((item, index) => ({
       num: index + 1,
       ordercode: item.order_code,
       companyName: item.cp_name,
@@ -171,104 +278,21 @@ onMounted(async () => {
       deaddate: item.dead_date,
       companyTel: item.cp_tel,
       salesManager: '심재진',
-      salesTel: '0103213',
+      salesTel: '010-3213',
       address: item.address,
       note: item.note,
       status: item.state
     }));
 
-    console.log('📦 DB에서 받아온 데이터:', OrderData.value);
-  } catch (error) {
-    console.error('❌ 주문 목록 로딩 실패:', error.message);
+    companyList.value = resCompany.data;
+
+  } catch (e) {
+    console.error('데이터 로드 실패', e);
   }
 });
-// 주문 상세 정보
-// const ordercurrentOrder = ref({});
-
-
-const tabulatorEvent = [
-  {
-    eventName: "rowClick",
-    eventAction: (e, row) => {
-      const rowData = row.getData();
-      console.log(rowData);
-      detailFields.value = rowData;
-      //console.log(detailFields.value.material_code);
-    }
-  }
-];
-
-const orderDetailFields={
-  companyName: "",
-  companyTel: "",
-  address: "",
-  orderDate: "",
-  deadDate: "",
-  salesManager: "",
-  salesTel: "",
-  note: ""
-}
-
-const tabulatorOptions = {
-  selectableRows: 1,
-}
-
-const detailFields = ref({ ...orderDetailFields });
-
-// 동적으로 데이터 업데이트 예시 (버튼 클릭 시)
-// const updateUserData = () => {
-  //   userData.value = [
-    //     ...userData.value,
-    //     { id: userData.value.length + 1, name: "새로운 사용자", age: 22, email: "new@example.com", status: "Pending" }
-    //   ];
-// };
-
 </script>
 
 <style scoped>
-  input {
-    display: block;
-    margin-bottom: -10px; /* 간격을 줄임 */
-  }
-  .search-color {
-  margin: 10px;
-  padding: 20px;
-  border-radius: 1rem;
-  background-color: #fff;
-}
-/* 주문 상세 카드 내부의 제품 테이블 */
-.product-table {
-  border-top: 1px solid #ddd;
-  padding-top: 1rem;
-  background-color: white; /* ✅ 흰 배경 적용 */
-  border-radius: 8px;
-}
-
-/* 테이블 스타일 */
-.product-list-table {
-  width: 100%;
-  border-collapse: collapse;
-  background-color: white; /* ✅ 테이블 배경도 흰색으로 */
-  font-size: 0.875rem;
-  border-radius: 6px;
-  overflow: hidden;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.2);
-}
-
-.product-list-table th,
-.product-list-table td {
-  padding: 6px 8px;
-  text-align: center;
-  border-bottom: 1px solid #eee;
-}
-
-#cbox{
-  margin-bottom: 5px;
-}
-
-.del{
-  width: 65px;
-  /* height: 30px; */
-  /* padding-bottom: 10px; */
-}
+/* 기존 조회페이지 스타일 유지 */
+.search-color { margin: 10px; padding: 20px; border-radius: 1rem; background-color: #fff; }
 </style>

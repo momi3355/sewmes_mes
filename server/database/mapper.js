@@ -20,7 +20,7 @@ const connectionPool = mariadb.createPool({
   },
 });
 
-const query = async (alias, values) => {
+const query = async (alias, values = []) => {
   let executeSql = sqlList[alias];
   let conn;
   try {
