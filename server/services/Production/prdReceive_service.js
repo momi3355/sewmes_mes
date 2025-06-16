@@ -29,7 +29,28 @@ const getReleaseLotList = (code) => {
   return mariadb.query("selectReleaseLotList", code);
 }
 
+const addReleaseDataWithDetails = async (params) => {
+  if (!params.order_detail_code && !params.user_code && !params.lot_info) return;
+
+  try {
+    const lotInfo = JSON.stringify(params.lot_info);
+    // console.log([
+    //   params.order_detail_code,
+    //   params.user_code,
+    //   lotInfo
+    // ]);
+    return mariadb.query("insertReleaseDataWithDetails", [
+      params.order_detail_code,
+      params.user_code,
+      lotInfo
+    ]);
+  } catch(error) {
+    console.log(error);
+  }
+};
+
 module.exports = {
   getProductReceiveList,
-  getReleaseLotList
+  getReleaseLotList,
+  addReleaseDataWithDetails
 }

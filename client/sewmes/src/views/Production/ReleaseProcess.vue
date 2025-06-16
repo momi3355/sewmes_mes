@@ -1,5 +1,6 @@
 <script setup>
 import { onMounted, ref } from "vue";
+import { useStore } from "vuex";
 import axios from "axios";
 import moment from 'moment';
 
@@ -7,6 +8,8 @@ import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import ReleaseProcessLotListModal from "./ReleaseProcessLotListModal.vue";
 import { dateFormatter } from "@/assets/js/utils/tableFormatter";
 import groupcodelist from "../../assets/js/utils/groupcodelist";
+
+const store = useStore();
 
 const stantype = ref([]);
 
@@ -114,8 +117,10 @@ const releaseAddhandler = async () => {
 };
 
 const releaseClickhandler = async () => {
-  const orterTable = order_table.value.getTabulator();
-  if (!orterTable.getSelectedRows().length) {
+  const user = store.state.user;
+
+  const orderTable = order_table.value.getTabulator();
+  if (!orderTable.getSelectedRows().length) {
     alert("제품을 먼저 선택해 주세요.");
     return;
   }
@@ -126,15 +131,38 @@ const releaseClickhandler = async () => {
   }
 
   const notFound = releaseData.value.find(e => {
-    return e.release_qty == "" || e.release_qty == "0" || e.release_qty == 0;
+    if (e.release_qty == "" || e.release_qty == "0" || e.release_qty == 0)
+      return true;
+    const qty = Number(e.release_qty);
+    if (!qty) return true; //숫자가 아닐경우
+    else if (qty > e.stock_qty) return true; //재고 수량보다 많을 경우
+    else if (qty < 0) return true; //0보다 적을 경우
   });
 
   if (notFound) {
-    alert("출고 수량이 없습니다.");
+    alert("출고 수량이 없거나 비정상 값입니다.");
     return;
   }
 
   console.log("완료");
+  const releaseDetailInfo = releaseData.value.map(e => {
+    return {
+      lot: e.lot,
+      qty: e.release_qty,
+    };
+  });
+
+  const orderCode = orderTable.getSelectedRows();  
+  const releaseInfo = {
+    order_detail_code: orderCode[0].getData().order_detail_code,
+    user_code: user.emp_num,
+    lot_info: releaseDetailInfo,
+  }
+
+  const query = await axios.post("/api/prdReceive", releaseInfo);
+  if (query.data.affectedRows) {
+    alert("성공");
+  }
 };
 
 onMounted(async () => {

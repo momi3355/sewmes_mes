@@ -137,4 +137,14 @@ router.get("/prdReceive/lot", async (req, res) => {
   }
 });
 
+router.post("/prdReceive", async (req, res) => {
+  try {
+    const result = await prdReceiveService.addReleaseDataWithDetails(req.body);
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "추가 중 오류 발생" });
+  }
+});
+
 module.exports = router;

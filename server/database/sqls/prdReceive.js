@@ -8,7 +8,8 @@ const selectPrdReceive =
        cp_code,
        cp_name,
        cls,
-       address
+       address,
+       order_detail_code
 FROM v_product_receive
 WHERE 1 = 1
 `;
@@ -25,7 +26,11 @@ WHERE stock_qty > 0
 AND prod_code = ?
 ORDER BY inbound_date DESC`;
 
+const insertReleaseDataWithDetails = 
+`CALL product_release_process(?, ?, ?)`;
+
 module.exports = {
   selectPrdReceive,
   selectReleaseLotList,
+  insertReleaseDataWithDetails
 };
