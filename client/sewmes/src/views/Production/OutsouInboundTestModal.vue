@@ -10,7 +10,8 @@ const props = defineProps({
   isOpen: Boolean,
   prodName: String,
   outsouInboundCode: String,
-  inboundQty:Number
+  inboundQty:Number,
+  userCode:String, userName:String
 });
 
 const emit = defineEmits(['close', 'saved']);
@@ -24,28 +25,38 @@ const defectTotal = computed(() =>
 const passQty = computed(() =>
   props.inboundQty - defectTotal.value
 );
-
+// 기존 검사 정보 가져오기
+const fetchExistingDefectDetail = async (inboundCode) => {
+  try {
+    const result = await axios.get(`/api/defectDetail/${inboundCode}`);
+    // 반환: [{ quality_code, test_name, test_method, defect_qty }, ...]
+    return result.data;
+  } catch (err) {
+    console.error("기존 불량 검사 조회 실패:", err);
+    return [];
+  }
+};
 const fetchTestItems = async () => {
   try {
     const result = await axios.get('/api/semiProductQualityTest');
-    const data = result.data;
-
-    let dataArray = [];
-
-    if (Array.isArray(data)) {
-      dataArray = data;
-    } else if (typeof data === 'object' && data !== null) {
-      dataArray = [data]; // 단일 객체일 경우 배열로 변환
-    }
-
-    semiProductQualityTest.value = dataArray.map(item => ({
+    const baseItems = result.data.map(item => ({
       qualityCode: item.quality_code,
       testName: item.test_name,
       testMethod: item.test_method
     }));
+    semiProductQualityTest.value = baseItems;
 
+    // 👉 기존 불량 정보 불러오기
+    const existingDefects = await fetchExistingDefectDetail(props.outsouInboundCode);
+
+    // 👉 testName => defectQty 매핑
+    const existingDefectMap = Object.fromEntries(
+      existingDefects.map(d => [d.test_name, d.defect_qty])
+    );
+
+    // 👉 defectCounts 초기값 세팅
     defectCounts.value = Object.fromEntries(
-      dataArray.map(item => [item.test_name, 0])
+      baseItems.map(item => [item.testName, existingDefectMap[item.testName] ?? 0])
     );
   } catch (err) {
     console.error('검사 항목 조회 실패:', err);
@@ -55,18 +66,43 @@ const fetchTestItems = async () => {
 onMounted(() => {
   if (props.isOpen) fetchTestItems();
 });
-watch(() => props.isOpen, (newVal) => {
-  if (newVal) fetchTestItems();
+watch(() => props.isOpen, (opened) => {
+  if (opened) fetchTestItems();
 });
 const close = () => emit('close');
-const save = () => {
-  emit('saved', {
-    outsouInboundCode: props.outsouInboundCode,
-    defectCounts: defectCounts.value,
-    passQty: passQty.value,
-    defectQty: defectTotal.value
-  });
-  close();
+//
+const save = async () => {
+  try {
+    const defectArray = Object.entries(defectCounts.value)
+      .filter(([_, qty]) => qty > 0)
+      .map(([qualityCode, defectQty]) => ({
+        quality_code: qualityCode,
+        defect_qty: defectQty
+      }));
+
+    await axios.post('/api/saveInboundInspection', {
+      outsouInboundCode: props.outsouInboundCode,
+      userCode: props.userCode,
+      passQty: passQty.value,
+      defectList: defectArray
+    });
+//    { 전달되는 데이터 예시
+//   "outsouInboundCode": "OR4",
+//   "userCode": "EMP01",
+//   "passQty": 95,
+//   "defectList": [
+//     { "quality_code": "Q1", "defect_qty": 5 },
+//     { "quality_code": "Q2", "defect_qty": 0 }
+//   ]
+// }
+
+    alert('검사 저장이 완료되었습니다.');
+    emit('saved'); // 검사 완료 시 부모에 알림
+    close();  // 모달 닫기
+  } catch (err) {
+    console.error('검사 저장 실패:', err);
+    alert('저장 중 오류가 발생했습니다.');
+  }
 };
 </script>
 
@@ -81,9 +117,9 @@ const save = () => {
       <table class="table table-bordered mt-3">
         <thead>
           <tr>
-            <th>항목</th>
-            <th>검사방법</th>
-            <th>불합격개수</th>
+            <th style="width: 25%;">항목</th>
+            <th style="width: 55%;">검사방법</th>
+            <th style="width: 20%;">불합격개수</th>
           </tr>
         </thead>
         <tbody>
@@ -94,8 +130,9 @@ const save = () => {
               <input
                 type="number"
                 class="form-control"
-                v-model.number="defectCounts[test.testName]"
+                v-model.number="defectCounts[test.qualityCode]"
                 min="0"
+                style="width: 80px;"
               />
             </td>
           </tr>
@@ -105,6 +142,7 @@ const save = () => {
       <div class="mt-3">
         <p><strong>합격수량:</strong> {{ passQty }}</p>
         <p><strong>불합격수량:</strong> {{ defectTotal }}</p>
+        <p><strong>검수자:</strong> {{ userName }}</p>
       </div>
 
       <div class="d-flex justify-content-end gap-2 mt-3">

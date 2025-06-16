@@ -1,16 +1,17 @@
 <script setup>
 import axios from 'axios';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
 import ArgonButton from "@/components/ArgonButton.vue";
 
 const releaseMaterialTableRef = ref(null);
+const outsouOrderTableRef = ref(null);
 
 // 검색 객체
 const searchProdName = ref('');
 const searchOutsouCode = ref('');
 const searchCpName = ref('');
-const searchReleaseState = ref('');
+const searchReleaseState = ref('0o1o');
 const searchRegDateStart = ref('');
 const searchRegDateEnd = ref('');
 const searchDeadDateStart = ref('');
@@ -64,6 +65,17 @@ const outsouOrderColumns = [
   { title: '주문수량', field: 'orderQty', width: 150 },
   { title: '작업공정코드', field: 'workProcessCode', width: 150 }
 ];
+const tabulatorOptions = {
+  selectableRows: 1,
+  rowFormatter: function(row) {
+    const rowData = row.getData();
+    if (selectedOutsouOrderCode.value && rowData.outsouOrderCode === selectedOutsouOrderCode.value.outsouOrderCode) {
+      row.getElement().classList.add("selected-row");
+    } else {
+      row.getElement().classList.remove("selected-row");
+    }
+  }
+};
 // 초기화 버튼 클릭 시 검색조건 입력란 비움움
 const resetFilter = () => {
   searchProdName.value = '';
@@ -143,7 +155,6 @@ const handleReleaseComplete = async () => {
 
     alert("출고 처리 완료");
     await searchOutsouOrder();  // 목록 재조회
-    await fetchNullDeadCount(); // 미등록건 수 재조회
     selectedOutsouOrderCode.value = ''; // 선택 초기화 필요 시
   } catch (err) {
     console.error("출고 처리 실패:", err);
@@ -175,6 +186,9 @@ const formatDate = (str) => {
 const formatInt = (val) => {
   return parseInt(val, 10);
 };
+onMounted(() => {
+  searchOutsouOrder();
+});
 </script>
 
 <template>
@@ -231,10 +245,12 @@ const formatInt = (val) => {
     <div class="row">
       <div class="col-md-12 d-flex flex-column">
         <tabulator-card
+          ref="outsouOrderTableRef"
           card-title="외주발주 목록"
           :height="300"
           :table-data="outsouOrderData"
           :table-columns="outsouOrderColumns"
+          :tabulator-options="tabulatorOptions"
           :on="tabulatorEvent"
         />
         <tabulator-card
@@ -264,5 +280,10 @@ const formatInt = (val) => {
   padding: 20px;
   border-radius: 15px;
   background-color: #FFF;
+}
+/* 선택된 행의 스타일 */
+.selected-row {
+  background-color: #e0e0e0 !important; /* 원하는 강조 색상으로 변경 */
+  font-weight: bold; /* 선택된 행의 텍스트를 굵게 */
 }
 </style>
