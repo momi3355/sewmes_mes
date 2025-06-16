@@ -28,16 +28,16 @@ const getRoute = () => {
       />
       </li> -->
 
-      <li class="nav-item">
+      <!--<li class="nav-item">
         <sidenav-item
           to="/table"
           :class="getRoute() === 'tables' ? 'active' : ''"
           navText="임시"
         >
         </sidenav-item>
-      </li>
+      </li>-->
 
-      <li class="nav-item">
+      <!--<li class="nav-item">
         <sidenav-item
           to="/signin"
           :class="getRoute() === 'signin' ? 'active' : ''"
@@ -47,7 +47,7 @@ const getRoute = () => {
             <i class="ni ni-single-copy-04 text-danger text-sm opacity-10"></i>
           </template>
         </sidenav-item>
-      </li>
+      </li>-->
 
       <li class="nav-item">
         <sidenav-item
@@ -111,6 +111,8 @@ const getRoute = () => {
             { name: '외주 출고 처리', to: '/outsouRelease' },
             { name: '외주 입고 관리', to: '/outsouInbound' },
             { name: '외주 입고 불량 관리', to: '/outsouErrMngment' },
+            { name: '외주출고 자재 조회', to: '/outsouReleaseList' },
+            { name: '완제품 입고 관리', to: '/prdInboundMngment' },
             { name: '출고 내역 조회', to: '/releaseHistory' },
             { name: '출고 처리', to: '/releaseProcess' },
           ]"
