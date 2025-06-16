@@ -1,31 +1,10 @@
 const mariadb = require("../../database/mapper.js");
 
 //설비 전체조회
-const equiList = async ({
-  equiName = '',
-  equiType = '',
-  useYnList = [],
-  dateType = '',
-  startDate = '',
-  endDate = '',
-}) => {
-  // useYnList -> 문자열로 합쳐서 IN절과 FIND_IN_SET에 넘길 값 준비
-  const useYnParam = useYnList.length > 0 ? useYnList.join(',') : null;
+const equiList = async () => {
+  let list = await mariadb.query("selectEquiList");
 
-  // params 순서에 맞게 배열 만들기
-  const params = [
-    equiName, equiName, equiName,     // equi_name LIKE
-    equiType, equiType, equiType,     // equi_type =
-    null, '', useYnParam,              // use_yn IN (?)
-    null, '', useYnParam,              // FIND_IN_SET(use_yn, ?)
-    
-    dateType, startDate, endDate,      // install_date 조건
-    dateType, startDate, endDate,      // last_check 조건
-    dateType, startDate, endDate,      // check_date 조건
-    null, ''                          // 날짜 필터 없을 때 조건 (널 또는 빈문자열)
-  ];
-
-  return await mariadb.query("selectEquiList", params);
+  return list;
 };
 
 //단건조회
