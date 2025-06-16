@@ -84,12 +84,12 @@ const getWorkInstAll= async(searchParams = {}) => { // searchParams를 인자로
     }
 }
 
-// 작업지시서 저장 (수정된 핵심 로직 포함)
-const saveWorkInstructions= async (workInstructions) => {
+// 작업지시서 저장 (재고 차감 및 상태 업데이트 제외 버전)
+const saveWorkInstructions = async (workInstructions) => {
     let conn;
     try {
         conn = await getConnection();
-        await conn.beginTransaction();
+        await conn.beginTransaction(); // 트랜잭션 시작
 
         const savedResults = [];
 
@@ -99,7 +99,7 @@ const saveWorkInstructions= async (workInstructions) => {
             const p_prod_plan_code = instruction.prod_plan_code && instruction.prod_plan_code.trim() !== '' ? instruction.prod_plan_code.trim() : null;
             const p_prod_code = instruction.prod_code && instruction.prod_code.trim() !== '' ? instruction.prod_code.trim() : null;
             const p_inst_qty = parseFloat(instruction.inst_qty) || 0;
-            const p_dead_date = instruction.dead_date ? new Date(instruction.dead_date) : null;
+
             const p_inst_state = instruction.inst_state && instruction.inst_state.trim() !== '' ? instruction.inst_state.trim() : '0s1s';
             const p_emp_num = instruction.emp_num && instruction.emp_num.trim() !== '' ? instruction.emp_num.trim() : null;
             const p_inst_date = instruction.inst_date ? new Date(instruction.inst_date) : null;
@@ -113,7 +113,7 @@ const saveWorkInstructions= async (workInstructions) => {
             let current_bom_code = null;
             let isNewInstruction = false;
 
-            // 3. 기존 작업지시 코드 존재 여부 확인 및 처리 
+            // 3. 기존 작업지시 코드 존재 여부 확인 및 처리
             if (p_work_inst_code_in) {
                 const checkExistsResult = await conn.query(sqlList['checkWorkInstCode'], [p_work_inst_code_in]);
                 const exists = checkExistsResult && checkExistsResult.length > 0 && checkExistsResult[0].count > 0;
@@ -122,7 +122,7 @@ const saveWorkInstructions= async (workInstructions) => {
                     console.log(`[saveWorkInstructions] Updating existing work instruction: ${p_work_inst_code_in}`);
                     currentWorkInstCode = p_work_inst_code_in;
 
-                    // 4. BOM_CODE 조회 로직 
+                    // 4. BOM_CODE 조회 (업데이트 시에도 최신 BOM 코드를 적용)
                     const bomRows = await conn.query(sqlList['selectBomByProdCode'], [p_prod_code]);
                     if (bomRows && bomRows.length > 0) {
                         current_bom_code = bomRows[0].bom_code;
@@ -130,13 +130,22 @@ const saveWorkInstructions= async (workInstructions) => {
                         throw new Error(`제품코드 '${p_prod_code}'에 해당하는 BOM 정보를 찾을 수 없어 작업지시를 저장할 수 없습니다.`);
                     }
 
-                    const UpdateValues = [
-                        p_prod_plan_code, p_prod_code, current_bom_code, p_inst_qty, p_dead_date,
-                        p_inst_state, p_emp_num, p_inst_date, p_inst_reg_date, currentWorkInstCode
+                    const updateValues = [
+                        p_prod_plan_code, p_prod_code, current_bom_code, p_inst_qty,
+                        p_inst_state, p_emp_num, p_inst_date, p_inst_date, p_inst_reg_date, p_inst_reg_date, currentWorkInstCode
                     ];
-                    const updateResult = await conn.query(sqlList['updateWorkInstList'], UpdateValues);
+                    const updateResult = await conn.query(sqlList['updateWorkInstList'], updateValues);
                     console.log(`작업지시 ${currentWorkInstCode} 업데이트 성공. Affected rows: ${updateResult.affectedRows}`);
-                    
+
+                    // 작업공정 업데이트 (필요시 활성화) - 이 부분은 기존 로직 유지
+                    const updateWorkProcessValues = [
+                        p_inst_qty,
+                        currentWorkInstCode
+                    ];
+                    // Make sure 'updateWorkProcessByWorkInstCode' is defined in sqlList
+                    await conn.query(sqlList['updateWorkProcessByWorkInstCode'], updateWorkProcessValues);
+                    console.log(`작업지시 ${currentWorkInstCode} 관련 작업공정 데이터 업데이트 완료.`);
+
                 } else { // 코드값은 넘어왔으나 DB에 없는 경우: 신규 코드 생성 및 INSERT
                     console.warn(`[saveWorkInstructions] Existing work_inst_code '${p_work_inst_code_in}' not found in DB. Treating as new.`);
                     currentWorkInstCode = await generateWorkInstCode(conn);
@@ -147,7 +156,7 @@ const saveWorkInstructions= async (workInstructions) => {
                 isNewInstruction = true;
             }
 
-            // 4. 신규 작업지시인 경우만 t_work_inst 테이블에 INSERT 실행 
+            // 4. 신규 작업지시인 경우에만 t_work_inst 테이블에 INSERT 실행
             if (isNewInstruction) {
                 const bomRows = await conn.query(sqlList['selectBomByProdCode'], [p_prod_code]);
                 if (bomRows && bomRows.length > 0) {
@@ -156,66 +165,124 @@ const saveWorkInstructions= async (workInstructions) => {
                     throw new Error(`제품코드 '${p_prod_code}'에 해당하는 BOM 정보를 찾을 수 없어 작업지시를 저장할 수 없습니다.`);
                 }
 
+                // Check parameter count for insertWorkInstList. It should be 11.
                 const insertValues = [
                     currentWorkInstCode, p_prod_plan_code, p_prod_code, current_bom_code,
-                    p_inst_qty, p_inst_state, p_emp_num, p_inst_date, p_inst_reg_date
+                    p_inst_qty, p_inst_state, p_emp_num, p_inst_date, p_inst_date, p_inst_date, p_inst_reg_date
                 ];
                 console.log('insertWorkInstList parameters:', insertValues);
                 const insertResult = await conn.query(sqlList['insertWorkInstList'], insertValues);
                 console.log(`작업지시 ${currentWorkInstCode} 신규 삽입 성공. Insert ID: ${insertResult.insertId}`);
+
+                // 작업공정 insert 프로시저 호출
+                let procMsg = await conn.query(sqlList['workProcessInsertProced'], [currentWorkInstCode]).catch(err => {
+                    console.error("workProcessInsertProced 호출 오류:", err);
+                    throw new Error("작업공정 생성 프로시저 호출 중 오류 발생.");
+                });
+                procMsg = procMsg[1] && procMsg[1][0] ? procMsg[1][0].msg : '메시지 없음';
+                console.log(`작업공정 생성 프로시저 메시지: ${procMsg}`);
             }
 
-            //  5. 자재 홀드 처리  
+            // --- 5. 자재 홀드 처리 ---
+            // ❗ 변경: 기존 홀드를 먼저 모두 삭제하고, 새로운 지시 수량에 맞춰 재할당하는 전략을 사용합니다.
+            // 이렇게 하면 이전 FAB LOT 할당 정보도 초기화되고 새로 할당됩니다.
+            await conn.query(sqlList['deleteHoldsByWorkInstCode'], [currentWorkInstCode]);
+            console.log(`기존 작업지시 ${currentWorkInstCode} 에 대한 모든 홀드 데이터 삭제 완료.`);
+
             const bomDetails = await conn.query(sqlList['selectBomDetailsByBomCode'], [current_bom_code]);
-            const existingHolds = await conn.query(sqlList['selectHoldsByWorkInstCode'], [currentWorkInstCode]);
-            const existingHoldsMap = new Map();
-            for (const hold of existingHolds) {
-                existingHoldsMap.set(hold.material_code, hold);
-            }
-
-            const materialCodesToKeep = new Set(); 
 
             if (bomDetails && bomDetails.length > 0) {
                 for (const detail of bomDetails) {
                     const material_code = detail.item_code;
-                    const calculatedHoldQty = detail.need * p_inst_qty; 
-                    
-                    materialCodesToKeep.add(material_code);
+                    const requiredQty = detail.need * p_inst_qty; // 이 자재에 필요한 총 수량
 
-                    if (existingHoldsMap.has(material_code)) {
-                        // 5-4-1. 기존 홀드 데이터가 있는 경우: UPDATE
-                        const existingHold = existingHoldsMap.get(material_code);
-                        if (existingHold.hold_qty !== calculatedHoldQty) {
-                            await conn.query(sqlList['updateHold'], [calculatedHoldQty, existingHold.hold_id, material_code]);
-                            console.log(`홀드 ${existingHold.hold_id} (자재: ${material_code}) 수량 업데이트: ${calculatedHoldQty}`);
-                        } else {
-                            console.log(`홀드 ${existingHold.hold_id} (자재: ${material_code}) 수량 변동 없음.`);
+                    // ⭐ FAB 자재인 경우와 아닌 경우를 분리 ⭐
+                    if (material_code.startsWith('FAB')) {
+                        // FAB 자재 처리: 재고에서 LOT을 할당 (FIFO 방식)
+                        console.log(`[FAB 자재 홀드] 작업지시: ${currentWorkInstCode}, 자재: ${material_code}, 필요 수량: ${requiredQty}`);
+
+                        let allocatedQty = 0;
+                        let remainingQtyToAllocate = requiredQty;
+
+
+                        const availableLots = await conn.query(sqlList['selectInboundMaterialsForFab'], [material_code]);
+
+                        if (!availableLots || availableLots.length === 0) {
+                            // 실제 재고가 없어도 홀드를 생성하지 못할 수 있으므로, 재고 부족 메시지는 유효합니다.
+                            throw new Error(`FAB 자재 '${material_code}'에 대한 유효한 재고가 부족합니다. (재고 없음)`);
                         }
+
+                        for (const lot of availableLots) {
+                            if (remainingQtyToAllocate <= 0) break; // 필요한 수량을 모두 할당했으면 종료
+
+                            const lotAvailableQty = lot.inbound_qty; // LOT에 현재 남아있는 사용 가능 수량
+                            const qtyToAllocateFromLot = Math.min(remainingQtyToAllocate, lotAvailableQty);
+
+                            if (qtyToAllocateFromLot > 0) {
+                                // 새 홀드 ID 생성
+                                const holdIdResultRows = await conn.query(sqlList['callCreateCodeProcForHoldId'], []);
+                                const newHoldId = holdIdResultRows && holdIdResultRows[1] && holdIdResultRows[1].length > 0
+                                    ? holdIdResultRows[1][0].new_hold_id : null;
+                                if (!newHoldId) {
+                                    throw new Error('새로운 홀드 ID를 생성하지 못했습니다. (DB 프로시저 오류)');
+                                }
+
+                                // t_hold 테이블에 삽입 (LOT 코드와 연결)
+                                // 실제 재고(t_material_inbound)는 건드리지 않고, t_hold에만 기록합니다.
+                                await conn.query(sqlList['insertSingleHold'], [
+                                    newHoldId,
+                                    material_code,
+                                    qtyToAllocateFromLot,
+                                    currentWorkInstCode,
+                                    '0b2b', // use_yn: '0b2b' (홀드 상태)
+                                    lot.lot_code, // FAB 자재는 LOT 코드와 연결
+                                    0 // release_qty 초기값 0
+                                ]);
+                                console.log(`새 FAB 홀드 ${newHoldId} (자재: ${material_code}, LOT: ${lot.lot_code}) 삽입: ${qtyToAllocateFromLot}`);
+
+                                allocatedQty += qtyToAllocateFromLot;
+                                remainingQtyToAllocate -= qtyToAllocateFromLot;
+
+                                // ❗ 중요: t_material_inbound 테이블의 재고 수량 및 상태 업데이트 로직은 여기서 제거됩니다.
+                                // 재고 차감 및 상태 변경은 나중에 '출고' 또는 '생산 투입' 시점에 별도로 처리해야 합니다.
+                            }
+                        }
+
+                        if (remainingQtyToAllocate > 0) {
+                            // 필요한 수량을 모두 할당하지 못했을 경우 (홀드 부족 메시지)
+                            // 실제 재고가 부족한 상황이므로 여전히 오류로 처리해야 합니다.
+                            throw new Error(`FAB 자재 '${material_code}'의 재고가 ${remainingQtyToAllocate} 부족하여 홀드할 수 없습니다. (작업지시: ${currentWorkInstCode})`);
+                        }
+
                     } else {
-                        // 5-4-2. 기존 홀드 데이터가 없는 경우: INSERT (DB 프로시저를 통해 홀드 ID 생성)
-                        //  스토어드 프로시저 호출로 ID 얻기 
+                        // 일반 자재 (부자재) 처리: LOT 할당 없이 수량만 홀드
+                        const calculatedHoldQty = requiredQty; // 일반 자재의 필요 수량
+
+                        // 새 홀드 ID 생성
                         const holdIdResultRows = await conn.query(sqlList['callCreateCodeProcForHoldId'], []);
-                        const newHoldId = holdIdResultRows && holdIdResultRows.length > 1 && holdIdResultRows[1].length > 0
+                        const newHoldId = holdIdResultRows && holdIdResultRows[1] && holdIdResultRows[1].length > 0
                             ? holdIdResultRows[1][0].new_hold_id : null;
 
                         if (!newHoldId) {
-                            throw new Error('새로운 홀드 ID를 생성하지 못했습니다. (DB 프로시저 오류 또는 타임아웃)');
+                            throw new Error('새로운 홀드 ID를 생성하지 못했습니다. (DB 프로시저 오류)');
                         }
 
-                        await conn.query(sqlList['insertSingleHold'], [newHoldId, material_code, calculatedHoldQty, currentWorkInstCode]);
-                        console.log(`새 홀드 ${newHoldId} (자재: ${material_code}) 삽입: ${calculatedHoldQty}`);
+                        // 일반 자재는 lot_code에 NULL 삽입
+                        // insertSingleHold 쿼리 인자 순서: hold_id, material_code, hold_qty, work_inst_code, use_yn, lot_code, release_qty
+                        await conn.query(sqlList['insertSingleHold'], [
+                            newHoldId,
+                            material_code,
+                            calculatedHoldQty,
+                            currentWorkInstCode,
+                            '0b2b', // use_yn: '0b2b' (홀드 상태)
+                            null, // 일반 자재는 lot_code가 필요 없음
+                            0 // release_qty 초기값 0
+                        ]);
+                        console.log(`새 일반 자재 홀드 ${newHoldId} (자재: ${material_code}) 삽입: ${calculatedHoldQty}`);
                     }
                 }
             } else {
                 console.warn(`BOM 코드 '${current_bom_code}'에 대한 상세 내역(자재 목록)을 찾을 수 없습니다. 자재 홀드 처리 생략.`);
-            }
-
-            // 5-5. 더 이상 필요 없는 기존 홀드 데이터 삭제 (DELETE)
-            for (const existingHold of existingHolds) {
-                if (!materialCodesToKeep.has(existingHold.material_code)) {
-                    await conn.query(sqlList['deleteHoldById'], [existingHold.hold_id]);
-                    console.log(`더 이상 필요 없는 홀드 ${existingHold.hold_id} (자재: ${existingHold.material_code}) 삭제.`);
-                }
             }
 
             // 6. 응답을 위한 결과 저장 (변경 없음)
@@ -246,7 +313,6 @@ const saveWorkInstructions= async (workInstructions) => {
         }
     }
 };
-
 // 작업지시서 삭제
 const deleteWorkInstructions = async (workInstCodes) => {
     let conn; // 데이터베이스 연결 변수
@@ -271,6 +337,10 @@ const deleteWorkInstructions = async (workInstCodes) => {
                 await conn.rollback();
                 throw new Error(`작업지시코드 '${code}'는 '생산 전' 상태가 아니므로 삭제할 수 없습니다.`);
             }
+            //t_work_prcess도 삭제
+            const deleteWorkProcessResult = await conn.query(sqlList['deleteWorkProcessByworkInstCode'], [code]);
+            deletedCount.workProcesses += deleteWorkProcessResult.affectedRows;
+            console.log(`작업지시 ${code} 관련 작업 공정 데이터 ${deleteWorkProcessResult.affectedRows}개 삭제.`);
 
             // 3. 해당 작업지시와 관련된 자재 홀드 먼저 삭제
             

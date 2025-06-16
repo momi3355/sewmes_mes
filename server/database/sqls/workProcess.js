@@ -1,5 +1,22 @@
 
+//작업공정생성
+const workProcessInsertProced=`
+    CALL prdWorkprocesss_proc(?, @msg);
+    SELECT @msg AS msg;
+`;
+//작업공정테이블 삭제
+const deleteWorkProcessByworkInstCode=`
+DELETE FROM t_work_process 
+WHERE work_inst_code=?;
+`
 
+//작업지시 수정시 작업공정테이블 수정
+const updateWorkProcessByWorkInstCode=`
+    UPDATE t_work_process
+    SET inst_qty = ?
+    WHERE 
+    work_inst_code=?
+`;
 
 
 //작업공정테이블에서 필요한 쿼리문
@@ -33,9 +50,13 @@ WHERE
     te.equi_type = (SELECT tpm.equi_type FROM t_process_master tpm WHERE tpm.process_code = ?)
 `;
 
+//작업지시상세 조회
 
 
 module.exports={
     getProcessFlowByWorkInst,
     getEquipmentByProcess,
+    workProcessInsertProced,
+    deleteWorkProcessByworkInstCode,
+    updateWorkProcessByWorkInstCode,
 }
