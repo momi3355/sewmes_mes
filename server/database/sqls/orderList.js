@@ -19,26 +19,6 @@ const orderListCheck2 =
 FROM t_order_detail a JOIN t_company b
      ON(a.cp_code = b.cp_code)`
 
-// 주문서 등록
-const orderAdd =
-`INSERT INTO t_order_detail (
-  order_detail_code, 
-  order_code, 
-  prod_code, 
-  standard, 
-  qty, 
-  unit_price, 
-  total_price, 
-  state, 
-  emp_num, 
-  note, 
-  order_date, 
-  dead_date, 
-  cp_code, 
-  sel_price 
-) 
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-
 // 주문서등록 / 제품모달
 const productList =
 `SELECT a.prod_code,
@@ -52,6 +32,39 @@ FROM t_product a JOIN t_order_detail b
 WHERE a.prod_type = '0k2k'
 AND a.use_yn = '0b1b'`
 
+const orderDetailAdd = `
+INSERT INTO t_order_detail (
+  order_detail_code, 
+  order_code, 
+  prod_code, 
+  standard, 
+  qty, 
+  unit_price, 
+  total_price,
+  emp_num,
+  note,
+  order_date, 
+  dead_date,
+  cp_code,
+  sel_price
+) 
+  VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+`;
+// 주문서 등록
+const orderAdd =
+`INSERT INTO t_order(
+  order_code,
+  total_price,
+  state,
+  total_qty
+) 
+VALUES (?, ?, ?, ?)`
+
+const getNextOrderCode =
+`SELECT order_code FROM t_order ORDER BY order_code DESC LIMIT 1`;
+
+const getNextOrderDetailCode = 
+`SELECT order_detail_code FROM t_order_detail ORDER BY order_detail_code DESC LIMIT 1`;
 
 // 년-월-일 날짜포맷
 // DATE_FORMAT((Now), '%Y-%m-%d')
@@ -61,4 +74,7 @@ module.exports = {
   orderListCheck2,
   orderAdd,
   productList,
+  orderDetailAdd,
+  getNextOrderCode,
+  getNextOrderDetailCode
 }
