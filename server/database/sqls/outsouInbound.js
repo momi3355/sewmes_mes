@@ -23,6 +23,16 @@ const getSemiProductQualityTest = `
   SELECT quality_code, test_name, test_method
   FROM t_quality
   WHERE test_target = '1b3b' AND use_yn = '0b1b'`;
+// 외주입고 기존 검사이력 정보 가져오기
+const getSemiProductQualityTestHistory = `
+  SELECT 
+    q.quality_code,
+    q.test_name,
+    q.test_method,
+    d.defect_qty
+  FROM t_outsou_defect_detail d
+  JOIN t_quality q ON d.quality_code = q.quality_code
+  WHERE d.outsou_inbound_code = ?`;
 
 // =========================================
 
@@ -44,10 +54,15 @@ const selectInboundDefectByConditions = `
   LEFT JOIN t_employees e ON oi.emp_num = e.emp_num
   WHERE 1 = 1
     /**조건절**/
-  ORDER BY oi.reg_date DESC`;
+  ORDER BY CAST(SUBSTRING(od.defect_history_code, 4) AS UNSIGNED) DESC`;
+// 외주입고 검사 완료 시 작동 프로시저
+const callSaveOutsouInboundInspection =`
+CALL proc_save_outsou_inbound_inspection(?, ?, ?, ?)`;
 
 module.exports ={
   selectOutsouInboundByConditions,
   getSemiProductQualityTest,
-  selectInboundDefectByConditions
+  getSemiProductQualityTestHistory,
+  selectInboundDefectByConditions,
+  callSaveOutsouInboundInspection
 };

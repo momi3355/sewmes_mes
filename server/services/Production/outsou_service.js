@@ -86,7 +86,7 @@ const callOutsouRelease = async (updates) => {
 
   for (const row of updateList) {
     const { outsouOrderCode } = row;
-    await mariadb.query("CALL proc_outsou_release(?)", [outsouOrderCode]);
+    await mariadb.query("callOutsouRelease", [outsouOrderCode]);
   }
 };
 // ==============================================================
@@ -195,12 +195,16 @@ const findInboundReceiveByConditions = async ({
 const getSemiProductQualityTest = async () => {
   try {
     const rows = await mariadb.query("getSemiProductQualityTest", []);
-    console.log("쿼리 결과 rows:", rows);
     return rows;
   } catch (err) {
     console.error('품질검사 항목 조회 실패:', err);
     throw err;
   }
+};
+// 반제품 품질 기존 검사이력 가져오기
+const getDefectDetailByInboundCode = async (inboundCode) => {
+  const sql = sqlList.getSemiProductQualityTestHistory;
+  return await mariadb.directQuery(sql, [inboundCode]);
 };
 
 // ==============================================================
@@ -237,6 +241,16 @@ const findInboundDefectByConditions = async ({
   const finalSql = baseSql.replace("/**조건절**/", whereClauses.join("\n"));
   return await mariadb.directQuery(finalSql, params);
 };
+// 외주입고 검사 완료 시 저장 기능
+const callSaveOutsouInboundInspection = async ({ outsouInboundCode, userCode, passQty, defectList }) => {
+  const jsonParam = JSON.stringify(defectList); // [{ quality_code, defect_qty }, ...]
+  return await mariadb.query("callSaveOutsouInboundInspection", [
+    outsouInboundCode,
+    userCode,
+    passQty,
+    jsonParam
+  ]);
+};
 
 module.exports ={
   // 외주발주
@@ -252,6 +266,8 @@ module.exports ={
   // 외주입고
   findInboundReceiveByConditions,
   getSemiProductQualityTest,
+  getDefectDetailByInboundCode,
   // 외주입고불량
-  findInboundDefectByConditions
+  findInboundDefectByConditions,
+  callSaveOutsouInboundInspection
 };

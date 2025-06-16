@@ -327,7 +327,16 @@ router.get('/semiProductQualityTest', async (req, res) => {
     res.status(500).json({ message: '조회 실패', error: err.message });
   }
 });
-
+// 외주입고 품질 검사 기존 정보 가져오기
+router.get('/defectDetail/:inboundCode', async (req, res) => {
+  try {
+    const result = await outsouService.getDefectDetailByInboundCode(req.params.inboundCode);
+    res.json(result);
+  } catch (err) {
+    console.error('검사상세 조회 실패:', err);
+    res.status(500).json({ message: '조회 실패', error: err.message });
+  }
+});
 // ==============================================================
 
 // 외주입고불량내역 페이지 라우터 =========================================
@@ -347,5 +356,20 @@ router.get('/outsouInboundDefectList', async (req, res)=>{
     res.status(500).send({ message: "검색 중 오류 발생" });
   }
 });
-
+// 외주입고 검사 완료 시 저장
+router.post("/saveInboundInspection", async (req, res) => {
+  try {
+    const { outsouInboundCode, userCode, passQty, defectList } = req.body;
+    await outsouService.callSaveOutsouInboundInspection({
+      outsouInboundCode,
+      userCode,
+      passQty,
+      defectList
+    });
+    res.send({ message: "저장 완료" });
+  } catch (err) {
+    console.error("입고검사 저장 실패:", err);
+    res.status(500).send({ message: "입고검사 저장 실패" });
+  }
+});
 module.exports = router;

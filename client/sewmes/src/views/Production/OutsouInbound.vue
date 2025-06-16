@@ -1,16 +1,21 @@
 <script setup>
 import axios from 'axios';
-import { ref } from 'vue';
+import { useStore } from "vuex";
+import { ref, onMounted } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
 import OutsouInboundTestModal from './OutsouInboundTestModal.vue';
 import ArgonButton from "@/components/ArgonButton.vue";
+import moment from 'moment';
 
 const productTableRef = ref(null);
-
+// 사원정보 가져오기
+const store = useStore();
+const userCode = store.state.user.emp_num;
+const userName = store.state.user.emp_name;
 // 검색 객체
 const searchProdName = ref('');
 const searchCpName = ref('');
-const searchTestState = ref('');
+const searchTestState = ref('not_tested');
 const searchRegDateStart = ref('');
 const searchRegDateEnd = ref('');
 const searchInboundDateStart = ref('');
@@ -58,6 +63,18 @@ const searchOutsouReceive = async () => {
   }
 };
 
+const getTestStatus = ({ inboundQty, defectQty, passQty }) => {
+  const inbound = formatInt(inboundQty);
+  const defect = formatInt(defectQty);
+  const pass = formatInt(passQty);
+
+  if (pass === 0 && defect === 0) return "검사 전";
+  if (pass === inbound) return "합격";
+  if (pass < inbound && pass > 0) return "부분 합격";
+  if (inbound === defect) return "불합격";
+  return "검사 전";
+};
+
 const outsouReceiveColumns = [
   { title: "No", field: "rowNum", width: 80 },
   {
@@ -65,15 +82,7 @@ const outsouReceiveColumns = [
     width: 150,
     formatter: (cell) => {
       const data = cell.getRow().getData();
-      const inbound = data.inboundQty;
-      const defect = data.defectQty;
-      const pass = data.passQty;
-
-      if (pass === null || pass === undefined) return "검사 전";
-      if (inbound === pass) return "합격";
-      if (inbound > pass) return "부분 합격";
-      if (inbound === defect) return "불합격";
-      return "알 수 없음";
+      return getTestStatus(data);
     }
   },
   { title: '품명', field: 'prodName', width: 250 },
@@ -109,9 +118,16 @@ const resetFilter = () => {
   searchInboundDateStart.value = '';
   searchInboundDateEnd.value = '';
 };
+
 // 외주입고검수 페이지 출력
 const openModal = () => {
   if (!selectedOutsouInboundCode.value) return alert("외주입고 건을 먼저 선택하세요.");
+  
+  const testStatus = getTestStatus(selectedOutsouInboundCode.value);
+  if (testStatus !== "검사 전") {
+    return alert(`이미 검사가 진행된 건입니다. (상태: ${testStatus})`);
+  }
+  
   isTestModalOpen.value = true;
 };
 const tabulatorEvent = [
@@ -130,13 +146,24 @@ const tabulatorEvent = [
   }
 ];
 // 형태 변환
+const formatInt = (val) => {
+  const num = parseInt(val);
+  return isNaN(num) ? 0 : num;
+};
 const formatDate = (str) => {
   if (!str) return '';
-  return new Date(str).toISOString().slice(0, 10);
+  const date = moment(str);
+  return date.isValid() ? date.format('YYYY-MM-DD') : '';
 };
-const formatInt = (val) => {
-  return parseInt(val, 10);
+// 검사 완료 시 페이지 재조회
+const handleAfterTestSaved = () => {
+  isTestModalOpen.value = false;
+  selectedOutsouInboundCode.value = null;
+  searchOutsouReceive(); // 다시 조회
 };
+onMounted(() => {
+  searchOutsouReceive();
+});
 </script>
 
 <template>
@@ -210,6 +237,8 @@ const formatInt = (val) => {
           :prodName="selectedOutsouInboundCode?.prodName"
           :outsouInboundCode="selectedOutsouInboundCode?.outsouInboundCode"
           :inboundQty="selectedOutsouInboundCode?.inboundQty"
+          :userCode="userCode"
+          :userName="userName"
           @close="isTestModalOpen = false"
           @saved="handleAfterTestSaved"
         />
