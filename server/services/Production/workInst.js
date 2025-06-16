@@ -186,9 +186,6 @@ const saveWorkInstructions = async (workInstructions) => {
             // --- 5. 자재 홀드 처리 ---
             // ❗ 변경: 기존 홀드를 먼저 모두 삭제하고, 새로운 지시 수량에 맞춰 재할당하는 전략을 사용합니다.
             // 이렇게 하면 이전 FAB LOT 할당 정보도 초기화되고 새로 할당됩니다.
-            await conn.query(sqlList['deleteHoldsByWorkInstCode'], [currentWorkInstCode]);
-            console.log(`기존 작업지시 ${currentWorkInstCode} 에 대한 모든 홀드 데이터 삭제 완료.`);
-
             const bomDetails = await conn.query(sqlList['selectBomDetailsByBomCode'], [current_bom_code]);
 
             if (bomDetails && bomDetails.length > 0) {

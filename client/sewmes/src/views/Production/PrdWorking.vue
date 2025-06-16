@@ -1,8 +1,7 @@
 <script setup>
 import { TabulatorFull as Tabulator } from "tabulator-tables";
 import { ref, onMounted, computed, watch } from "vue";
-import axios from "axios"; // axios 직접 임포트
-// import ArgonButton from "@/components/ArgonButton.vue"; // ArgonButton은 더 이상 사용하지 않으므로 주석 처리 또는 삭제
+import axios from "axios";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import PrdPrefModal from "./PrdPrefModal.vue";
 
@@ -12,33 +11,32 @@ const processFlowData = ref([]);
 const equipmentData = ref([]);
 
 const currentWorkOrder = ref({
-  work_inst_code: '', prod_name: '', inst_qty: null, inst_date: '', lot: '',
-  item_code: '', material: '', thickness: null, width: null, length: null,
-  color: '',
-  option_dansu: false, dansu_qty: null,
-  option_jasu: false, jasu_qty: null,
-  option_zipper: false, zipper_qty: null,
-  option_printing: false, printing_qty: null,
-  work_start_date: '', work_end_date: '',
-  inst_state: "0s1s", // 초기 상태 '생산전' 코드
-  bom_type: '', material_name: '', material_spec: '',
-  width_cm: null,
-  length_m: null,
-  has_dancho: false, 
-  has_jasu: false, 
-  has_zipper: false, 
-  has_printing: false,
-  isSelected: false
+    work_inst_code: '',
+    prod_name: '',
+    inst_qty: null,
+    inst_date: '',
+    work_start_date: '',
+    work_end_date: '',
+    inst_state: "0s1s",
+    prod_code: '',
+    prod_type: '',
+    category: '',
+    product_color: '',
+    product_size: '',
+    isSelected: false,
+    materials: []
 });
 
 const selectedProcess = ref({
-  process_code: '', process_name: '', detail: '', process_seq: null,
-  inst_qty: null, prod_code: '', isSelected: false
+    process_code: '', process_name: '', detail: '', process_seq: null,
+    inst_qty: null, prod_code: '', isSelected: false,
+    process_start_date: '', // ⭐ 여기에 시작 시간 필드 추가 (null 또는 빈 문자열로 초기화) ⭐
+    process_end_date: '' // 미리 종료 시간 필드도 추가
 });
 
 const selectedEquipment = ref({
-  equi_code: '', equi_name: '', status: '', equip_type: '', // ⭐ status 필드명 확인 (equi_status에서 status로 변경) ⭐
-  need_time: null, process_type: '', use_yn: '', isSelected: false
+    equi_code: '', equi_name: '', status: '', equip_type: '',
+    need_time: null, process_type: '', use_yn: '', isSelected: false
 });
 
 const isLoadingWorkOrders = ref(false);
@@ -46,541 +44,568 @@ const isLoadingProcesses = ref(false);
 const isLoadingEquipment = ref(false);
 const isProcessingWork = ref(false);
 
-// 사용자 정보 (로그인 여부, 사번 등) - 임시로 하드코딩하거나 로그인 로직에서 받아와야 함
 const currentUser = ref({
-  emp_num: 'USR001', // 예시 사번
-  name: '홍길동'
+    emp_num: 'USR001',
+    name: '홍길동'
 });
-const isLoggedIn = computed(() => !!currentUser.value.emp_num); // 사용자 정보 유무로 로그인 상태 판단
+const isLoggedIn = computed(() => !!currentUser.value.emp_num);
 
 // --- Computed 속성 (버튼/그리드 활성화 로직) ---
 const isProcessGridEnabled = computed(() => !!currentWorkOrder.value?.work_inst_code);
 const isEquipmentGridEnabled = computed(() => !!selectedProcess.value?.process_code);
 
 const isStartButtonEnabled = computed(() =>
-  !!currentWorkOrder.value?.work_inst_code &&
-  !!selectedProcess.value?.process_code &&
-  !!selectedEquipment.value?.equi_code &&
-  currentWorkOrder.value?.inst_state !== '0s2s' && // '생산중'이 아닐 때만 시작 가능
-  currentWorkOrder.value?.inst_state !== '0s3s' && // '생산완료'도 시작 불가
-  !isProcessingWork.value
+    !!currentWorkOrder.value?.work_inst_code &&
+    !!selectedProcess.value?.process_code &&
+    !!selectedEquipment.value?.equi_code &&
+    currentWorkOrder.value?.inst_state !== '0s2s' &&
+    currentWorkOrder.value?.inst_state !== '0s3s' &&
+    !isProcessingWork.value
 );
 
 const isEndButtonEnabled = computed(() =>
-  !!currentWorkOrder.value?.work_inst_code &&
-  !!selectedProcess.value?.process_code &&
-  !!selectedEquipment.value?.equi_code &&
-  currentWorkOrder.value?.inst_state === '0s2s' && // '생산중' 상태일 때만 종료 가능
-  !isProcessingWork.value
+    !!currentWorkOrder.value?.work_inst_code &&
+    !!selectedProcess.value?.process_code &&
+    !!selectedEquipment.value?.equi_code &&
+    currentWorkOrder.value?.inst_state === '0s2s' &&
+    !isProcessingWork.value
 );
 
 // --- Tabulator Columns 및 Options ---
 const workOrderColumns = [
-  { title: "지시코드", field: "work_inst_code", width: 120, hozAlign: "center" },
-  { title: "제품명", field: "prod_name", width: 180 },
-  { title: "수량", field: "inst_qty", hozAlign: "right", width: 90 },
-  { title: "지시일자", field: "inst_date", hozAlign: "center", width: 200 },
-  { title: "작업시작일", field: "work_start_date", hozAlign: "center", width: 200 },
-  { title: "작업종료일", field: "work_end_date", hozAlign: "center", width: 200 },
-  { title: "진행상태", field: "inst_state", width: 180 },
+    { title: "지시코드", field: "work_inst_code", width: 120, hozAlign: "center" },
+    { title: "제품명", field: "prod_name", width: 180 },
+    { title: "수량", field: "inst_qty", hozAlign: "right", width: 90 },
+    { title: "지시일자", field: "inst_date", hozAlign: "center", width: 200 },
+    { title: "작업시작일", field: "work_start_date", hozAlign: "center", width: 200 },
+    { title: "작업종료일", field: "work_end_date", hozAlign: "center", width: 200 },
+    { title: "진행상태", field: "inst_state", width: 180 },
 ];
 
 const workOrderTabulatorOptions = {
-
-  pagination: false,
-  selectable: 1, // 단일 행 선택
-  rowFormatter: function(row) {
-    if (row.getData().isSelected) {
-      row.getElement().classList.add("selected-row");
-    } else {
-      row.getElement().classList.remove("selected-row");
+    pagination: false,
+    selectable: 1,
+    rowFormatter: function(row) {
+        if (row.getData().isSelected) {
+            row.getElement().classList.add("selected-row");
+        } else {
+            row.getElement().classList.remove("selected-row");
+        }
     }
-  }
 };
 
 const workOrderOnEvents = [
-  {
-    eventName: "rowClick",
-    eventAction: (e, row) => {
-      selectWorkOrder(row.getData());
+    {
+        eventName: "rowClick",
+        eventAction: (e, row) => {
+            selectWorkOrder(row.getData());
+        }
     }
-  }
 ];
 
 const processFlowColumns = [
-  { title: "공정코드", field: "process_code", width: 200 },
-  { title: "공정명", field: "process_name", width: 380 },
-  { title: "공정순서", field: "process_seq", hozAlign: "right", width: 150 },
+    { title: "공정코드", field: "process_code", width: 200 },
+    { title: "공정명", field: "process_name", width: 380 },
+    { title: "공정순서", field: "process_seq", hozAlign: "right", width: 150 },
+    { title: "작업시작시간", field: "process_start_date", hozAlign: "center", width: 200 }, // ⭐ 컬럼 정의 ⭐
+    { title: "작업종료시간", field: "process_end_date", hozAlign: "center", width: 200 }, // 미리 추가
 ];
 
 const processFlowTabulatorOptions = {
-
-  selectable: 1,
-  rowFormatter: function(row) {
-    if (row.getData().isSelected) {
-      row.getElement().classList.add("selected-row");
-    } else {
-      row.getElement().classList.remove("selected-row");
+    selectable: 1,
+    rowFormatter: function(row) {
+        if (row.getData().isSelected) {
+            row.getElement().classList.add("selected-row");
+        } else {
+            row.getElement().classList.remove("selected-row");
+        }
     }
-  }
 };
 
 const processFlowOnEvents = [
-  {
-    eventName: "rowClick",
-    eventAction: (e, row) => {
-      selectProcess(row.getData());
+    {
+        eventName: "rowClick",
+        eventAction: (e, row) => {
+            selectProcess(row.getData());
+        }
     }
-  }
 ];
 
 const equipmentColumns = [
-  { title: "설비코드", field: "equi_code", width: 100, hozAlign: "center" },
-  { title: "설비명", field: "equi_name", minWidth: 150 },
-  { title: "상태", field: "equi_status", width: 100, hozAlign: "center", // ⭐ field: "status"로 변경됨 ⭐
-    formatter: function(cell) {
-      const status = cell.getValue();
-      let colorClass = '';
-      if (status === '가동가능') {
-        colorClass = 'text-success';
-      } else if (status === '점검필요') {
-        colorClass = 'text-danger';
-      } else if (status === '가동중') {
-        colorClass = 'text-primary';
-      }
-      return `<span class="${colorClass}">${status}</span>`;
-    }
-  },
-
+    { title: "설비코드", field: "equi_code", width: 100, hozAlign: "center" },
+    { title: "설비명", field: "equi_name", minWidth: 150 },
+    { title: "상태", field: "equi_status", width: 100, hozAlign: "center",
+        formatter: function(cell) {
+            const status = cell.getValue();
+            let colorClass = '';
+            if (status === '가동가능') {
+                colorClass = 'text-success';
+            } else if (status === '점검필요') {
+                colorClass = 'text-danger';
+            } else if (status === '가동중') {
+                colorClass = 'text-primary';
+            }
+            return `<span class="${colorClass}">${status}</span>`;
+        }
+    },
 ];
 
 const equipmentTabulatorOptions = {
-  layout: 'fitColumns',
-  selectable: 1,
-  rowFormatter: function(row) {
-    if (row.getData().isSelected) {
-      row.getElement().classList.add("selected-row");
-    } else {
-      row.getElement().classList.remove("selected-row");
+    layout: 'fitColumns',
+    selectable: 1,
+    rowFormatter: function(row) {
+        if (row.getData().isSelected) {
+            row.getElement().classList.add("selected-row");
+        } else {
+            row.getElement().classList.remove("selected-row");
+        }
     }
-  }
 };
 
 const equipmentOnEvents = [
-  {
-    eventName: "rowClick",
-    eventAction: (e, row) => {
-      selectEquipment(row.getData());
+    {
+        eventName: "rowClick",
+        eventAction: (e, row) => {
+            selectEquipment(row.getData());
+        }
     }
-  }
 ];
 
 // --- 데이터 로딩 함수 ---
 const fetchAllWorkOrders = async () => {
-  isLoadingWorkOrders.value = true;
-  try {
-    const response = await axios.get('/api/allworkInst');
-    if (response.data.success && Array.isArray(response.data.data)) {
-      workOrderData.value = response.data.data.map(item => ({ ...item, isSelected: false }));
-    } else {
-      console.error('작업지시 목록 불러오기 실패:', response.data.message);
-      workOrderData.value = [];
+    isLoadingWorkOrders.value = true;
+    try {
+        const response = await axios.get('/api/allworkInst');
+        if (response.data.success && Array.isArray(response.data.data)) {
+            workOrderData.value = response.data.data.map(item => ({ ...item, isSelected: false }));
+        } else {
+            console.error('작업지시 목록 불러오기 실패:', response.data.message);
+            workOrderData.value = [];
+        }
+    } catch (error) {
+        console.error('API 호출 중 오류 발생 (fetchAllWorkOrders):', error);
+        workOrderData.value = [];
+    } finally {
+        isLoadingWorkOrders.value = false;
     }
-  } catch (error) {
-    console.error('API 호출 중 오류 발생 (fetchAllWorkOrders):', error);
-    workOrderData.value = [];
-  } finally {
-    isLoadingWorkOrders.value = false;
-  }
 };
 
-const fetchProcessFlow = async (workInstCode) => {
-  isLoadingProcesses.value = true;
-  try {
-    const response = await axios.get(`/api/workInst/${workInstCode}/processes`);
-    if (response.data.success && Array.isArray(response.data.data)) {
-      processFlowData.value = response.data.data.map(item => ({ ...item, isSelected: false }));
-    } else {
-      console.error('공정 흐름도 불러오기 실패:', response.data.message);
-      processFlowData.value = [];
+const fetchWorkOrderDetails = async (workInstCode) => {
+    try {
+        const response = await axios.get(`/api/getWorkInstDetails?work_inst_code=${workInstCode}`);
+
+        if (response.data.success && response.data.data) {
+            const data = response.data.data;
+            currentWorkOrder.value = {
+                work_inst_code: data.work_inst_code,
+                prod_name: data.prod_name,
+                inst_qty: data.inst_qty,
+                inst_date: data.inst_date,
+                prod_code: data.prod_code,
+                prod_type: data.prod_type,
+                category: data.category,
+                product_color: data.product_color,
+                product_size: data.product_size,
+                work_start_date: data.work_start_date || '',
+                work_end_date: data.work_end_date || '',
+                inst_state: data.inst_state,
+                isSelected: true,
+                materials: data.materials || []
+            };
+            console.log("작업지시 상세 정보 및 자재 정보 로드 완료:", currentWorkOrder.value);
+        } else {
+            console.error('작업지시 상세 정보 불러오기 실패:', response.data.message);
+            currentWorkOrder.value = {
+                work_inst_code: '', prod_name: '', inst_qty: null, inst_date: '',
+                work_start_date: '', work_end_date: '', inst_state: "0s1s", materials: []
+            };
+        }
+    } catch (error) {
+        console.error('API 호출 중 오류 발생 (fetchWorkOrderDetails):', error);
+        currentWorkOrder.value = {
+            work_inst_code: '', prod_name: '', inst_qty: null, inst_date: '',
+            work_start_date: '', work_end_date: '', inst_state: "0s1s", materials: []
+        };
     }
-  } catch (error) {
-    console.error('API 호출 중 오류 발생 (fetchProcessFlow):', error);
-    processFlowData.value = [];
-  } finally {
-    isLoadingProcesses.value = false;
-  }
+};
+
+
+const fetchProcessFlow = async (workInstCode) => {
+    isLoadingProcesses.value = true;
+    try {
+        const response = await axios.get(`/api/workInst/${workInstCode}/processes`);
+        if (response.data.success && Array.isArray(response.data.data)) {
+            // ⭐ 각 공정 데이터에 process_start_date와 process_end_date를 초기화 또는 백엔드 값으로 할당 ⭐
+            // 백엔드에서 process_start_date와 process_end_date를 직접 주는 것이 가장 좋지만,
+            // 없다면 여기서 추가합니다.
+            processFlowData.value = response.data.data.map(item => ({
+                ...item,
+                isSelected: false,
+                process_start_date: item.process_start_date || '', // 백엔드에서 주면 그대로 사용, 아니면 빈 값
+                process_end_date: item.process_end_date || ''    // 백엔드에서 주면 그대로 사용, 아니면 빈 값
+            }));
+        } else {
+            console.error('공정 흐름도 불러오기 실패:', response.data.message);
+            processFlowData.value = [];
+        }
+    } catch (error) {
+        console.error('API 호출 중 오류 발생 (fetchProcessFlow):', error);
+        processFlowData.value = [];
+    } finally {
+        isLoadingProcesses.value = false;
+    }
 };
 
 const fetchEquipmentByProcess = async (processCode) => {
-  isLoadingEquipment.value = true;
-  try {
-    const response = await axios.get(`/api/processes/${processCode}/equipment`);
-    if (response.data.success && Array.isArray(response.data.data)) {
-      equipmentData.value = response.data.data.map(item => ({ ...item, isSelected: false }));
-    } else {
-      console.error('설비 목록 불러오기 실패:', response.data.message);
-      equipmentData.value = [];
+    isLoadingEquipment.value = true;
+    try {
+        const response = await axios.get(`/api/processes/${processCode}/equipment`);
+        if (response.data.success && Array.isArray(response.data.data)) {
+            equipmentData.value = response.data.data.map(item => ({ ...item, isSelected: false }));
+        } else {
+            console.error('설비 목록 불러오기 실패:', response.data.message);
+            equipmentData.value = [];
+        }
+    } catch (error) {
+        console.error('API 호출 중 오류 발생 (fetchEquipmentByProcess):', error);
+        equipmentData.value = [];
+    } finally {
+        isLoadingEquipment.value = false;
     }
-  } catch (error) {
-    console.error('API 호출 중 오류 발생 (fetchEquipmentByProcess):', error);
-    equipmentData.value = [];
-  } finally {
-    isLoadingEquipment.value = false;
-  }
 };
 
 // --- 선택 로직 (ref 직접 업데이트) ---
 const selectWorkOrder = async (workOrder) => {
-  // 다른 작업지시의 선택 상태를 해제하고 현재 작업지시만 선택 상태로 설정
-  workOrderData.value.forEach(item => {
-    item.isSelected = (item.work_inst_code === workOrder.work_inst_code);
-  });
+    workOrderData.value.forEach(item => {
+        item.isSelected = (item.work_inst_code === workOrder.work_inst_code);
+    });
 
-  // currentWorkOrder를 설정하고, 필요한 경우 work_start_date와 work_end_date 초기화
-  currentWorkOrder.value = {
-    ...workOrder,
-    work_start_date: workOrder.work_start_date || '',
-    work_end_date: workOrder.work_end_date || ''
-  };
+    if (workOrder && workOrder.work_inst_code) {
+        await fetchWorkOrderDetails(workOrder.work_inst_code);
+        await fetchProcessFlow(workOrder.work_inst_code);
+    } else {
+        currentWorkOrder.value = {
+            work_inst_code: '', prod_name: '', inst_qty: null, inst_date: '',
+            work_start_date: '', work_end_date: '', inst_state: "0s1s", materials: []
+        };
+        // 작업지시 선택 해제 시 공정 데이터도 비웁니다.
+        processFlowData.value = [];
+    }
 
-  // 공정 및 설비 선택 상태 초기화
-  selectedProcess.value = { process_code: '', process_name: '', detail: '', isSelected: false };
-  selectedEquipment.value = { equi_code: '', equi_name: '', equi_status: '', isSelected: false };
-
- 
-
-  if (workOrder && workOrder.work_inst_code) {
-    await fetchProcessFlow(workOrder.work_inst_code); // 공정 흐름도 불러오기
-  }
+    selectedProcess.value = { process_code: '', process_name: '', detail: '', isSelected: false };
+    selectedEquipment.value = { equi_code: '', equi_name: '', status: '', isSelected: false };
+    equipmentData.value = [];
+    processFlowData.value.forEach(p => p.isSelected = false);
 };
 
+
 const selectProcess = async (process) => {
-  // 다른 공정의 선택 상태를 해제하고 현재 공정만 선택 상태로 설정
-  processFlowData.value.forEach(item => {
-    item.isSelected = (item.process_code === process.process_code);
-  });
+    processFlowData.value.forEach(item => {
+        item.isSelected = (item.process_code === process.process_code);
+    });
 
-  selectedProcess.value = { ...process, isSelected: true };
-  selectedEquipment.value = { equi_code: '', equi_name: '', status: '', isSelected: false };
-  equipmentData.value = []; // 설비 데이터 초기화
+    // 선택된 공정의 데이터를 selectedProcess에 완전히 복사하여 process_start_date와 end_date를 포함하도록 합니다.
+    selectedProcess.value = { ...process, isSelected: true };
 
-  if (process && process.process_code) {
-    await fetchEquipmentByProcess(process.process_code); // 설비 목록 불러오기
-  }
+    selectedEquipment.value = { equi_code: '', equi_name: '', status: '', isSelected: false };
+    equipmentData.value = [];
+
+    if (process && process.process_code) {
+        await fetchEquipmentByProcess(process.process_code);
+    }
 };
 
 const selectEquipment = (equipment) => {
-  // 다른 설비의 선택 상태를 해제하고 현재 설비만 선택 상태로 설정
-  equipmentData.value.forEach(item => {
-    item.isSelected = (item.equi_code === equipment.equi_code);
-  });
-  selectedEquipment.value = { ...equipment, isSelected: true };
+    equipmentData.value.forEach(item => {
+        item.isSelected = (item.equi_code === equipment.equi_code);
+    });
+    selectedEquipment.value = { ...equipment, isSelected: true };
 };
 
 // --- 작업 시작/종료 핸들러 ---
 const startWorkHandler = async () => {
-  isProcessingWork.value = true;
-  try {
-    if (!currentWorkOrder.value.work_inst_code || !selectedProcess.value.process_code || !selectedEquipment.value.equi_code || !isLoggedIn.value) {
-      alert("작업 시작을 위해 작업지시, 공정, 설비를 모두 선택하고 로그인 상태를 확인해주세요.");
-      return;
+    isProcessingWork.value = true;
+    try {
+        if (!currentWorkOrder.value.work_inst_code || !selectedProcess.value.process_code || !selectedEquipment.value.equi_code || !isLoggedIn.value) {
+            alert("작업 시작을 위해 작업지시, 공정, 설비를 모두 선택하고 로그인 상태를 확인해주세요.");
+            return;
+        }
+
+        const userEmpNum = currentUser.value.emp_num;
+        const now = new Date();
+        const currentTime = now.toISOString().slice(0, 19).replace('T', ' ');
+
+        const payload = {
+            work_inst_code: currentWorkOrder.value.work_inst_code,
+            process_code: selectedProcess.value.process_code,
+            equi_code: selectedEquipment.value.equi_code,
+            start_date: currentTime,
+            user_code: userEmpNum,
+        };
+
+        const response = await axios.post('/api/startWork', payload);
+
+        if (response.data.success) {
+            // 1. 현재 작업지시의 시작 시간 및 상태 업데이트
+            currentWorkOrder.value.work_start_date = currentTime;
+            currentWorkOrder.value.inst_state = '0s2s'; // '생산중'으로 변경
+
+            // 2. 전체 작업지시 목록 (상단 그리드) 업데이트
+            const workOrderIndex = workOrderData.value.findIndex(wo => wo.work_inst_code === currentWorkOrder.value.work_inst_code);
+            if (workOrderIndex !== -1) {
+                workOrderData.value[workOrderIndex].inst_state = '0s2s';
+                workOrderData.value[workOrderIndex].work_start_date = currentTime;
+                // Tabulator가 업데이트를 감지하도록 배열 복사
+                workOrderData.value = [...workOrderData.value];
+            }
+
+            // ⭐ 3. 공정 흐름도 테이블의 해당 공정 시작 시간 업데이트 ⭐
+            const processIndex = processFlowData.value.findIndex(p => p.process_code === selectedProcess.value.process_code);
+            if (processIndex !== -1) {
+                // 해당 공정 객체의 process_start_date 필드 업데이트
+                processFlowData.value[processIndex].process_start_date = currentTime;
+                // Tabulator에 변경 사항을 알리기 위해 배열을 새로 할당
+                processFlowData.value = [...processFlowData.value];
+            }
+
+            // 4. 선택된 공정 ref의 시작 시간 업데이트 (상세 정보 UI에 반영될 수 있음)
+            selectedProcess.value.process_start_date = currentTime;
+
+
+            alert('작업이 시작되었습니다.');
+        } else {
+            alert('작업 시작에 실패했습니다: ' + (response.data.message || '알 수 없는 오류'));
+        }
+    } catch (error) {
+        console.error('작업 시작 실패:', error);
+        alert('작업 시작 중 오류가 발생했습니다.');
+    } finally {
+        isProcessingWork.value = false;
     }
-
-    const userEmpNum = currentUser.value.emp_num;
-    const now = new Date();
-    const currentTime = now.toISOString().slice(0, 19).replace('T', ' ');
-
-    const payload = {
-      work_inst_code: currentWorkOrder.value.work_inst_code,
-      process_code: selectedProcess.value.process_code,
-      equi_code: selectedEquipment.value.equi_code,
-      start_date: currentTime,
-      user_code: userEmpNum,
-    };
-
-    const response = await axios.post('/api/startWork', payload);
-
-    if (response.data.success) {
-      currentWorkOrder.value.work_start_date = currentTime;
-      currentWorkOrder.value.inst_state = '0s2s'; // '생산중'으로 변경
-
-      // 작업 지시 목록의 해당 작업 지시 상태도 업데이트
-      const index = workOrderData.value.findIndex(wo => wo.work_inst_code === currentWorkOrder.value.work_inst_code);
-      if (index !== -1) {
-        workOrderData.value[index].inst_state = '0s2s';
-        workOrderData.value[index].work_start_date = currentTime;
-      }
-      alert('작업이 시작되었습니다.');
-    } else {
-      alert('작업 시작에 실패했습니다: ' + (response.data.message || '알 수 없는 오류'));
-    }
-  } catch (error) {
-    console.error('작업 시작 실패:', error);
-    alert('작업 시작 중 오류가 발생했습니다.');
-  } finally {
-    isProcessingWork.value = false;
-  }
 };
-const isModalOpen = ref(false); //초기상태
-  
+
+const isModalOpen = ref(false);
+
 const openModal = () => {
-    isModalOpen.value = true; //isModalOpen 값 true 변경해 모달 열기
+    isModalOpen.value = true;
 };
 const closeModal = () => {
     isModalOpen.value = false;
 };
-const endWorkHandler = async () => {
+
+const endWorkHandler = async () => { /* ... */ };
 
 
-  // isProcessingWork.value = true;
-  // try {
-  //   if (!currentWorkOrder.value.work_inst_code || !selectedProcess.value.process_code || !selectedEquipment.value.equi_code || !isLoggedIn.value) {
-  //     alert("작업 종료를 위해 작업지시, 공정, 설비를 모두 선택하고 로그인 상태를 확인해주세요.");
-  //     return;
-  //   }
-  //   if (currentWorkOrder.value.inst_state !== '0s2s') {
-  //     alert("현재 작업이 '생산중' 상태가 아니므로 종료할 수 없습니다.");
-  //     return;
-  //   }
-
-  //   const userEmpNum = currentUser.value.emp_num;
-  //   const now = new Date();
-  //   const currentTime = now.toISOString().slice(0, 19).replace('T', ' ');
-
-  //   const payload = {
-  //     work_inst_code: currentWorkOrder.value.work_inst_code,
-  //     process_code: selectedProcess.value.process_code,
-  //     equi_code: selectedEquipment.value.equi_code,
-  //     end_date: currentTime,
-  //     user_code: userEmpNum,
-  //   };
-
-  //   const response = await axios.post('/api/production/endWork', payload);
-
-  //   if (response.data.success) {
-  //     currentWorkOrder.value.work_end_date = currentTime;
-  //     currentWorkOrder.value.inst_state = '0s3s'; // '생산완료'로 변경
-
-  //     // 작업 지시 목록의 해당 작업 지시 상태도 업데이트
-  //     const index = workOrderData.value.findIndex(wo => wo.work_inst_code === currentWorkOrder.value.work_inst_code);
-  //     if (index !== -1) {
-  //       workOrderData.value[index].inst_state = '0s3s';
-  //       workOrderData.value[index].work_end_date = currentTime;
-  //     }
-  //     alert('작업이 종료되었습니다.');
-  //   } else {
-  //     alert('작업 종료에 실패했습니다: ' + (response.data.message || '알 수 없는 오류'));
-  //   }
-  // } catch (error) {
-  //   console.error('작업 종료 실패:', error);
-  //   alert('작업 종료 중 오류가 발생했습니다.');
-  // } finally {
-  //   isProcessingWork.value = false;
-  // }
-};
-
-
-// 컴포넌트 마운트 시 초기 작업 지시 데이터 불러오기
 onMounted(() => {
-  fetchAllWorkOrders();
+    fetchAllWorkOrders();
 });
 </script>
 
 <template>
-  <div class="py-4 container-fluid">
-    <div class="row">
-      <div class="col-12">
+    <div class="py-4 container-fluid">
         <div class="row">
-          <div class="col-lg-6 col-md-12 mb-4">
-            <tabulator-card
-              card-title="작업지시 선택"
-              :table-data="workOrderData"
-              :table-columns="workOrderColumns"
-              :tabulator-options="workOrderTabulatorOptions"
-              :on="workOrderOnEvents"
-              :is-loading="isLoadingWorkOrders"
-              empty-message="조회된 작업 지시가 없습니다."
-              style="height: 450px;"
-            />
-
-            <tabulator-card
-              card-title="공정 흐름도"
-              :table-data="processFlowData"
-              :table-columns="processFlowColumns"
-              :tabulator-options="processFlowTabulatorOptions"
-              :on="processFlowOnEvents"
-              class="mt-4"
-              :disabled="!isProcessGridEnabled"
-              :is-loading="isLoadingProcesses"
-              empty-message="조회된 공정이 없습니다."
-              style="height: 420px;"
-            />
-
-            <tabulator-card
-               card-title="설비 선택"
-              :table-data="equipmentData"
-              :table-columns="equipmentColumns"
-              :tabulator-options="equipmentTabulatorOptions"
-              :on="equipmentOnEvents"
-              class="mt-4"
-              :disabled="!isEquipmentGridEnabled"
-              :is-loading="isLoadingEquipment"
-              empty-message="조회된 설비가 없습니다."
-              style="height: 250px;"
-            />
-          </div>
-
-          <div class="col-lg-6 col-md-12 mb-4">
-            <div class="card h-100">
-              <div class="card-header pb-0">
-                <h6>작업지시 상세</h6>
-              </div>
-              <div class="card-body">
-                <div class="form-group">
-                  <label for="productName">제품명</label>
-                  <input type="text" class="form-control" id="productName" v-model="currentWorkOrder.prod_name" :disabled="!currentWorkOrder.work_inst_code">
-                </div>
-                <div class="form-group">
-                  <label for="orderQuantity">지시수량</label>
-                  <input type="text" class="form-control" id="orderQuantity" v-model="currentWorkOrder.inst_qty" :disabled="!currentWorkOrder.work_inst_code">
-                </div>
-
-                <div class="form-group">
-                   <h6>투입 자재 정보</h6>
-                  <label for="lot">LOT</label>
-                  <input type="text" class="form-control" id="lot" v-model="currentWorkOrder.lot" :disabled="!currentWorkOrder.work_inst_code">
-                </div>
-                <div class="form-group">
-                  <label for="partNumber">품번</label>
-                  <input type="text" class="form-control" id="partNumber" v-model="currentWorkOrder.item_code" :disabled="!currentWorkOrder.work_inst_code">
-                </div>
-                <div class="form-group">
-                  <label for="categoryr">분류</label>
-                  <input type="text" class="form-control" id="categoryr" v-model="currentWorkOrder.categoryr" :disabled="!currentWorkOrder.work_inst_code">
-                </div>
-             
+            <div class="col-12">
                 <div class="row">
-                  <div class="col-md-2">
-                    <div class="form-group">
-                      <label for="width">폭</label>
-                      <input type="number" class="form-control" id="width" v-model="currentWorkOrder.width" :disabled="true">
-                    </div>
-                  </div>
-                  <div class="col-md-2">
-                    <div class="form-group">
-                      <label for="length">길이</label>
-                      <input type="number" class="form-control" id="length" v-model="currentWorkOrder.length" :disabled="true">
-                    </div>
-                  </div>
-                  <div class="col-md-2">
-                    <div class="form-group">
-                      <label for="color">색상</label>
-                      <input type="text" class="form-control" id="color" v-model="currentWorkOrder.color" :disabled="true">
-                    </div>
-                  </div>
-                   <div class="col-md-2">
-                    <div class="form-group">
-                      <label for="butt">단추</label>
-                      <input type="text" class="form-control" id="butt" v-model="currentWorkOrder.butt" :disabled="true">
-                    </div>
-                  </div>
-                   <div class="col-md-2">
-                    <div class="form-group">
-                      <label for="zipper">지퍼</label>
-                      <input type="text" class="form-control" id="zipper" v-model="currentWorkOrder.zipper" :disabled="true">
-                    </div>
-                  </div>
-                   <div class="col-md-2">
-                    <div class="form-group">
-                      <label for="zasuimg">자수</label>
-                      <input type="text" class="form-control" id="zasuimg" v-model="currentWorkOrder.zasuimg" :disabled="true">
-                    </div>
-                  </div>
-                  <div class="col-md-2">
-                    <div class="form-group">
-                      <label for="printimg">프린팅</label>
-                      <input type="text" class="form-control" id="printimg" v-model="currentWorkOrder.printimg" :disabled="true">
-                    </div>
-                  </div>
-                </div>
+                    <div class="col-lg-6 col-md-12 mb-4">
+                        <tabulator-card
+                            card-title="작업지시 선택"
+                            :table-data="workOrderData"
+                            :table-columns="workOrderColumns"
+                            :tabulator-options="workOrderTabulatorOptions"
+                            :on="workOrderOnEvents"
+                            :is-loading="isLoadingWorkOrders"
+                            empty-message="조회된 작업 지시가 없습니다."
+                            style="height: 450px;"
+                        />
 
-                <div class="form-group">
-                  <label for="workStartTime">작업시작일시</label>
-                  <input type="text" class="form-control" id="workStartTime" v-model="currentWorkOrder.work_start_date" :disabled="true">
-                </div>
-                <div class="form-group">
-                  <label for="workEndTime">작업종료일시</label>
-                  <input type="text" class="form-control" id="workEndTime" v-model="currentWorkOrder.work_end_date" :disabled="true">
-                </div>
+                        <tabulator-card
+                            card-title="공정 흐름도"
+                            :table-data="processFlowData"
+                            :table-columns="processFlowColumns"
+                            :tabulator-options="processFlowTabulatorOptions"
+                            :on="processFlowOnEvents"
+                            class="mt-4"
+                            :disabled="!isProcessGridEnabled"
+                            :is-loading="isLoadingProcesses"
+                            empty-message="조회된 공정이 없습니다."
+                            style="height: 420px;"
+                        />
 
-                <div class="d-flex justify-content-end">
-                  <button
-                    type="button"
-                    class="btn btn-danger me-2"
-                    @click="openModal"
-                  >
-                    작업 종료
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-danger me-2"
-                    :disabled="!isEndButtonEnabled"
-                  >
-                    작업 종료
-                  </button>
-                  <button
-                    type="button"
-                    class="btn btn-info"
-                    :disabled="!isStartButtonEnabled"
-                    @click="startWorkHandler"
-                  >
-                    작업 시작
-                  </button>
+                        <tabulator-card
+                            card-title="설비 선택"
+                            :table-data="equipmentData"
+                            :table-columns="equipmentColumns"
+                            :tabulator-options="equipmentTabulatorOptions"
+                            :on="equipmentOnEvents"
+                            class="mt-4"
+                            :disabled="!isEquipmentGridEnabled"
+                            :is-loading="isLoadingEquipment"
+                            empty-message="조회된 설비가 없습니다."
+                            style="height: 250px;"
+                        />
+                    </div>
+
+                    <div class="col-lg-6 col-md-12 mb-4">
+                        <div class="card h-100">
+                            <div class="card-header pb-0">
+                                <h6>작업지시 상세</h6>
+                            </div>
+                            <div class="card-body">
+                                <div class="form-group">
+                                    <label for="productName">제품명</label>
+                                    <input type="text" class="form-control" id="productName" v-model="currentWorkOrder.prod_name" :disabled="!currentWorkOrder.work_inst_code">
+                                </div>
+                                <div class="form-group">
+                                    <label for="orderQuantity">지시수량</label>
+                                    <input type="text" class="form-control" id="orderQuantity" v-model="currentWorkOrder.inst_qty" :disabled="!currentWorkOrder.work_inst_code">
+                                </div>
+
+                                <h6 class="mt-4">투입 자재 정보</h6>
+                                <div v-if="!currentWorkOrder.materials || currentWorkOrder.materials.length === 0" class="alert alert-info">
+                                    투입 자재 정보가 없습니다.
+                                </div>
+
+                                <div v-for="(material, index) in currentWorkOrder.materials" :key="index" class="mb-4 p-3 border rounded bg-light">
+                                    <h6>자재 {{ index + 1 }}</h6>
+                                    <div class="row">
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label :for="'lot-' + index">LOT</label>
+                                                <input type="text" class="form-control" :id="'lot-' + index" v-model="material.lot_number" :disabled="!currentWorkOrder.work_inst_code">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label :for="'partNumber-' + index">품번</label>
+                                                <input type="text" class="form-control" :id="'partNumber-' + index" v-model="material.item_code" :disabled="!currentWorkOrder.work_inst_code">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label :for="'materialName-' + index">분류</label>
+                                                <input type="text" class="form-control" :id="'materialName-' + index" v-model="material.material_name" :disabled="!currentWorkOrder.work_inst_code">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-group">
+                                                <label :for="'materialUnit-' + index">단위</label>
+                                                <input type="text" class="form-control" :id="'materialUnit-' + index" v-model="material.material_unit" :disabled="true">
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row">
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label :for="'materialStandard-' + index">규격</label>
+                                                <input type="text" class="form-control" :id="'materialStandard-' + index" v-model="material.material_standard" :disabled="true">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2">
+                                            <div class="form-group">
+                                                <label :for="'productColor-' + index">색상</label>
+                                                <input type="text" class="form-control" :id="'productColor-' + index" v-model="currentWorkOrder.product_color" :disabled="true">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2" v-if="material.item_code === 'GEN-BUTTON-001'">
+                                            <div class="form-group">
+                                                <label :for="'butt-' + index">단추</label>
+                                                <input type="text" class="form-control" :id="'butt-' + index" value="적용됨" :disabled="true">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2" v-if="material.item_code === 'GEN-ZIPPER-001'">
+                                            <div class="form-group">
+                                                <label :for="'zipper-' + index">지퍼</label>
+                                                <input type="text" class="form-control" :id="'zipper-' + index" value="적용됨" :disabled="true">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2" v-if="material.material_type === '자수'">
+                                            <div class="form-group">
+                                                <label :for="'zasuimg-' + index">자수</label>
+                                                <input type="text" class="form-control" :id="'zasuimg-' + index" value="적용됨" :disabled="true">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-2" v-if="material.material_type === '프린팅'">
+                                            <div class="form-group">
+                                                <label :for="'printimg-' + index">프린팅</label>
+                                                <input type="text" class="form-control" :id="'printimg-' + index" value="적용됨" :disabled="true">
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label for="workStartTime">작업시작일시</label>
+                                    <input type="text" class="form-control" id="workStartTime" v-model="currentWorkOrder.work_start_date" :disabled="true">
+                                </div>
+                                <div class="form-group">
+                                    <label for="workEndTime">작업종료일시</label>
+                                    <input type="text" class="form-control" id="workEndTime" v-model="currentWorkOrder.work_end_date" :disabled="true">
+                                </div>
+
+                                <div class="d-flex justify-content-end">
+                                    <button
+                                        type="button"
+                                        class="btn btn-danger me-2"
+                                        @click="openModal"
+                                    >
+                                        작업 종료
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-danger me-2"
+                                        :disabled="!isEndButtonEnabled"
+                                    >
+                                        작업 종료
+                                    </button>
+                                    <button
+                                        type="button"
+                                        class="btn btn-info"
+                                        :disabled="!isStartButtonEnabled"
+                                        @click="startWorkHandler"
+                                    >
+                                        작업 시작
+                                    </button>
+                                </div>
+                                <PrdPrefModal
+                                    v-bind:isModalOpen="isModalOpen"
+                                    v-on:close-modal="closeModal"
+                                />
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <PrdPrefModal
-                  v-bind:isModalOpen="isModalOpen"
-
-                  v-on:close-modal="closeModal"
-                />
-
-                
-              </div>
             </div>
-          </div>
         </div>
-      </div>
     </div>
-  </div>
 </template>
 
 <style scoped>
 .selected-row {
-  background-color: #e0f2f1 !important; /* Light teal, similar to the image */
-  font-weight: bold;
+    background-color: #e0f2f1 !important; /* Light teal, similar to the image */
+    font-weight: bold;
 }
 
 .card-body {
-  padding-bottom: 0.5rem;
+    padding-bottom: 0.5rem;
 }
 
 .card-footer {
-  padding-top: 0.5rem;
-  padding-bottom: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 1rem;
 }
 
 .form-group label {
-  font-size: 0.875rem;
-  margin-bottom: 0.25rem;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
 }
 
 .form-check {
-  padding-left: 1.5em;
-  margin-bottom: 0.5rem;
+    padding-left: 1.5em;
+    margin-bottom: 0.5rem;
 }
 
 .form-check-input {
-  margin-top: 0.25em;
+    margin-top: 0.25em;
 }
 
 /* Status specific colors for table cells */
