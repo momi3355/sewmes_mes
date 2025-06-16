@@ -25,6 +25,11 @@ const getProductReceiveList = ({prod_code, prod_name, dead_date}) => {
   return mariadb.directQuery(finalSql, params);
 }
 
+const getReleaseLotList = (code) => {
+  return mariadb.query("selectReleaseLotList", code);
+}
+
 module.exports = {
-  getProductReceiveList
+  getProductReceiveList,
+  getReleaseLotList
 }
