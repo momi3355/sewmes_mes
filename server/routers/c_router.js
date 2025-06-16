@@ -126,4 +126,25 @@ router.get("/prdReceive", async (req, res) => {
   }
 });
 
+router.get("/prdReceive/lot", async (req, res) => {
+  const code = req.query.code; // '/prdReceive/lot?code='
+  try {
+    const result = await prdReceiveService.getReleaseLotList(code);
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "검색 중 오류 발생" });
+  }
+});
+
+router.post("/prdReceive", async (req, res) => {
+  try {
+    const result = await prdReceiveService.addReleaseDataWithDetails(req.body);
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "추가 중 오류 발생" });
+  }
+});
+
 module.exports = router;
