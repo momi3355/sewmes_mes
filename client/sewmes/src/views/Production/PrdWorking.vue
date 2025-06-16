@@ -4,6 +4,7 @@ import { ref, onMounted, computed, watch } from "vue";
 import axios from "axios"; // axios 직접 임포트
 // import ArgonButton from "@/components/ArgonButton.vue"; // ArgonButton은 더 이상 사용하지 않으므로 주석 처리 또는 삭제
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
+import PrdPrefModal from "./PrdPrefModal.vue";
 
 // --- 상태 변수 선언 (ref 사용) ---
 const workOrderData = ref([]);
@@ -136,7 +137,7 @@ const processFlowOnEvents = [
 const equipmentColumns = [
   { title: "설비코드", field: "equi_code", width: 100, hozAlign: "center" },
   { title: "설비명", field: "equi_name", minWidth: 150 },
-  { title: "상태", field: "status", width: 100, hozAlign: "center", // ⭐ field: "status"로 변경됨 ⭐
+  { title: "상태", field: "equi_status", width: 100, hozAlign: "center", // ⭐ field: "status"로 변경됨 ⭐
     formatter: function(cell) {
       const status = cell.getValue();
       let colorClass = '';
@@ -321,54 +322,64 @@ const startWorkHandler = async () => {
     isProcessingWork.value = false;
   }
 };
-
-const endWorkHandler = async () => {
-  isProcessingWork.value = true;
-  try {
-    if (!currentWorkOrder.value.work_inst_code || !selectedProcess.value.process_code || !selectedEquipment.value.equi_code || !isLoggedIn.value) {
-      alert("작업 종료를 위해 작업지시, 공정, 설비를 모두 선택하고 로그인 상태를 확인해주세요.");
-      return;
-    }
-    if (currentWorkOrder.value.inst_state !== '0s2s') {
-      alert("현재 작업이 '생산중' 상태가 아니므로 종료할 수 없습니다.");
-      return;
-    }
-
-    const userEmpNum = currentUser.value.emp_num;
-    const now = new Date();
-    const currentTime = now.toISOString().slice(0, 19).replace('T', ' ');
-
-    const payload = {
-      work_inst_code: currentWorkOrder.value.work_inst_code,
-      process_code: selectedProcess.value.process_code,
-      equi_code: selectedEquipment.value.equi_code,
-      end_date: currentTime,
-      user_code: userEmpNum,
-    };
-
-    const response = await axios.post('/api/production/endWork', payload);
-
-    if (response.data.success) {
-      currentWorkOrder.value.work_end_date = currentTime;
-      currentWorkOrder.value.inst_state = '0s3s'; // '생산완료'로 변경
-
-      // 작업 지시 목록의 해당 작업 지시 상태도 업데이트
-      const index = workOrderData.value.findIndex(wo => wo.work_inst_code === currentWorkOrder.value.work_inst_code);
-      if (index !== -1) {
-        workOrderData.value[index].inst_state = '0s3s';
-        workOrderData.value[index].work_end_date = currentTime;
-      }
-      alert('작업이 종료되었습니다.');
-    } else {
-      alert('작업 종료에 실패했습니다: ' + (response.data.message || '알 수 없는 오류'));
-    }
-  } catch (error) {
-    console.error('작업 종료 실패:', error);
-    alert('작업 종료 중 오류가 발생했습니다.');
-  } finally {
-    isProcessingWork.value = false;
-  }
+const isModalOpen = ref(false); //초기상태
+  
+const openModal = () => {
+    isModalOpen.value = true; //isModalOpen 값 true 변경해 모달 열기
 };
+const closeModal = () => {
+    isModalOpen.value = false;
+};
+const endWorkHandler = async () => {
+
+
+  // isProcessingWork.value = true;
+  // try {
+  //   if (!currentWorkOrder.value.work_inst_code || !selectedProcess.value.process_code || !selectedEquipment.value.equi_code || !isLoggedIn.value) {
+  //     alert("작업 종료를 위해 작업지시, 공정, 설비를 모두 선택하고 로그인 상태를 확인해주세요.");
+  //     return;
+  //   }
+  //   if (currentWorkOrder.value.inst_state !== '0s2s') {
+  //     alert("현재 작업이 '생산중' 상태가 아니므로 종료할 수 없습니다.");
+  //     return;
+  //   }
+
+  //   const userEmpNum = currentUser.value.emp_num;
+  //   const now = new Date();
+  //   const currentTime = now.toISOString().slice(0, 19).replace('T', ' ');
+
+  //   const payload = {
+  //     work_inst_code: currentWorkOrder.value.work_inst_code,
+  //     process_code: selectedProcess.value.process_code,
+  //     equi_code: selectedEquipment.value.equi_code,
+  //     end_date: currentTime,
+  //     user_code: userEmpNum,
+  //   };
+
+  //   const response = await axios.post('/api/production/endWork', payload);
+
+  //   if (response.data.success) {
+  //     currentWorkOrder.value.work_end_date = currentTime;
+  //     currentWorkOrder.value.inst_state = '0s3s'; // '생산완료'로 변경
+
+  //     // 작업 지시 목록의 해당 작업 지시 상태도 업데이트
+  //     const index = workOrderData.value.findIndex(wo => wo.work_inst_code === currentWorkOrder.value.work_inst_code);
+  //     if (index !== -1) {
+  //       workOrderData.value[index].inst_state = '0s3s';
+  //       workOrderData.value[index].work_end_date = currentTime;
+  //     }
+  //     alert('작업이 종료되었습니다.');
+  //   } else {
+  //     alert('작업 종료에 실패했습니다: ' + (response.data.message || '알 수 없는 오류'));
+  //   }
+  // } catch (error) {
+  //   console.error('작업 종료 실패:', error);
+  //   alert('작업 종료 중 오류가 발생했습니다.');
+  // } finally {
+  //   isProcessingWork.value = false;
+  // }
+};
+
 
 // 컴포넌트 마운트 시 초기 작업 지시 데이터 불러오기
 onMounted(() => {
@@ -507,8 +518,14 @@ onMounted(() => {
                   <button
                     type="button"
                     class="btn btn-danger me-2"
+                    @click="openModal"
+                  >
+                    작업 종료
+                  </button>
+                  <button
+                    type="button"
+                    class="btn btn-danger me-2"
                     :disabled="!isEndButtonEnabled"
-                    @click="endWorkHandler"
                   >
                     작업 종료
                   </button>
@@ -521,6 +538,13 @@ onMounted(() => {
                     작업 시작
                   </button>
                 </div>
+                <PrdPrefModal
+                  v-bind:isModalOpen="isModalOpen"
+
+                  v-on:close-modal="closeModal"
+                />
+
+                
               </div>
             </div>
           </div>

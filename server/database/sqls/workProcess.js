@@ -18,6 +18,9 @@ const updateWorkProcessByWorkInstCode=`
     work_inst_code=?
 `;
 
+//작업시작시 작업공정테이블에 작업시간 update
+const updateStart=``;
+
 
 //작업공정테이블에서 필요한 쿼리문
 
@@ -41,13 +44,13 @@ SELECT
 //설비
 const getEquipmentByProcess = `
 SELECT
-    te.equi_code,
-    te.equi_name,
-    te.equi_status
+    equi_code,
+    equi_name,
+    equi_status
 FROM
-    t_equipment te
+    t_equipment 
 WHERE
-    te.equi_type = (SELECT tpm.equi_type FROM t_process_master tpm WHERE tpm.process_code = ?)
+    equi_type = (SELECT equi_type FROM t_process_master  WHERE process_code = ?)
 `;
 
 //작업지시상세 조회

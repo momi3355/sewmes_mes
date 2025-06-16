@@ -28,7 +28,6 @@ const getEquipmentByProcess = async (processCode) => {
     }
 };
 
-
 module.exports ={
    getProcessFlowByWorkInst,
    getEquipmentByProcess,
