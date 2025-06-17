@@ -67,7 +67,6 @@ const getEquiList = async () => {
 const EquiSearchHandler = async () => {
   const params = {
     ...equiSchData.value,
-    useYn: equiSchData.value.useYn.length ? equiSchData.value.useYn.join(',') : null,
     startDate: equiSchData.value.startDate ? moment(equiSchData.value.startDate).format('YYYY-MM-DD') : '',
     endDate: equiSchData.value.endDate ? moment(equiSchData.value.endDate).format('YYYY-MM-DD') : '',
   };
@@ -75,7 +74,15 @@ const EquiSearchHandler = async () => {
     params
   }).catch(err => console.log(err));
   equiList.value = res.data;
-
+  
+  const equiFilter = res.data.filter(item => {
+    let matchUseYn = true;
+    if (params.useYn.length === 1) {
+      matchUseYn = params.useYn.includes(item.use_yn);
+    }
+    return matchUseYn;
+  })
+  equiList.value = equiFilter;
 }
 
 const EquiSearchReset = () => {
