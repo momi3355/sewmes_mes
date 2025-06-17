@@ -22,8 +22,9 @@ const checkModal = ref(null);
 
 // 모달을 여는 함수
 const openCheckModal = (item) => {
+  console.log("모달로 전달할 데이터 (item): ", JSON.stringify(item, null, 2));
+  selectedMaterial.value = item;
   if (checkModal.value) {
-    selectedMaterial.value = item;
     checkModal.value.openModal();
   }
 };
@@ -61,7 +62,7 @@ const dateFormatter = (cell) => {
 const materialColumns = [
   { title: "발주번호", field: "material_order_code", width: 150},
   { title: "자재명", field: "material_name", minWidth: 200, hozAlign: "left", sorter: "number" },
-  { title: "수입량", field: "inbound_qty", width: 100, hozAlign: "left"},
+  { title: "수입량", field: "order_qty", width: 100, hozAlign: "left"},
   { title: "공급처", field: "cp_name", minWidth: 150, hozAlign: "left"},
   { title: "수입일자", 
     field: "inbound_date", 
@@ -115,6 +116,38 @@ const getSelectedRows = (tableRef) => {
   }
 };
 
+const handleCheckComplete = async (checkData) => {
+  try{
+    console.log("서버로 보낼 최종 데이터(checkData): ", JSON.stringify(checkData, null, 2));
+    const response = await axios.post('/api/material/complete-check', checkData);
+    if(response.data.success){
+      alert('검사 결과가 성공적으로 저장되었습니다.');
+      fetchCheckList();
+    } else{
+      alert('저장에 실패했습니다.: ' + response.data.message);
+    } 
+  } catch(error){
+      console.error('검사 결과 저장 API 호출 오류', error);
+      if(error.response){
+        console.error('에러 응답 데이터: ', error.response.data);
+        console.error('에러 응답 상태: ', error.response.status);
+      }else if(error.request){
+        console.error('응답 없음: ', error.request);
+      }else{
+        console.error('요청 설정 오류: ', error.message);
+      }
+      alert('서버에 저장하는 도중 오류가 발생했습니다.');
+    }
+  };
+  const fetchCheckList = async () => {
+    try{
+      const response = await axios.get('/api/matcheck');
+      checkListData.value = response.data;
+      console.log("서버로부터 받은 검수 대기목록: ", checkListData.value);
+    } catch(error){
+      console.error("수입검사 대기 목록 로딩 실패", error);
+    }
+  };
 
 
 </script>
@@ -179,7 +212,8 @@ const getSelectedRows = (tableRef) => {
       </div>
     </div>
   </div>
-  <MatCheckModal ref="checkModal" :item="selectedMaterial" />
+  <MatCheckModal ref="checkModal" :item="selectedMaterial" 
+  @complete="handleCheckComplete" />
 </template>
 <style scoped>
  .col-lg-12{

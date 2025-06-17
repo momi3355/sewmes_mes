@@ -32,7 +32,7 @@ const totalUnqualifiedQty = computed(() => {
 
 // 총 수입량에서 총 불합격 수량을 뺀 최종 합격 수량을 계산
 const finalQualifiedQty = computed(() => {
-  const totalInbound = props.item.inbound_qty || 0;
+  const totalInbound = props.item.order_qty || 0;
   const newQualified = totalInbound - totalUnqualifiedQty.value;
   // 합격 수량이 음수가 되지 않도록 방지
   return newQualified < 0 ? 0 : newQualified;
@@ -74,7 +74,7 @@ const closeModal = () => {
 
 // 수입량 초과 체크
 const validateInput = () => {
-  const totalInbound = props.item.inbound_qty || 0;
+  const totalInbound = props.item.order_qty || 0;
   if (totalUnqualifiedQty.value > totalInbound) {
     alert(`총 불합격 개수가 수입량(${totalInbound})을 초과할 수 없습니다.`);
   }
@@ -83,16 +83,18 @@ const validateInput = () => {
 
 const completeCheck = () => {
   validateInput(); // 완료 전 최종 검사
-  if (totalUnqualifiedQty.value > (props.item.inbound_qty || 0)) {
+  if (totalUnqualifiedQty.value > (props.item.order_qty || 0)) {
     return; // 유효성 검사 실패 시 완료 처리 중단
   }
-  
-  emit('complete', {
-    item_id: props.item.id, // 부모가 어떤 아이템인지 식별할 ID
+  const resultData = {
+    material_order_code: props.item.material_order_code,
+    inbound_check_code: props.item.inbound_check_code,
     qualified_qty: finalQualifiedQty.value,
     unqualified_qty: totalUnqualifiedQty.value,
-    details: checkResults.value // 각 항목별 불합격 수량도 함께 전달
-  });
+    details: checkResults.value
+  };
+  console.log('inbound_check_code', props.item.inbound_check_code);
+  emit('complete', resultData);
 
   alert('검사가 완료되었습니다.');
   closeModal();
@@ -113,14 +115,19 @@ defineExpose({ openModal });
           <p>자재명: {{ item.material_name }}</p>
           <p>입고번호: {{ item.material_order_code }}</p>
           <p>검사일자: {{ checkDate }}</p>
+          <p class="qualified-summary">
+            <span>총 수입: <strong> {{ item.order_qty }}</strong></span>
+            <span>-</span>
+            <span>총 불합격: <strong class="unqualified-text">{{ totalUnqualifiedQty }}</strong></span>
+            <span>=</span>
+            <span>총 합격: <strong class="qualified-text">{{ finalQualifiedQty }}</strong></span>
+          </p>
         </div>
         <table>
           <thead>
             <tr>
               <th class="checklist-col">항목</th>
               <th class="reference-col">검사방법</th>
-              <th class="inboundqty-col">수입량</th>
-              <th class="passqty-col">합격개수</th>
               <th class="unqualified-col">불합격개수</th>
             </tr>
           </thead>
@@ -129,34 +136,21 @@ defineExpose({ openModal });
   <tr key="width">
     <td>폭</td>
     <td></td>
-    <td class="merged-top">
-      <span class="centered">{{ item.inbound_qty }}</span>
-    </td>
-    <td class="merged-top">
-      <span class="centered">{{ finalQualifiedQty }}</span>
-    </td>
     <td><input type="number" class="input-cell" v-model.number="checkResults.width" @input="validateInput" min="0"></td>
   </tr>
   <tr key="color">
     <td>색상 일치</td>
     <td></td>
-    <td class="merged-middle"></td>
-    <td class="merged-middle"></td>
     <td><input type="number" class="input-cell" v-model.number="checkResults.color" @input="validateInput" min="0"></td>
   </tr>
   <tr key="dirt">
     <td>오염여부</td>
     <td></td>
-    <td class="merged-middle"></td>
-    <td class="merged-middle"></td>
     <td><input type="number" class="input-cell" v-model.number="checkResults.dirt" @input="validateInput" min="0"></td>
   </tr>
   <tr key="tensile">
     <td>인장 강도</td>
     <td></td>
-    <td class="merged-end"></td>
-    <td class="merged-end"></td>
-    
     <td><input type="number" class="input-cell" v-model.number="checkResults.tensile" @input="validateInput" min="0"></td>
   </tr>
 </tbody>
@@ -317,5 +311,29 @@ th {
   display: flex;
   align-items: center;
   justify-content:center;
+}
+
+.qualified-summary {
+  font-size: 1.1rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 15px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-radius: 6px;
+}
+
+.qualified-summary strong {
+  font-weight: 700;
+}
+
+.unqualified-text {
+  color: #dc3545;
+}
+
+.qualified-text {
+  color: #198754;
 }
 </style>

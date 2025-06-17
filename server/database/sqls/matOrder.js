@@ -27,8 +27,15 @@ const createMatOrder = `
     (?, ?, NOW(), ?, ?, ?, ?, ?)
 `;
 
+const createInboundCheckShell = `
+  INSERT INTO t_matinbound_check 
+    (inbound_check_code, material_order_code, check_date, check_qty, pass_qty, emp_num)
+  VALUES 
+    (?, ?, NOW(), 0, 0, NULL) -- ✨ NULL 대신 NOW() 함수를 사용하여 현재 시간을 기록
+`;
 
 module.exports = {
   matorderList,
   createMatOrder,
+  createInboundCheckShell,
 }
