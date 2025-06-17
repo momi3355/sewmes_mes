@@ -3,6 +3,7 @@ const router = express.Router();
 const matOrderService = require('../services/Material/matOrder.js');
 const matCheckService = require('../services/Material/matCheck.js');
 const checkedMatService = require('../services/Material/matCheckView.js')
+const companyService = require('../services/Material/company.js');
 
 
 router.get("/matorder", async (req, res) => {
@@ -45,6 +46,13 @@ router.post("/matorder/save", async (req, res) => {
     console.error(err);
     res.status(500).send({ message: "저장 중 오류 발생" });
   }
+});
+
+router.get("/companies", async (req, res) => {
+  try {
+    const result = await companyService.getCompanyList();
+    res.send(result);
+  } catch (err) { res.status(500).send({ message: "공급처 조회 중 오류" }); }
 });
 
 module.exports = router;
