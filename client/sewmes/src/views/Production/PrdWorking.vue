@@ -4,6 +4,7 @@ import { ref, onMounted, computed, watch } from "vue";
 import axios from "axios";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import PrdPrefModal from "./PrdPrefModal.vue";
+import Swal from 'sweetalert2';
 
 // --- 상태 변수 선언 (ref 사용) ---
 const workOrderData = ref([]);
@@ -384,12 +385,78 @@ const startWorkHandler = async () => {
     }
 };
 
+
 const isModalOpen = ref(false);
 
 const openModal = () => {
     isModalOpen.value = true;
 
 };
+
+
+const endWorkHandler = async () => {
+    isProcessingWork.value = true;
+    try {
+        // ⭐ 여기에 로그인/권한 관련 에러 메시지를 Swal.fire로 변경 ⭐
+        if (!currentWorkOrder.value.work_inst_code || !selectedProcess.value.process_code || !selectedEquipment.value.equi_code || !currentUser.value.emp_num) {
+            Swal.fire({
+                title: "작업 종료 실패", // 기존 "권한 실패" 대신 좀 더 포괄적인 제목
+                text: "작업 종료를 위해 작업지시, 공정, 설비를 모두 선택하고 로그인 상태를 확인해주세요.",
+                icon: "error"
+            });
+            isProcessingWork.value = false;
+            return;
+        }
+
+        const payload = {
+            work_inst_code: currentWorkOrder.value.work_inst_code,
+            work_process_code: selectedProcess.value.work_process_code,
+            process_code: selectedProcess.value.process_code,
+            equi_code: selectedEquipment.value.equi_code,
+            user_code: currentUser.value.emp_num,
+        };
+
+        const response = await axios.post('/api/endWork', payload);
+
+        if (response.data.success) {
+            const currentTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
+
+            selectedProcess.value.process_end_date = currentTime;
+
+            // ⭐ 작업 성공 메시지도 Swal.fire로 변경 ⭐
+            Swal.fire({
+                title: "작업 종료 완료",
+                text: "공정 작업이 성공적으로 종료되었습니다.",
+                icon: "success",
+                confirmButtonText: "확인"
+            });
+
+            openModal(); // 실적 등록 모달 열기
+
+        } else {
+          
+            Swal.fire({
+                title: "작업 종료 실패",
+                text: '작업 종료에 실패했습니다: ' + (response.data.message || '알 수 없는 오류'),
+                icon: "error",
+                confirmButtonText: "확인"
+            });
+        }
+    } catch (error) {
+        console.error('작업 종료 중 오류 발생:', error);
+        Swal.fire({
+            title: "오류 발생",
+            text: "작업 종료 중 오류가 발생했습니다.",
+            icon: "error",
+            confirmButtonText: "확인"
+        });
+    } finally {
+        isProcessingWork.value = false;
+    }
+};
+
+
+
 const closeModal = () => {
     isModalOpen.value = false;
 
@@ -397,7 +464,6 @@ const closeModal = () => {
 
 
 
-const endWorkHandler = async () => { /* ... */ };
 
 
 onMounted(() => {
@@ -551,7 +617,7 @@ onMounted(() => {
                                         type="button"
                                         class="btn btn-danger me-2"
                                         :disabled="!isEndButtonEnabled"
-                                        @click="openModal"
+                                        @click="endWorkHandler"
                                         
                                     >
                                         작업 종료
@@ -575,8 +641,8 @@ onMounted(() => {
                                   currentWorkOrder.prod_code,
                                   currentWorkOrder.inst_qty,
                                   selectedProcess.inst_qty ,
-                                  selectedProcess.work_process_code
-                                   
+                                  selectedProcess.work_process_code,
+                                  selectedProcess.equi_code 
                                   ]"
                                 />
                             </div>

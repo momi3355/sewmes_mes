@@ -38,7 +38,15 @@ const updateWorkInstStateToInProgress = `
 
 `;
         
-
+//작업종료 후 작업공정종료시간에 update
+const updateEndWorkTime=`
+UPDATE t_work_process
+SET
+    work_end_date = NOW()           
+WHERE
+    work_inst_code = ? AND        
+    process_code = ?; 
+`
 
 
 //작업공정테이블에서 필요한 쿼리문
@@ -144,4 +152,5 @@ module.exports={
     updateProcessStartDate,
     getWorkInstDetails,
     updateWorkInstStateToInProgress,
+    updateEndWorkTime
 }
