@@ -4,8 +4,10 @@ import { useStore } from "vuex";
 import axios from "axios";
 
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
+import BomSaveModal from "./BomSaveModal.vue";
 import groupcodelist from "@/assets/js/utils/groupcodelist";
 import { typeFormatter } from "@/assets/js/utils/tableFormatter";
+import Swal from "sweetalert2";
 
 const store = useStore();
 
@@ -20,6 +22,8 @@ const bom_table = ref(null);
 
 const itemData = ref([]);
 const bomData = ref([]);
+
+const isModalOpen = ref(false);
 
 const itemColumns = [
   { title: "품목코드", field: "item_code", width: 120 },
@@ -149,22 +153,42 @@ const bomClickhandler = async () => {
   const bomTable = tabulator.getData();
 
   if (!prodCode) { //undefined
-    alert("제품번호를 입력하지 않았습니다.");
+    Swal.fire({
+      title: "필수 입력 항목",
+      text: "제품번호를 입력하지 않았습니다.",
+      icon: "error"
+    });
     return;
   } else if (!prodName) {
-    alert("제품이 존재하지 않습니다.");
+    Swal.fire({
+      title: "필수 입력 항목",
+      text: "제품이 존재하지 않습니다.",
+      icon: "error"
+    });
     return;
   } else if (!bomTable.length) {
-    alert("BOM정보가 비어있습니다.");
+    Swal.fire({
+      title: "필수 입력 항목",
+      text: "BOM정보가 비어있습니다.",
+      icon: "error"
+    });
     return;
   } else if (bomTable.find(e => !e.need)) {
-    alert("BOM소요량의 정보가 없습니다.");
+    Swal.fire({
+      title: "필수 입력 항목",
+      text: "BOM소요량의 정보가 없습니다.",
+      icon: "error"
+    });
     return;
   }
 
   for (const bom of bomDetailInfo) {
     if (!Number(bom.need)) {
-      alert("BOM소요량이 숫자가 아닙니다.");
+      Swal.fire({
+        title: "잘못된 숫자",
+        text: "BOM소요량이 숫자가 아닙니다.",
+        icon: "error"
+      });
       return;
     }
   } 
@@ -190,8 +214,12 @@ const bomClickhandler = async () => {
   };
 
   const query = await axios.post("/api/bomDetail", bomInfo);
-  if (query.data.affectedRows) {
-    alert("성공");
+  if (query?.data?.affectedRows) {
+    Swal.fire({
+      title: "성공",
+      text: "BOM정보가 추가되었습니다.",
+      icon: "success"
+    });
   }
 }
 
@@ -200,6 +228,30 @@ const bomResethandler = () => {
   detailFields.value.prod_name = "";
   bomData.value = [];
 }
+
+const productSelectHandler = async () => {
+  // const tabulator = order_table.value.getTabulator();
+  // if (!tabulator.getSelectedRows().length) {
+  //   Swal.fire({
+  //     title: "필수 입력 항목",
+  //     text: "제품을 먼저 선택해 주세요.",
+  //     icon: "error"
+  //   });
+  //   return;
+  // }
+  isModalOpen.value = true;
+};
+
+const closeModal = () => {
+  isModalOpen.value = false;
+};
+
+const handleAfterModalSaved = async (prdData) => {
+  const selectRow = prdData[0];
+
+  detailFields.value.prod_name = selectRow.prod_name;
+  detailFields.value.prod_code = selectRow.prod_code;
+};
 
 const findProd = async () => {
   const code = detailFields.value.prod_code;
@@ -227,14 +279,6 @@ onMounted(async () => {
     <div class="row search-color">
       <!-- 상단 검색 영역 -->
       <div class="row mb-3">
-        <div class="col-md-2 d-inline-block-custom">
-          <label class="form-label">품목코드</label>
-          <input
-            type="text"
-            class="form-control"
-            v-model="searchData.item_code"
-          />
-        </div>
         <div class="col-md-2">
           <label class="form-label">품목유형</label>
           <select class="form-select" v-model="searchData.item_type">
@@ -244,8 +288,14 @@ onMounted(async () => {
             </option>
           </select>
         </div>
-      </div>
-      <div class="row mb-3">
+        <div class="col-md-2 d-inline-block-custom">
+          <label class="form-label">품목코드</label>
+          <input
+            type="text"
+            class="form-control"
+            v-model="searchData.item_code"
+          />
+        </div>
         <div class="col-md-2">
           <label class="form-label">품명</label>
           <input
@@ -309,6 +359,7 @@ onMounted(async () => {
                       class="form-control form-control-sm"
                       @keyup.enter="findProd"
                       v-model="detailFields.prod_code"
+                      readonly
                     />
                   </td>
                 </tr>
@@ -323,6 +374,7 @@ onMounted(async () => {
                     />
                   </td>
                 </tr>
+                <tr><td colspan="2"><button class="btn btn-primary" style="width: 100%;" @click="productSelectHandler">제품 검색</button></td></tr>
               </tbody>
             </table>
           </div>
@@ -345,6 +397,12 @@ onMounted(async () => {
           :on="itemEvent"
         />
       </div>
+      <bom-save-modal
+        :isModalOpen="isModalOpen"
+        :prodCode="detailFields.prod_code"
+        v-on:close-modal="closeModal"
+        @saved="handleAfterModalSaved"
+      />
     </div>
   </div>
 </template>

@@ -5,6 +5,7 @@ import axios from "axios";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import groupcodelist from "@/assets/js/utils/groupcodelist";
 import { typeFormatter } from "@/assets/js/utils/tableFormatter";
+import Swal from "sweetalert2";
 
 const mattype = ref([]);
 const usetype = ref([]);
@@ -137,13 +138,21 @@ const materialClickhandler = async () => {
       currentDetailFields.unit === "";
 
   if (isAnyRequiredFieldEmpty) {
-      alert("필수 입력 항목(자재 코드, 자재명, 규격, 단위)을 모두 채워주세요.");
-      return;
+    Swal.fire({
+      title: "필수 입력 항목",
+      text: "자재 코드, 자재명, 규격, 단위을 모두 채워주세요.",
+      icon: "error"
+    });
+    return;
   }
 
   if (currentDetailFields.unit_price === 0 || currentDetailFields.safe_stock === 0) {
-      alert("단가 또는 안전 재고가 0으로 설정되어 있습니다. 확인해 주세요.");
-      return;
+    Swal.fire({
+      title: "잘못된 숫자",
+      text: "단가 또는 안전 재고가 0으로 설정되어 있습니다.",
+      icon: "error"
+    });
+    return;
   }
 
   const find = materialData.value.find(e => {
@@ -161,12 +170,26 @@ const materialClickhandler = async () => {
         code: find.material_code,
       }
     });
-    console.log(result);
+    // console.log(result);
+    if (result?.data) {
+      Swal.fire({
+        title: "성공",
+        text: "자재 정보가 수정되었습니다.",
+        icon: "success"
+      });
+    }
   } else {
     const result = await axios.post("/api/baseMaterial", {
       data: detailFields.value,
     });
-    console.log(result);
+    // console.log(result);
+    if (result?.data) {
+      Swal.fire({
+        title: "성공",
+        text: "자재 정보가 추가되었습니다.",
+        icon: "success"
+      });
+    }
   }
   const tabulator = table.value.getTabulator();
   await tabulator.setData("/api/baseMaterial" , searchData.value);
@@ -174,10 +197,13 @@ const materialClickhandler = async () => {
 };
 
 const getBaseMaterial = async() => {
-  //params 전달
+  const search = searchData.value;
   const material = await axios.get("/api/baseMaterial", {
     params: {
-      ...searchData.value
+      material_code: search.material_code,
+      material_name: search.material_name,
+      material_type: search.material_type,
+      use_yn: search.use_yn
     }
   });
   materialData.value = material.data;

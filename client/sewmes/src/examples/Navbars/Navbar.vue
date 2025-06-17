@@ -3,6 +3,7 @@ import { computed, ref, onMounted } from "vue";
 import { useStore } from "vuex";
 import { useRoute, useRouter } from "vue-router";
 import Breadcrumbs from "../Breadcrumbs.vue";
+import Swal from 'sweetalert2';
 
 const showMenu = ref(false);
 // const store = useStore();
@@ -31,6 +32,9 @@ const currentDirectory = computed(() => {
   let dir = route.path.split("/")[1];
   return dir.charAt(0).toUpperCase() + dir.slice(1);
 });
+const currentRouteTitle = computed(() => {
+  return route.meta.title;
+});
 
 const minimizeSidebar = () => store.commit("sidebarMinimize");
 const toggleConfigurator = () => store.commit("toggleConfigurator");
@@ -44,8 +48,12 @@ const closeMenu = () => {
 
 onMounted(() => {
   if (!isLoggedIn.value) {
-    alert('로그인이 필요합니다.');
-    router.push('/login');
+    Swal.fire({
+      title: "권한 실패",
+      text: "로그인이 필요합니다.",
+      icon: "error"
+    });
+    router.push('/signin');
   }
 });
 </script>
@@ -60,7 +68,7 @@ onMounted(() => {
     <div class="px-3 py-1 container-fluid">
       <breadcrumbs
         :current-page="currentRouteName"
-        :current-directory="currentDirectory"
+        :current-directory="currentRouteTitle"
       />
 
       <div

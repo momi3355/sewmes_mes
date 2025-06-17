@@ -8,6 +8,7 @@ import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import ReleaseProcessLotListModal from "./ReleaseProcessLotListModal.vue";
 import { dateFormatter } from "@/assets/js/utils/tableFormatter";
 import groupcodelist from "../../assets/js/utils/groupcodelist";
+import Swal from "sweetalert2";
 
 const store = useStore();
 
@@ -110,7 +111,11 @@ const handleAfterModalSaved = (lotData) => {
 const releaseAddhandler = async () => {
   const tabulator = order_table.value.getTabulator();
   if (!tabulator.getSelectedRows().length) {
-    alert("제품을 먼저 선택해 주세요.");
+    Swal.fire({
+      title: "필수 입력 항목",
+      text: "제품을 먼저 선택해 주세요.",
+      icon: "error"
+    });
     return;
   }
   isModalOpen.value = true;
@@ -121,12 +126,20 @@ const releaseClickhandler = async () => {
 
   const orderTable = order_table.value.getTabulator();
   if (!orderTable.getSelectedRows().length) {
-    alert("제품을 먼저 선택해 주세요.");
+    Swal.fire({
+      title: "필수 입력 항목",
+      text: "제품을 먼저 선택해 주세요.",
+      icon: "error"
+    });
     return;
   }
   const releaseTable = release_table.value.getTabulator();
   if (!releaseTable.getData().length) {
-    alert("출고 정보가 없습니다.");
+    Swal.fire({
+      title: "필수 입력 항목",
+      text: "출고 정보가 없습니다.",
+      icon: "error"
+    });
     return;
   }
 
@@ -140,11 +153,15 @@ const releaseClickhandler = async () => {
   });
 
   if (notFound) {
-    alert("출고 수량이 없거나 비정상 값입니다.");
+    Swal.fire({
+      title: "비정상 값",
+      text: "출고 수량이 없거나 비정상 값입니다.",
+      icon: "error"
+    });
     return;
   }
 
-  console.log("완료");
+  // console.log("완료");
   const releaseDetailInfo = releaseData.value.map(e => {
     return {
       lot: e.lot,
@@ -160,8 +177,12 @@ const releaseClickhandler = async () => {
   }
 
   const query = await axios.post("/api/prdReceive", releaseInfo);
-  if (query.data.affectedRows) {
-    alert("성공");
+  if (query?.data?.affectedRows) {
+    Swal.fire({
+      title: "성공",
+      text: "제품이 출고처리 되었습니다.",
+      icon: "success"
+    });
   }
 };
 
