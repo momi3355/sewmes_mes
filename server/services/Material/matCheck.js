@@ -42,33 +42,50 @@ const startMaterialCheck = async (material_order_code) => {
 
 const completeMaterialCheck = async (checkData) => {
   const connection = await db.getConnection();
-  try{
+  try {
     await connection.beginTransaction();
-    console.log(checkData);
+
+    // 1. 메인 검수 테이블 업데이트
     const updateParams = [checkData.qualified_qty, checkData.inbound_check_code];
     await connection.query(sql.updateInboundCheck, updateParams);
 
-    if(!checkData.inbound_check_code){
-      throw new Error("inbound_check_code가 전달되지 않았습니다.");
-    }
-    
+    // 2. 상세 내역 저장
+    const details = checkData.details;
+    const inbound_check_code = checkData.inbound_check_code;
 
-     const detailDataToInsert = Object.entries(checkData.details)
-      .filter(([key, value]) => value > 0) // 불합격 수량이 0보다 큰 항목만
-      .map(([key, value]) => [
-        `DET-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`, // 고유 상세 코드
-        key, // 품질 코드 (예: 'width')
-        value, // 불합격 수량
-        checkData.inbound_check_code, // 검사 코드
-      ]);
+    // ✨ for...in 루프를 사용하여 객체를 순회
+    for (const qualityKey in details) {
+      const defectQty = details[qualityKey];
 
-    // 3. INSERT할 데이터가 있을 경우에만 쿼리 실행
-    if (detailDataToInsert.length > 0) {
-      console.log("--- DETAIL INSERT 실행 직전 ---");
-      console.log("SQL: ", sql.insertCheckDetail);
-      console.log("PARAMS: ", JSON.stringify([detailDataToInsert], null, 2));
-      
-      await connection.query(sql.insertCheckDetail, [detailDataToInsert]);
+      // 불합격 수량이 0보다 큰 경우에만 INSERT
+      if (defectQty > 0) {
+        
+        // ✨ INSERT 쿼리를 여기서 직접 만듭니다. (가장 확실한 방법)
+        const insertSql = `INSERT INTO t_matcheck_detail 
+                             (mat_check_detail, quality_code, defect_qty, inbound_check_code) 
+                           VALUES (?, ?, ?, ?)`;
+
+        const now = new Date();
+        // 'YYMMDDHHMMSS' (12자)
+        const dateTimeString = now.toISOString().slice(2, 19).replace(/[-T:]/g, '');
+        // 최종 코드 (예: "DET240524153045")
+        const mat_check_detail_code = `DET${dateTimeString}`; // DET(3) + 12 = 15자
+        
+        const detailParams = [
+          mat_check_detail_code, // ✨ 새로 만든 코드로 교체
+          qualityKey,
+          defectQty,
+          inbound_check_code
+        ];
+
+        console.log(detailParams);
+        
+        // 디버깅 로그
+        console.log(`Executing INSERT for ${qualityKey}:`, detailParams);
+        
+        // ✨ sql 객체를 참조하지 않고, 직접 만든 SQL과 파라미터로 실행
+        await connection.query(insertSql, detailParams);
+      }
     }
     
     await connection.commit();

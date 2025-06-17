@@ -117,6 +117,16 @@ const getSelectedRows = (tableRef) => {
 };
 
 const handleCheckComplete = async (checkData) => {
+
+  console.log("==============================================");
+  console.log("서버로 전송하기 직전의 최종 데이터 (checkData):");
+  console.log(JSON.stringify(checkData, null, 2)); // 객체를 예쁘게 출력
+  console.log("==============================================");
+   console.log("typeof checkData.qualified_qty:", typeof checkData.qualified_qty);
+  console.log("typeof checkData.inbound_check_code:", typeof checkData.inbound_check_code);
+  if (checkData.details && typeof checkData.details.color !== 'undefined') {
+    console.log("typeof checkData.details.color:", typeof checkData.details.color);
+  }
   try{
     console.log("서버로 보낼 최종 데이터(checkData): ", JSON.stringify(checkData, null, 2));
     const response = await axios.post('/api/material/complete-check', checkData);
