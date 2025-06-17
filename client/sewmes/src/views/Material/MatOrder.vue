@@ -30,7 +30,7 @@ const productColumns = [
   { 
     title: "주문수량", 
     field: "order_qty", 
-    width: 150, hozAlign: "right", 
+    width: 150, hozAlign: "left", 
     editor: "input",
     cellEdited: (cell) => {
       const data = cell.getRow().getData();
@@ -40,7 +40,7 @@ const productColumns = [
   { 
     title: "단가", 
     field: "unit_price", 
-    width: 120, hozAlign: "right", 
+    width: 120, hozAlign: "left", 
     editor: "input", 
     formatter: "money", 
     formatterParams: { symbol: "₩", precision: 0 },
@@ -52,7 +52,7 @@ const productColumns = [
   { 
     title: "합계", 
     field: "total_price", 
-    width: 160, hozAlign: "right", 
+    width: 160, hozAlign: "left", 
     formatter: "money", 
     formatterParams: { symbol: "₩", precision: 0 }
   },
@@ -168,6 +168,7 @@ const saveOrder = async () => {
     total_price: Number(p.order_qty) * Number(p.unit_price),
     order_qty: p.order_qty,
   }));
+  
 
   try {
     const response = await axios.post('/api/matorder/save', processedData);

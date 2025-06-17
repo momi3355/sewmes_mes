@@ -4,10 +4,12 @@ const sqlList = require("../../database/sqlList.js");
 
 // 수입검사 완료 자재 조회
 const checkedMaterialList = async () => {
-    let list = await mariadb.query("checkedMaterialList")
-    .catch(err => console.log(err));
-    return list;
+  try{
+    const rows = await db.query("getCompletedList");
+    return rows;
+  } catch (err) { throw err; }
 };
+
 
 // 수입검사 완료 자재 상세정보
 const checkedMaterialDetail = async (inbound_check_code) => {

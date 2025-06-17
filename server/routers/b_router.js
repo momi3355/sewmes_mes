@@ -55,5 +55,35 @@ router.get("/companies", async (req, res) => {
   } catch (err) { res.status(500).send({ message: "공급처 조회 중 오류" }); }
 });
 
+router.post("/material/complete-check", async (req, res) => {
+  try{
+    const result = await matCheckService.completeMaterialCheck(req.body);
+    res.send(result);
+  } catch(err){
+    console.error("검사 완료 라우터 오류:", err);
+    res.status(500).send({ success: false, mesage: "저장 중 오류 발생"});
+  }
+});
+
+router.get("/material/matcheckview", async (req, res) => {
+  try {
+    const result = await checkedMatService.checkedMaterialList();
+    res.send(result);
+  } catch (err){
+    res.status(500).send({ message: "완료 목록 조회 중 오류 발생" });
+  }
+});
+
+router.post("/material/start-check", async (req, res) => {
+  try {
+    // 발주 코드를 받아서 '검수 시작' 처리
+    const { material_order_code } = req.body;
+    const result = await matCheckService.startMaterialCheck(material_order_code);
+    res.send(result);
+  } catch (err) {
+    res.status(500).send({ success: false, message: "검수 시작 처리 중 오류" });
+  }
+});
+
 module.exports = router;
 
