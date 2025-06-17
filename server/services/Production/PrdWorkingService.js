@@ -129,13 +129,40 @@ const startWorkProcess = async (workInstCode, processCode, equiCode, startDate) 
     }
 };
 
+
 //const insertPrdPref= async( work_inst_code, work_process_code,  input_qty, prod_qty,defect_qty, pref_note,defect_type, emp_num)=>{
     const insertPrdPref= async(details)=>{
   let creCode = await query("createCodeProc", [ 't_inst_perf', 'work_perf_code', 'WPC' ]);
   let newCode = creCode[1][0].newCode;
+  const connection = await getConnection();
     try{
+        await connection.beginTransaction(); 
         
+        const selectWorkProcess = await connection.query(sqlList['selectWorkProcess',details.work_inst_code]).catch(err=>console.error(err));
         
+        for( let process  of selectWorkProcess){
+            
+           if(process.work_process_code == details.work_process_code ){
+                let newInputQty=details.input_qty+process.inst_qty;
+                let newDefectQty= process.defect_qty+ details.defect_qty;
+                let newProdQty = process.prod_qty+ details.prod_qty;
+                let updateParmas = {
+                input_qty:newInputQty,
+                defect_qty:newDefectQty,
+                prod_qty:newProdQty
+            }
+                if(process.inst_qty == newInputQty ){
+                    updateParmas.complete='1a1a ';
+                    // updateParmas.equi_code= 가져오세요
+
+                    // const updateWorkProcState= await connection.query(sqlList['updateWorkProcess'],[
+                    //     updateParmas, details.work_process_code
+                    // ])
+
+                }
+           }
+        }
+
          /*const details = {
             
             work_perf_code:newCode,
@@ -167,5 +194,6 @@ module.exports ={
    getEquipmentByProcess,
    getWorkInstDetails,
    startWorkProcess,
-   insertPrdPref
+   insertPrdPref,
+   selectWorkProcessList
 };

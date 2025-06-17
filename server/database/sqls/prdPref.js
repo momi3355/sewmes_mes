@@ -1,6 +1,6 @@
 
 
-
+//인서트 된값을 input_qty 셀렉해서 들고온 
 const insertPrdPref=`
 INSERT INTO t_inst_perf (
                         work_perf_code

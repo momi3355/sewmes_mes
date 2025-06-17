@@ -575,7 +575,8 @@ onMounted(() => {
                                   currentWorkOrder.prod_code,
                                   currentWorkOrder.inst_qty,
                                   selectedProcess.inst_qty ,
-                                  selectedProcess.work_process_code  
+                                  selectedProcess.work_process_code
+                                   
                                   ]"
                                 />
                             </div>
