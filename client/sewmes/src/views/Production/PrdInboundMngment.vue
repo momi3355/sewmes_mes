@@ -3,7 +3,7 @@ import axios from 'axios';
 import { useStore } from "vuex";
 import { ref, onMounted } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
-import OutsouInboundTestModal from './OutsouInboundTestModal.vue';
+import PrdInboundTestModal from './PrdInboundTestModal.vue';
 import ArgonButton from "@/components/ArgonButton.vue";
 import moment from 'moment';
 
@@ -23,12 +23,15 @@ const searchCheckDateEnd = ref('');
 const productTestList = ref([]);
 
 
-// 외주입고검수 페이지 출력을 위한 객체
-const selectedOutsouInboundCode = ref(null);
+// 완제품 검수 페이지 출력을 위한 객체
+const selectedWorkPerfCode = ref(null);
 const isTestModalOpen = ref(false);
 
+// 완제품 검사 내역 출력을 위한 객체
+const inboundTestHistory = ref([]);
+
 // 제품 목록 조건에 따른 검색
-const searchOutsouReceive = async () => {
+const searchPrdInboundList = async () => {
   const params = {};
 
   if (searchProdName.value.trim()) params.prodName = searchProdName.value.trim();
@@ -96,7 +99,7 @@ const tabulatorOptions = {
   rowFormatter: function(row) {
     const rowData = row.getData();
     // selectedOutsouInboundCode가 객체이고, 그 객체의 outsouInboundCode와 현재 행의 코드가 일치하는지 확인
-    if (selectedOutsouInboundCode.value && rowData.outsouInboundCode === selectedOutsouInboundCode.value.outsouInboundCode) {
+    if (selectedWorkPerfCode.value && rowData.workPerfCode === selectedWorkPerfCode.value.workPerfCode) {
       row.getElement().classList.add("selected-row");
     } else {
       row.getElement().classList.remove("selected-row");
@@ -113,11 +116,11 @@ const resetFilter = () => {
   searchCheckDateEnd.value = '';
 };
 
-// 외주입고검수 페이지 출력
+// 완제품 입고검수 페이지 출력
 const openModal = () => {
-  if (!selectedOutsouInboundCode.value) return alert("외주입고 건을 먼저 선택하세요.");
+  if (!selectedWorkPerfCode.value) return alert("완제품 입고 건을 먼저 선택하세요.");
   
-  const testStatus = getTestStatus(selectedOutsouInboundCode.value);
+  const testStatus = getTestStatus(selectedWorkPerfCode.value);
   if (testStatus !== "검사 전") {
     return alert(`이미 검사가 진행된 건입니다. (상태: ${testStatus})`);
   }
@@ -130,7 +133,8 @@ const tabulatorEvent = [
     eventAction: 
       async (e, row) => {
       const data = row.getData();
-      selectedOutsouInboundCode.value = data;
+      selectedWorkPerfCode.value = data;
+      await loalTestHistory();
 
       const tableInstance = productTableRef.value?.$el?.querySelector('.tabulator')?.__tabulator__;
       if (tableInstance) {
@@ -138,6 +142,28 @@ const tabulatorEvent = [
       }
     }
   }
+];
+
+// 선택된 완제품 입고 건 검사 내역 출력 ===============================================
+const loalTestHistory = async () => {
+  if (!selectedWorkPerfCode.value) return;
+  try {
+    const result = await axios.get(`/api/inboundTestHistory?inboundCheckCode=${selectedWorkPerfCode.value.inboundCheckCode}`);
+    const list = Array.isArray(result.data) ? result.data : [];
+    inboundTestHistory.value = list.map((item, idx) => ({
+      qualityCode: item.quality_code,
+      testName: item.test_name,
+      testMethod: item.test_method,
+      defectQty: formatInt(item.defect_qty)
+    }));
+  } catch (err) {
+    console.error("API 호출 오류:", err);
+  }
+};
+const inboundTestHistoryColumns = [
+  { title: '검사명', field: 'testName', width: 150 },
+  { title: '검사 방법', field: 'testMethod', width: 200 },
+  { title: '불합격수량', field: 'defectQty', width: 150 }
 ];
 // 형태 변환
 const formatInt = (val) => {
@@ -152,11 +178,11 @@ const formatDate = (str) => {
 // 검사 완료 시 페이지 재조회
 const handleAfterTestSaved = () => {
   isTestModalOpen.value = false;
-  selectedOutsouInboundCode.value = null;
-  searchOutsouReceive(); // 다시 조회
+  selectedWorkPerfCode.value = null;
+  searchPrdInboundList(); // 다시 조회
 };
 onMounted(() => {
-  searchOutsouReceive();
+  searchPrdInboundList();
 });
 </script>
 
@@ -199,16 +225,16 @@ onMounted(() => {
         </div>
         <div class="col-md-3 d-flex align-items-end">
             <button class="btn btn-secondary me-2" @click="resetFilter">초기화</button>
-          <button class="btn btn-primary" @click="searchOutsouReceive">조회</button>
+          <button class="btn btn-primary" @click="searchPrdInboundList">조회</button>
         </div>
       </div>
     </div>
     <div class="row">
-      <div class="col-md-12 d-flex flex-column">
+      <div class="col-md-8 d-flex flex-column">
         <tabulator-card
           ref="productTableRef"
-          card-title="완제품 미입고 목록"
-          :height="450"
+          card-title="완제품 입고 대기 목록"
+          :height="550"
           :table-data="productTestList"
           :table-columns="productTestColumns"
           :tabulator-options="tabulatorOptions"
@@ -220,15 +246,24 @@ onMounted(() => {
             </ArgonButton>
           </template>
         </tabulator-card>
-        <OutsouInboundTestModal
+        <PrdInboundTestModal
           :isOpen="isTestModalOpen"
-          :prodName="selectedOutsouInboundCode?.prodName"
-          :outsouInboundCode="selectedOutsouInboundCode?.outsouInboundCode"
-          :inboundQty="selectedOutsouInboundCode?.inboundQty"
+          :prodName="selectedWorkPerfCode?.prodName"
+          :workPerfCode="selectedWorkPerfCode?.workPerfCode"
+          :prodQty="selectedWorkPerfCode?.prodQty"
           :userCode="userCode"
           :userName="userName"
           @close="isTestModalOpen = false"
           @saved="handleAfterTestSaved"
+        />
+      </div>
+      <div class="col-md-4 d-flex flex-column">
+        <tabulator-card
+          card-title="완제품 검수 불량 내역"
+          :height="550"
+          :table-data="inboundTestHistory"
+          :table-columns="inboundTestHistoryColumns"
+          :on="tabulatorEvent"
         />
       </div>
     </div>

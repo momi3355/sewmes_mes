@@ -1,3 +1,4 @@
+// 완제품 입고 검사 리스트 가져오기
 const selectProdInboundTestByConditions = `
     SELECT 
         ip.work_perf_code,
@@ -45,8 +46,29 @@ const selectProdInboundTestByConditions = `
         /**조건절**/
     ORDER BY CAST(SUBSTRING(ip.work_perf_code, 3) AS UNSIGNED) DESC`;
 
+// 완제품검사 모달 품질 검사 리스트 불러오기
+const getProductQualityTest = `
+  SELECT quality_code, test_name, test_method
+  FROM t_quality
+  WHERE test_target = '1b4b' AND use_yn = '0b1b'`;
+
+// 완제품 입고 프로시저 불러오기
+const callSaveProdInboundInspection =`
+    CALL proc_save_inbound_inspection(?, ?, ?, ?)`;
+
+const getTestHistory = `
+    SELECT 
+    pd.quality_code,
+    pd.defect_qty,
+    q.test_name,
+    q.test_method
+    FROM t_prodcheck_detail pd
+    LEFT JOIN t_quality q ON pd.quality_code = q.quality_code
+    WHERE pd.inbound_check_code = ? `;
 
 module.exports ={
-    selectProdInboundTestByConditions
-
+    selectProdInboundTestByConditions,
+    getProductQualityTest,
+    callSaveProdInboundInspection,
+    getTestHistory
 };
