@@ -63,8 +63,11 @@ const getRoute = () => {
             { name: 'BOM조회', to: '/bomView' },
             { name: 'BOM등록', to: '/bomSave' },
             { name: '설비 관리', to: '/equiMaster' },
-          ]"
+          ]" 
         >
+          <template v-slot:icon>
+              <i class="ni ni-single-copy-04 text-info text-sm opacity-10"></i>
+            </template>
         </sidenav-item>
       </li>
 
@@ -79,6 +82,9 @@ const getRoute = () => {
             { name: '업체별 외주제품', to: '/outPossible' },
           ]"
         >
+          <template v-slot:icon>
+            <i class="ni ni-single-02 text-primary text-sm opacity-10"></i>
+          </template>
         </sidenav-item>
       </li>
 
@@ -94,6 +100,9 @@ const getRoute = () => {
             { name: '자재 수입검사 조회', to: '/matCheckView' },
           ]"
         >
+          <template v-slot:icon>
+            <i class="ni ni-app text-success text-sm opacity-10"></i>
+          </template>
         </sidenav-item>
       </li>
 
@@ -117,6 +126,9 @@ const getRoute = () => {
             { name: '출고 처리', to: '/releaseProcess' },
           ]"
         >
+          <template v-slot:icon>
+            <i class="ni ni-tag text-danger text-sm opacity-10"></i>
+          </template>
         </sidenav-item>
       </li>
 
@@ -127,6 +139,9 @@ const getRoute = () => {
             { name: '설비 점검/수리', to: '/equiMaint' },
           ]"
         >
+          <template v-slot:icon>
+            <i class="ni ni-atom text-warning text-sm opacity-10"></i>
+          </template>
         </sidenav-item>
       </li>
     </ul>

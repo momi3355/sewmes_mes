@@ -53,6 +53,7 @@ const handleClick = () => {
     <div
       v-if="hasSubItems"
       class="nav-link d-flex align-items-center"
+      :class="showSubmenu ? 'select' : ''"
       @click="handleClick"
     >
       <div
@@ -64,7 +65,7 @@ const handleClick = () => {
         {{ navText }}
       </span>
       <span class="ms-auto">
-        <i class="ni" :class="showSubmenu ? 'ni-minimal-up' : 'ni-minimal-down'"></i>
+        <i class="ni" :class="showSubmenu ? 'ni-bold-up' : 'ni-bold-down'"></i>
       </span>
     </div>
 
@@ -103,7 +104,10 @@ const handleClick = () => {
 
 <style scoped>
 .nav-link.active {
-  background-color: #f5f5f5;
+  background-color: #dadada;
   font-weight: bold;
+}
+.select {
+  background-color: rgb(198, 247, 242);
 }
 </style>

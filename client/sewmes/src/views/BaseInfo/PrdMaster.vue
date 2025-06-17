@@ -5,6 +5,7 @@ import axios from "axios";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import groupcodelist from "@/assets/js/utils/groupcodelist";
 import { typeFormatter } from "@/assets/js/utils/tableFormatter";
+import Swal from "sweetalert2";
 
 const prdtype = ref([]);
 const usetype = ref([]);
@@ -159,12 +160,20 @@ const productClickhandler = async () => {
     currentDetailFields.unit === "";
 
   if (isAnyRequiredFieldEmpty) {
-    alert("필수 입력 항목(제품 코드, 제품명, 규격, 단위)을 모두 채워주세요.");
+    Swal.fire({
+      title: "필수 입력 항목",
+      text: "제품 코드, 제품명, 규격, 단위을 모두 채워주세요.",
+      icon: "error"
+    });
     return;
   }
 
   if (currentDetailFields.unit_price === 0) {
-    alert("단가가 0으로 설정되어 있습니다. 확인해 주세요.");
+    Swal.fire({
+      title: "잘못된 숫자",
+      text: "단가가 0으로 설정되어 있습니다.",
+      icon: "error"
+    });
     return;
   }
 
@@ -183,12 +192,26 @@ const productClickhandler = async () => {
         code: find.prod_code,
       }
     });
-    console.log(result);
+    // console.log(result);
+    if (result?.data) {
+      Swal.fire({
+        title: "성공",
+        text: "제품 정보가 수정되었습니다.",
+        icon: "success"
+      });
+    }
   } else {
     const result = await axios.post("/api/baseProduct", {
       data: detailFields.value,
     });
-    console.log(result);
+    // console.log(result);
+    if (result?.data) {
+      Swal.fire({
+        title: "성공",
+        text: "제품 정보가 추가되었습니다.",
+        icon: "success"
+      });
+    }
   }
   const tabulator = table.value.getTabulator();
   await tabulator.setData("/api/baseProduct", searchData.value);
