@@ -91,11 +91,11 @@ const startWorkProcess = async (workInstCode, processCode, equiCode, startDate) 
 
         // 1. t_work_process 테이블 업데이트 (해당 공정의 시작일자, 설비 업데이트)
         // 쿼리 이름은 'updateProcessStartDate'로 가정하며, 파라미터는 쿼리에 맞춰 조정
-        const updateProcessResult = await directQuery(connection, 'updateProcessStartDate', [
+        const updateProcessResult = await connection.query(sqlList['updateProcessStartDate'], [
             equiCode,       // 첫 번째 ? 에 매핑
             // 만약 sqlList.js의 updateProcessStartDate 쿼리에 work_start_worker_code가 있다면 여기에 userCode 추가:
             // userCode,
-            workInstCode,   // 두 번째 ? 에 매핑
+            workInstCode,  
             processCode     // 세 번째 ? 에 매핑
         ]);
 
@@ -105,7 +105,7 @@ const startWorkProcess = async (workInstCode, processCode, equiCode, startDate) 
 
         // 2. t_work_inst 테이블 상태 업데이트 (작업지시 전체 상태를 '생산중'으로 변경)
         // 이 쿼리를 다시 포함해야 프론트엔드와 백엔드 상태가 일치합니다.
-        const updateInstStateResult = await directQuery(connection, 'updateWorkInstStateToInProgress', [
+        const updateInstStateResult = await connection.query(sqlList[ 'updateWorkInstStateToInProgress'], [
             '0s2s', // '생산중' 상태 코드
             workInstCode
         ]);
@@ -129,11 +129,43 @@ const startWorkProcess = async (workInstCode, processCode, equiCode, startDate) 
     }
 };
 
+//const insertPrdPref= async( work_inst_code, work_process_code,  input_qty, prod_qty,defect_qty, pref_note,defect_type, emp_num)=>{
+    const insertPrdPref= async(details)=>{
+  let creCode = await query("createCodeProc", [ 't_inst_perf', 'work_perf_code', 'WPC' ]);
+  let newCode = creCode[1][0].newCode;
+    try{
+        
+        
+         /*const details = {
+            
+            work_perf_code:newCode,
+            work_inst_code:work_inst_code,
+            work_process_code:work_process_code,
+            input_qty:input_qty,
+            prod_qty:prod_qty,
+            defect_qty:defect_qty,
+            pref_note:pref_note,
+            defect_type:defect_type,
 
+            emp_num:emp_num,
+                    
+        };*/
+        details.splice(0, 0, newCode);
+        console.log('넘어오는 파라미터: ', details);
+        const rows = await query('insertPrdPref', details);
+        
+        console.log(rows);
+    }catch(error){
+        console.error(error);
 
+    }
+      
+
+};
 module.exports ={
    getProcessFlowByWorkInst,
    getEquipmentByProcess,
    getWorkInstDetails,
-   startWorkProcess
+   startWorkProcess,
+   insertPrdPref
 };
