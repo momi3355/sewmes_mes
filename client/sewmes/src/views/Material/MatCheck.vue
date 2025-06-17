@@ -2,12 +2,15 @@
 <script setup>
 import { TabulatorFull as Tabulator } from "tabulator-tables";
 import { ref, onMounted } from "vue"; // Import ref and onMounted
+import { useStore } from "vuex";
 import axios from "axios";
 
 import ArgonButton from "@/components/ArgonButton.vue";
 import DefaultInfoCard from "@/examples/Cards/DefaultInfoCard.vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import MatCheckModal from '@/views/Material/MatCheckModal.vue';
+
+const store = useStore();
 
 const searchField1 = ref('');
 const searchField2 = ref('');
@@ -16,18 +19,20 @@ const searchDate = ref('');
 
 const checkTableCard = ref(null);
 const selectedMaterial = ref(null);
+const userInfo = ref(null);
 
 // 모달 컴포넌트 참조
-const checkModal = ref(null);
+const isTestModalOpen = ref(false);
 
 // 모달을 여는 함수
 const openCheckModal = (item) => {
-  console.log("모달로 전달할 데이터 (item): ", JSON.stringify(item, null, 2));
+  //console.log("모달로 전달할 데이터 (item): ", JSON.stringify(item, null, 2));
   selectedMaterial.value = item;
-  if (checkModal.value) {
-    checkModal.value.openModal();
-  }
+  
+  userInfo.value = store.state.user;
+  isTestModalOpen.value = true;
 };
+
 const matcheckData = ref([]);
 
 onMounted(() => {
@@ -222,8 +227,13 @@ const handleCheckComplete = async (checkData) => {
       </div>
     </div>
   </div>
-  <MatCheckModal ref="checkModal" :item="selectedMaterial" 
-  @complete="handleCheckComplete" />
+  <MatCheckModal
+    :isOpen="isTestModalOpen"
+    :checkData="selectedMaterial"
+    :userInfo="userInfo"
+    @close="isTestModalOpen = false"
+    @saved="handleAfterTestSaved"
+  />
 </template>
 <style scoped>
  .col-lg-12{

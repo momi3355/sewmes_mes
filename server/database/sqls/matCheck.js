@@ -1,8 +1,9 @@
-const materialCheckList = `
+const materialCheckListView = `
   SELECT 
     mo.material_order_code,
     mc.inbound_check_code,
     m.material_name,
+    m.material_code,
     mo.order_qty,
     c.cp_name,
     mo.deadline AS inbound_date
@@ -20,6 +21,22 @@ const materialCheckList = `
     mc.check_date DESC;
 `;
 
+const selectMaterialQualityTest = `
+  SELECT quality_code, test_name, test_method
+  FROM t_quality
+  WHERE test_target = '1b2b' AND use_yn = '0b1b'`;
+
+const selectMatinboundList = 
+`SELECT inbound_check_code
+       ,material_order_code
+       ,check_date
+       ,check_qty
+       ,pass_qty
+       ,inbound_date
+       ,emp_num
+FROM t_matinbound_check
+ORDER BY inbound_check_code`;
+
 const insertCheckDetail = `
   INSERT INTO t_matcheck_detail (mat_check_detail, quality_code, defect_qty, inbound_check_code)
   VALUES (?, ?, ?, ?);
@@ -35,14 +52,14 @@ const updateInboundCheck = `
     inbound_check_code = ? -- ✨ PK인 inbound_check_code로 업데이트하는 것이 더 안전
 `;
 
-const createInboundCheckShell = `
-  INSERT INTO t_matinbound_check (inbound_check_code, material_order_code, check_date, check_qty, pass_qty, emp_num)
-  VALUES (?, ?, NULL, 0, 0, NULL)
-`;
+const insertInboundDataWithDetails =
+`CALL process_material_inbound(?, ?, ?, ?, ?, ?)`;
  
 module.exports = {
-  materialCheckList,
+  materialCheckListView,
+  selectMaterialQualityTest,
+  selectMatinboundList,
   insertCheckDetail,
   updateInboundCheck,
-  createInboundCheckShell,
+  insertInboundDataWithDetails,
 };
