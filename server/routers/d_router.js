@@ -8,6 +8,7 @@ const router = express.Router();
 const processService =require('../services/BaseInfo/process_service.js');
 const outsouService =require('../services/Production/outsou_service.js');
 const prodPlanService =require('../services/Production/prodPlan_service.js');
+const prdInboundService =require('../services/Production/prdInbound_service.js');
 
 // 공정관리 페이지 라우터 =========================================
 router.get('/processList', async (req, res)=>{
@@ -372,4 +373,22 @@ router.post("/saveInboundInspection", async (req, res) => {
     res.status(500).send({ message: "입고검사 저장 실패" });
   }
 });
+// ==============================================================
+
+// 완제품 입고 검수 페이지 라우터 =========================================
+router.get('/productTestList', async (req, res)=>{
+  try {
+    const {
+      regStart, regEnd, checkStart, checkEnd, prodName, testState
+    } = req.query;
+    const result = await prdInboundService.findProdInboundTestByConditions({
+      regStart, regEnd, checkStart, checkEnd, prodName, testState
+    });
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "검색 중 오류 발생" });
+  }
+});
+
 module.exports = router;

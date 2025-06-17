@@ -94,7 +94,7 @@ const saveQualityMaster = async () => {
   formData.append('test_ref', qualityInfo.value.test_ref || '');
   formData.append('test_standard', qualityInfo.value.test_standard || '');
   formData.append('test_note', qualityInfo.value.test_note || '');
-
+  formData.append('use_yn', qualityInfo.value.use_yn || '');
   let file = imageInput.value?.files[0];
   if (file) {
     formData.append('image', file);

@@ -5,6 +5,7 @@ import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
 
 
 const productTableRef = ref(null);
+const flowTableRef = ref(null);
 
 const searchProdCategory = ref('');
 const searchProdName = ref('');
@@ -261,11 +262,32 @@ const tabulatorEvent = [
         console.error("이미지 불러오기 실패", err);
         selectedImage.value = null;
       }
+      
+      const tableInstance = flowTableRef.value?.$el?.querySelector('.tabulator')?.__tabulator__;
+      if (tableInstance) {
+        tableInstance.redraw(true);
+      }
     }
   },
 
 ];
-
+const tabulatorOptions = {
+  selectableRows: 1,
+  rowFormatter: function(row) {
+    const rowData = row.getData();
+    // selectedOutsouInboundCode가 객체이고, 그 객체의 outsouInboundCode와 현재 행의 코드가 일치하는지 확인
+    if (selectedProdCode.value && rowData.prodCode === selectedProdCode.value.prodCode) {
+      row.getElement().classList.add("selected-row");
+    } else {
+      row.getElement().classList.remove("selected-row");
+    }
+    if (selectedProcessFlowCode.value && rowData.flowCode === selectedProcessFlowCode.value.flowCode) {
+      row.getElement().classList.add("selected-row");
+    } else {
+      row.getElement().classList.remove("selected-row");
+    }
+  }
+};
 </script>
 
 <template>
@@ -299,19 +321,20 @@ const tabulatorEvent = [
           :height="670"
           :table-data="prodData"
           :table-columns="productColumns"
+          :tabulator-options="tabulatorOptions"
           :on="tabulatorEvent"
         />
-        <div v-if="selectedProdCode" class="text-danger mt-1">선택 제품: {{ selectedProdName }}</div>
       </div>
 
       <div class="col-md-6 d-flex flex-column">
         <tabulator-card
+          ref="flowTableRef"
           card-title="공정순서"
           :table-data="processList"
           :table-columns="processColumns"
+          :tabulator-options="tabulatorOptions"
           :on="tabulatorEvent"
         />
-        <div v-if="selectedProcessFlowCode" class="text-danger mt-1">선택 공정: {{ selectedProcessFlowCode }}</div>
         <div class="d-flex justify-content-between mt-2 mb-2">
           <button class="btn btn-success" @click="loadProcesses">불러오기</button>
           <div>
@@ -342,5 +365,10 @@ const tabulatorEvent = [
 }
 .flex-grow-1 {
   flex-grow: 1;
+}
+/* 선택된 행의 스타일 */
+.selected-row {
+  background-color: #e0e0e0 !important; /* 원하는 강조 색상으로 변경 */
+  font-weight: bold; /* 선택된 행의 텍스트를 굵게 */
 }
 </style>
