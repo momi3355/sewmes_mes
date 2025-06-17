@@ -8,7 +8,7 @@ const selectProdPlanByConditions = `
     p.prod_name,
     pp.start_date,
     pp.end_date,
-    o.qty,
+    o.total_qty,
     pp.prod_qty,
     pp.emp_num,
     pp.complete
@@ -25,7 +25,7 @@ const selectOrderProdList =`
     od.order_detail_code,
     od.prod_code,
     p.prod_name,
-    od.qty,
+    od.total_qty,
     od.dead_date
   FROM t_order_detail od
   LEFT JOIN t_product p ON od.prod_code = p.prod_code

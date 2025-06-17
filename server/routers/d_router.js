@@ -328,7 +328,7 @@ router.get('/semiProductQualityTest', async (req, res) => {
     res.status(500).json({ message: '조회 실패', error: err.message });
   }
 });
-// 외주입고 품질 검사 기존 정보 가져오기
+// 외주입고 품질 검사 기존 정보 가져오기(지금 사용X)
 router.get('/defectDetail/:inboundCode', async (req, res) => {
   try {
     const result = await outsouService.getDefectDetailByInboundCode(req.params.inboundCode);
@@ -390,5 +390,37 @@ router.get('/productTestList', async (req, res)=>{
     res.status(500).send({ message: "검색 중 오류 발생" });
   }
 });
+// 완제품 품질 검사 목록 가져오기
+router.get('/productQualityTest', async (req, res) => {
+  try {
+    const result = await prdInboundService.getProductQualityTest();
+    res.json(result);
+  } catch (err) {
+    res.status(500).json({ message: '조회 실패', error: err.message });
+  }
+});
+// 완제품 입고 검사 프로시저 불러오기
+router.post('/saveProdInboundInspection', async (req, res) => {
+  try {
+    const { workPerfCode, userCode, passQty, defectList } = req.body;
+    await prdInboundService.saveInboundInspection(workPerfCode, userCode, passQty, defectList);
+    res.status(200).send({ message: '입고검사 저장 완료' });
+  } catch (err) {
+    console.error('입고검사 저장 실패:', err);
+    res.status(500).send({ message: '입고검사 저장 실패' });
+  }
+});
+// work_perf_code 기준으로 완제품 입고 검사 내역 가져오기
+router.get('/inboundTestHistory', async (req, res) => {
+  try {
+    const inboundCheckCode = req.query.inboundCheckCode;
+    if (!inboundCheckCode) return res.status(400).send('inboundCheckCode is required');
 
+    const result = await prdInboundService.getTestHistoryByOutsouOrderCode(inboundCheckCode);
+    res.json(result);
+  } catch (err) {
+    console.error('공정 흐름 조회 오류:', err);
+    res.status(500).send('Server Error');
+  }
+});
 module.exports = router;

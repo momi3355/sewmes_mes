@@ -3,7 +3,10 @@ import axios from 'axios';
 import { ref } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
 import OrderProdListModal from "./OrderProdListModal.vue";
-import ArgonButton from "@/components/ArgonButton.vue";
+
+// tabulatorCardRef 컴포넌트의 ref 선언
+const tabulatorCardRef = ref(null);
+
 // 검색 객체
 const searchProdName = ref('');
 const searchProdCode = ref('');
@@ -46,10 +49,19 @@ const searchProdPlan = async () => {
       complete: convertCode(item.complete),
       empNum: item.empNum
     }));
-    const count = converted.length + 5;
-    while (converted.length < count) {
-    converted.push({  
-      rowNum: converted.length + 1,
+    prodPlanData.value = converted;
+  } catch (err) {
+    console.error("API 호출 오류:", err);
+  }
+};
+//행추가 함수(주문 없이 생산계획 생성)
+const addRow = () => {
+    //새로운 행을 위한 NO값 생성
+    const newNo = prodPlanData.value.length > 0 ? Math.max(...prodPlanData.value.map(item => item.rowNum || 0)) + 1 : 1;
+
+    //새로운 빈 행 데이터 객체 생성
+    const newRow = {
+      rowNum: newNo,
       prodPlanCode: '',
       orderDetailCode: '',
       orderCode: '',
@@ -61,13 +73,12 @@ const searchProdPlan = async () => {
       prodQty: '',
       complete: '',
       empNum: ''
-      });
     }
-    prodPlanData.value = converted;
-  } catch (err) {
-    console.error("API 호출 오류:", err);
-  }
-};
+    prodPlanData.value.push(newRow);
+
+}
+
+
 // 공통코드 변환환
 const convertCode = (code) => {
   switch (code) {
@@ -77,17 +88,12 @@ const convertCode = (code) => {
   }
 };
 const prodPlanColumns = [
-  { title: "No", field: "rowNum", width: 80 },
   {
-  formatter: "rowSelection",  // 행 선택 체크박스를 생성합니다.
-  titleFormatter: "rowSelection", // 헤더에 '전체 선택' 체크박스를 생성합니다.
-  hozAlign: "center",
-  headerSort: false,          // 이 열은 정렬 기능을 비활성화합니다.
-  cellClick: function(e, cell) { // 셀의 아무 곳이나 클릭해도 체크되도록 합니다.
-    cell.getRow().toggleSelect();
+    formatter: "rowSelection", titleFormatter: "rowSelection",
+    hozAlign: "center", headerSort: false, width: 40,
+    cssClass: 'tabulator-checkbox-column'
   },
-   width: 10
-  },
+  { title: "No", field: "rowNum", width: 80 },
   { title: '주문번호', field: 'orderCode', width: 200 },
   { title: '품번', field: 'prodCode', width: 200 },
   { title: '품명', field: 'prodName', width: 300 },
@@ -98,7 +104,10 @@ const prodPlanColumns = [
   { title: '완료여부', field: 'complete', width: 150 },
   { title: '사원번호', field: 'empNum', width: 150 }
 ];
-
+const tabulatorOptions = {
+  selectable: true,
+  selectablePersistence: false,
+};
 // 초기화 버튼 클릭 시 검색조건 입력란 비움움
 const resetFilter = () => {
   searchProdName.value = '';
@@ -112,15 +121,12 @@ const resetFilter = () => {
 };
 const tabulatorEvent = [
   {
-    eventName: "rowDblClick",
+    eventName: "rowClick",
     eventAction: 
       async (e, row) => {
-      const data = row.getData();
-      selectedProdCode.value = data.prodCode;
-      selectedProdName.value = data.prodName;
-      await loadProcesses();
+        row.toggleSelect()
 
-      const tableInstance = productTableRef.value?.$el?.querySelector('.tabulator')?.__tabulator__;
+      const tableInstance = tabulatorCardRef.value?.$el?.querySelector('.tabulator')?.__tabulator__;
       if (tableInstance) {
         tableInstance.redraw(true);
       }
@@ -137,30 +143,81 @@ const formatInt = (val) => {
 };
 // 모달 스크립트 영역 ===============================================================
 //주문목록 모달에서 데이터받아, 작업지시서 화면의 그리드에 표시될 데이터 추가하는 함수
-const handleSelectedPlans = (plans) => {
-    const newWorkInsts = plans.map((plan, index) => ({
-        NO: workInstData.value.length + index + 1,
-        work_inst_code: ' ', //지시코드 자동생성 저장전에는 빈값
-        prod_plan_code: plan.prod_plan_code,
-        prod_code: plan.prod_code, 
-        inst_qty: plan.prod_qty,
-        dead_date: plan.dead_date, //주문상세테이블과 조인해서 가져올 납기일자
-        inst_state: '생산 전', //초기상태
-        emp_num: '', // 담당자번호 초기화
-        //inst_date: inst_reg_date 저장버튼 누르면 등록일 나오고 지시버튼 누르면 들어가는 내용
+const handleSelectedOrder = (plans) => {
+    const newProdPlans = plans.map((plan, index) => ({
+        rowNum: prodPlanData.value.length + index + 1,
+        prodPlanCode: '',
+        orderDetailCode: plan.orderDetailCode,
+        orderCode: '',
+        prodCode: plan.prodCode,
+        prodName: plan.prodName,
+        startDate: '',
+        endDate: '',
+        orderQty: plan.totalQty,
+        prodQty: '',
+        complete: '',
+        empNum: ''
+
     }));
-    workInstData.value = [...workInstData.value, ...newWorkInsts];
+    prodPlanData.value = [...prodPlanData.value, ...newProdPlans];
 
 };
 const isModalOpen = ref(false); //초기상태
+
 const openModal = () => {
     isModalOpen.value = true; //isModalOpen 값 true 변경해 모달 열기
 };
 const closeModal = () => {
     isModalOpen.value = false;
 };
+// 사용자 날짜 입력 편의성
+const formatToDate = (input) => {
+  const today = new Date();
+  const currentYear = today.getFullYear().toString();
+  const currentMonth = String(today.getMonth() + 1).padStart(2, '0');
 
+  input = input.replace(/\D/g, '');
 
+  let y = '', m = '', d = '';
+
+  if (input.length === 8) {
+    y = input.slice(0, 4);
+    m = input.slice(4, 6);
+    d = input.slice(6, 8);
+  } else if (input.length === 6) {
+    y = '20' + input.slice(0, 2);
+    m = input.slice(2, 4);
+    d = input.slice(4, 6);
+  } else if (input.length === 4) {
+    y = currentYear;
+    m = input.slice(0, 2);
+    d = input.slice(2, 4);
+  } else if (input.length === 1 || input.length === 2) {
+    y = currentYear;
+    m = currentMonth;
+    d = input.padStart(2, '0');
+  } else {
+    return input;
+  }
+
+  // 숫자 변환
+  const yearNum = parseInt(y, 10);
+  const monthNum = Math.max(1, Math.min(parseInt(m, 10), 12));
+
+  // 각 월의 말일 계산
+  const getLastDay = (year, month) => {
+    return new Date(year, month, 0).getDate(); // 다음 달 0일 = 해당 월의 말일
+  };
+
+  const lastDay = getLastDay(yearNum, monthNum);
+  const dayNum = Math.max(1, Math.min(parseInt(d, 10), lastDay));
+
+  // 0패딩 후 반환
+  const fixedMonth = String(monthNum).padStart(2, '0');
+  const fixedDay = String(dayNum).padStart(2, '0');
+
+  return `${yearNum}-${fixedMonth}-${fixedDay}`;
+};
 </script>
 
 <template>
@@ -171,9 +228,21 @@ const closeModal = () => {
         <div class="col-md-3">
           <label class="form-label">시작일</label>
           <div class="d-flex align-items-center gap-2">
-            <input type="text" class="form-control" v-model="searchStartDateStart">
+            <input
+              type="text"
+              class="form-control"
+              v-model="searchStartDateStart"
+              @blur="searchStartDateStart = formatToDate(searchStartDateStart)"
+              @keyup.enter="searchStartDateStart = formatToDate(searchStartDateStart)"
+            >
             <span>~</span>
-            <input type="text" class="form-control" v-model="searchStartDateEnd">
+            <input
+              type="text"
+              class="form-control"
+              v-model="searchStartDateEnd"
+              @blur="searchStartDateEnd = formatToDate(searchStartDateEnd)"
+              @keyup.enter="searchStartDateEnd = formatToDate(searchStartDateEnd)"
+            >
           </div>
         </div>
 
@@ -220,33 +289,29 @@ const closeModal = () => {
         <div>
           <button class="btn btn-info" style="width: 150px;" @click="openModal">주문 제품 목록 조회</button>
         </div> 
-
-        <!-- 오른쪽: 저장 및 삭제 버튼 -->
-        <div>
-          <button class="btn btn-sm btn-success me-2" @click="saveProcess">저장</button>
-          <button class="btn btn-sm btn-delete" @click="deleteProcess" style="background-color: red; color: black;">삭제</button>
-        </div>
       </div>
     </div>
     <div class="row">
       <div class="col-md-12 d-flex flex-column">
         <tabulator-card
+          ref="tabulatorCardRef"
           card-title="생산계획 목록"
           :table-data="prodPlanData"
           :table-columns="prodPlanColumns"
           :on="tabulatorEvent"
+          :tabulatorOptions="tabulatorOptions"
         >
           <template #actions>
-            <ArgonButton color="success" variant="gradient" @click="openModal">
-              주문 제품 목록 조회
-            </ArgonButton>
+            <button class="btn btn-secondary me-2" @click="addRow">행추가</button>
+            <button class="btn btn-success me-2" @click="saveProcess">저장</button>
+            <button class="btn btn-delete" @click="deleteProcess" style="background-color: red; color: black;">삭제</button>
           </template>
         </tabulator-card>
       </div>
       <OrderProdListModal
-      v-bind:isModalOpen="isModalOpen"
-      v-on:select-plans="handleSelectedPlans"
-      v-on:close-modal="closeModal"
+        :isModalOpen="isModalOpen"
+        @selectOrder="handleSelectedOrder"
+        @closeModal="closeModal"
       />
     </div>
   </div>

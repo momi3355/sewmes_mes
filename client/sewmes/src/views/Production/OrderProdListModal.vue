@@ -12,11 +12,15 @@ const tabulatorCardRef = ref(null); // TabulatorCard의 getTabulator 메서드�
 
 const modalTableColumns = [
     // ... 컬럼 정의 (이전 코드 유지) ...
-    { formatter: "rowSelection", titleFormatter: "rowSelection", hozAlign: "center", headerSort: false, width: 40, cssClass: 'tabulator-checkbox-column' },
+    {
+      formatter: "rowSelection", titleFormatter: "rowSelection",
+      hozAlign: "center", headerSort: false, width: 40,
+      cssClass: 'tabulator-checkbox-column'
+    },
     { title: "주문상세코드", field: "orderDetailCode", width: 150 },
     { title: "품번", field: "prodCode", width: 150 },
     { title: "품명", field: "prodName", width: 150 },
-    { title: "주문수량", field: "qty", width: 150 },
+    { title: "주문수량", field: "totalQty", width: 150 },
     { title: "납기일자", field: "deadDate", width: 150 }
 ];
 
@@ -32,7 +36,7 @@ const fetchOrderProdList = async () => {
         prodCode: item.prod_code,
         prodName: item.prod_name,
         deadDate: formatDate(item.dead_date),
-        qty: formatInt(item.qty)
+        totalQty: formatInt(item.total_qty)
     }));
   } catch (err) {
     console.error("API 호출 오류:", err);
@@ -50,14 +54,14 @@ watch(() => props.isModalOpen, (isOpen) => {
     }
 }, { immediate: true });
 
-const emit = defineEmits(['closeModal', 'selectPlans']);
+const emit = defineEmits(['closeModal', 'selectOrder']);
 
-const handleSelectedPlans = (plans) => {
+const handleSelectedOrder = (plans) => {
     if (tabulatorCardRef.value && tabulatorCardRef.value.getTabulator()) {
         const selectedData = tabulatorCardRef.value.getTabulator().getSelectedData();
         if (selectedData.length > 0) {
             console.log("선택된 주문목록:", selectedData);
-            emit('selectPlans', selectedData);
+            emit('selectOrder', selectedData);
             emit('closeModal');
         } else {
             alert("주문 목록을 선택해주세요.");
@@ -76,6 +80,20 @@ const formatDate = (str) => {
 const formatInt = (val) => {
   return parseInt(val, 10);
 };
+const tabulatorEvent = [
+  {
+    eventName: "rowClick",
+    eventAction: 
+      async (e, row) => {
+        row.toggleSelect()
+
+      const tableInstance = tabulatorCardRef.value?.$el?.querySelector('.tabulator')?.__tabulator__;
+      if (tableInstance) {
+        tableInstance.redraw(true);
+      }
+    }
+  }
+];
 </script>
 
 <template>
@@ -83,16 +101,18 @@ const formatInt = (val) => {
         <div class="modal-content">
             <TabulatorCard
                 ref="tabulatorCardRef"
-                :tableData="orderProdList"
                 cardTitle="주문제품 목록"
+                :tableData="orderProdList"
                 :tableColumns="modalTableColumns"
-                :tabulatorOptions="{ pagination: false, selectable: true }" >
-                <template #actions>
-                    </template>
+                :on="tabulatorEvent"
+                :tabulatorOptions="{
+                    pagination: false,
+                    selectable: true,
+                }" >
             </TabulatorCard>
 
             <div class="modal-actions">
-                <button class="btn btn-primary" @click="handleSelectedPlans">선택</button>
+                <button class="btn btn-primary" @click="handleSelectedOrder">선택</button>
                 <button class="btn btn-secondary ms-2" @click="handleCloseModal">닫기</button>
             </div>
         </div>

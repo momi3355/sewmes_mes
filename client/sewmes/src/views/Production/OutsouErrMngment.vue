@@ -136,15 +136,11 @@ const formatInt = (val) => {
         </div>
       </div>
     </div>
-    <div class="row mt-3">
-      <div class="d-flex justify-content-end">
-          <button class="btn btn-info" style="width: 150px;" @click="openModal">불량 수정</button>
-      </div>
-    </div>
     <div class="row">
       <div class="col-md-12 d-flex flex-column">
         <tabulator-card
           card-title="외주입고불량내역"
+          :height="600"
           :table-data="outsouDefectList"
           :table-columns="outsouDefectColumns"
           :on="tabulatorEvent"

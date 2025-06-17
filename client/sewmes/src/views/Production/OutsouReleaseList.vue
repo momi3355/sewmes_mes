@@ -155,9 +155,6 @@ const formatInt = (val) => {
         </div>
       </div>
     </div>
-    <div>
-      <button class="btn btn-sm btn-success" style="width: 150px; font-size: 14px;" @click="">출고 완료</button>
-    </div>
     <div class="row">
       <div class="col-md-12 d-flex flex-column">
         <tabulator-card

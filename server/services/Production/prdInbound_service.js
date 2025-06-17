@@ -39,6 +39,38 @@ const findProdInboundTestByConditions = async ({
   return await mariadb.directQuery(finalSql, params);
 };
 
+// 완제품 품질 검사 정보 가져오기
+const getProductQualityTest = async () => {
+  try {
+    const rows = await mariadb.query("getProductQualityTest", []);
+    return rows;
+  } catch (err) {
+    console.error('품질검사 항목 조회 실패:', err);
+    throw err;
+  }
+};
+
+// 완제품 입고 검사 완료 시 저장 기능
+const saveInboundInspection = async (workPerfCode, userCode, passQty, defectList) => {
+
+  const jsonParam = JSON.stringify(defectList);
+  return await mariadb.query("callSaveProdInboundInspection", [
+    workPerfCode,
+    userCode,
+    passQty,
+    jsonParam
+  ]);
+};
+
+// work_perf_code를 기준으로 입고 검사 내역 가져오기
+const getTestHistoryByOutsouOrderCode = async (inboundCheckCode) => {
+  const rows = await mariadb.directQuery(sqlList.getTestHistory, [inboundCheckCode]);
+return rows;
+};
+
 module.exports ={
-    findProdInboundTestByConditions
+    findProdInboundTestByConditions,
+    getProductQualityTest,
+    saveInboundInspection,
+    getTestHistoryByOutsouOrderCode
 };
