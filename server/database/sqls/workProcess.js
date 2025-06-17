@@ -19,19 +19,23 @@ const updateWorkProcessByWorkInstCode=`
 `;
 
 //작업시작시 작업공정테이블에 작업시간 update
-const updateStartdate=`      
+const updateProcessStartDate=
+`      
 UPDATE t_work_process
     SET
         equi_code = ?,          
         work_start_date = NOW() 
     WHERE
         work_inst_code = ? AND  
-        process_code = ?`;
+        process_code = ?
+`;
 
- const updateWorkInstStateToInProgress = `
+//작업시작 후 상태 생산 중으로 변경
+const updateWorkInstStateToInProgress = `
     UPDATE t_work_inst
     SET inst_state = ?
     WHERE work_inst_code = ?;
+
 `;
         
 
@@ -41,28 +45,25 @@ UPDATE t_work_process
 
 const getProcessFlowByWorkInst=`
 SELECT
-    tp.process_code,
-    tpm.process_name,
-    tpm.detail,
-    tp.process_seq,
-    twp.equi_code,               
-    twp.inst_qty AS process_input_qty, 
-    twp.work_start_date,        
-    twp.work_end_date            
+    twp.work_process_code,
+    twp.work_inst_code,
+    twp.process_code,
+    tpm.process_name, 
+    twp.process_seq,
+    twp.inst_qty,
+    twp.prod_qty
 FROM
-    t_process_flow tp             
+    t_work_process twp    
 JOIN
-    t_process_master tpm ON tp.process_code = tpm.process_code
-JOIN
-    t_work_inst twi ON tp.prod_code = twi.prod_code 
-LEFT JOIN
-    t_work_process twp ON twi.work_inst_code = twp.work_inst_code
-                        AND tp.process_code = twp.process_code
+    t_process_master tpm    
+    ON twp.process_code = tpm.process_code 
 WHERE
-    twi.work_inst_code = ?
+    twp.work_inst_code = ?
 ORDER BY
-    tp.process_seq ASC;
+    twp.process_seq ASC;
 `;
+
+
 //설비
 const getEquipmentByProcess = `
 SELECT
@@ -140,7 +141,7 @@ module.exports={
     workProcessInsertProced,
     deleteWorkProcessByworkInstCode,
     updateWorkProcessByWorkInstCode,
-    updateStartdate,
+    updateProcessStartDate,
     getWorkInstDetails,
     updateWorkInstStateToInProgress,
 }

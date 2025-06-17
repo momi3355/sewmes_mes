@@ -195,5 +195,24 @@ router.post('/startWork', async (req, res) => {
         });
     }
 });
+router.post('/prdPref', async (req, res) => {
+    const { work_inst_code, work_process_code,input_qty, prod_qty,defect_qty, pref_note,defect_type, emp_num} = req.body;
+    try{
+        const result = await ProductionService.insertPrdPref([
+            
+            work_inst_code,
+            work_process_code,
+            input_qty,
+            prod_qty,
+            defect_qty,
+            pref_note,
+            defect_type, 
+            emp_num
+        ]);
+        res.send(result);
+    }catch(error){
+
+    }
+})
 
 module.exports = router;

@@ -1,17 +1,68 @@
 <script setup>
 import axios from 'axios';
-import {ref} from 'vue';
-
+import {onMounted, ref} from 'vue';
+import { useStore } from "vuex";
+import { defineProps, defineEmits } from 'vue';
 const emit = defineEmits(['closeModal']);
+import groupcodelist from "../../assets/js/utils/groupcodelist";
+
+const defecttypeList=ref([]);
+
 const props = defineProps({
-    isModalOpen: Boolean
+    isModalOpen: Boolean,
+  prefProps:Array
+
 });
+
+// 사원정보 가져오기
+const store = useStore();
+const userCode = store.state.user.emp_num;
+const userName = store.state.user.emp_name;
+
+
+
+const input_qty = ref(0);   // 투입량
+const prod_qty = ref(0);    // 생산량
+const defect_qty = ref(0);  // 불량수량
+const pref_note = ref('');  // 비고
+const defect_type = ref('');
 
 const handleCloseModal = () => {
     emit('closeModal');
 };
 
+const saveData=async()=>{
+  try{
+       const payload = {
+        work_process_code:props.prefProps[4],
+        work_inst_code:props.prefProps[0],
+        // props.prefProps[1],
+        // props.prefProps[2],
+            
+            prod_code:props.prefProps[1],
+            inst_qty:props.prefProps[2],
+            input_qty:input_qty.value,
+            prod_qty:prod_qty.value,
+            defect_qty:defect_qty.value,
+            pref_note:pref_note.value,
+            defect_type:defect_type.value,   
+            emp_num: userCode,
+        };
+        console.log('넘겨주는 값',payload);
+       const result = await axios.post('/api/prdPref', payload); 
+       console.log('결과',result);
+  }catch(error){
+    console.error(error);
+  }
+
+} 
+onMounted(()=>{
+ groupcodelist.groupCodeList('0Q',defecttypeList);
+
+})
+
 </script>
+
 <template>
     <div class="modal-overlay" v-if="props.isModalOpen">
     <div class="modal-content p-4 bg-white shadow rounded" style="width: 500px; max-width: 100%;">
@@ -20,44 +71,42 @@ const handleCloseModal = () => {
       <!-- 자동표시 영역 -->
       <div class="mb-3">
         <label class="form-label">작업지시코드</label>
-        <input type="text" class="form-control" value="자동표시 수정 불가" disabled>
+        <input type="text" class="form-control" placeholder="자동표시 수정 불가" v-model="props.prefProps[0]" disabled>
       </div>
       <div class="mb-3">
         <label class="form-label">제품코드</label>
-        <input type="text" class="form-control" value="자동표시" disabled>
+        <input type="text" class="form-control" placeholder="자동표시"v-model="props.prefProps[1]" disabled>
       </div>
       <div class="mb-3">
         <label class="form-label">지시량</label>
-        <input type="text" class="form-control" value="자동표시" disabled>
+        <input type="text" class="form-control" placeholder="자동표시" v-model="props.prefProps[2]" disabled>
       </div>
       <div class="mb-4">
         <label class="form-label">투입량</label>
-        <input type="text" class="form-control" value="자동표시" disabled>
+        <input type="number" v-model="input_qty" class="form-control" >
       </div>
 
       <!-- 사용자입력 영역 -->
       <div class="mb-3">
         <label class="form-label">생산량</label>
-        <input type="number" class="form-control" >
+        <input type="number" v-model="prod_qty" class="form-control" >
       </div>
       <div class="mb-3">
         <label class="form-label">불량수량</label>
-        <input type="number" class="form-control">
+        <input type="number" v-model="defect_qty" class="form-control">
       </div>
       <div class="mb-3">
         <label class="form-label">불량유형</label>
-        <select class="form-select" >
+        <select class="form-select" v-model="defect_type" >
           <option value="">-- 선택 --</option>
-          <option>사이즈 오류</option>
-          <option>오염 발생</option>
-          <option>올 풀림</option>
-          <option>인쇄불량</option>
-          <option>원단손상</option>
+          <option v-for="type in defecttypeList":key="type.detail_code" :value="type.detail_code">
+            {{ type.detail_name }}</option>
+
         </select>
       </div>
       <div class="mb-4">
         <label class="form-label">비고</label>
-        <input type="text" class="form-control" placeholder="사용자입력 선택사항">
+        <input type="text" class="form-control" v-model="pref_note" placeholder="사용자입력 선택사항">
       </div>
 
       <!-- 하단 버튼 -->

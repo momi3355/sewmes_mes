@@ -104,11 +104,12 @@ const workOrderOnEvents = [
 ];
 
 const processFlowColumns = [
-    { title: "공정코드", field: "process_code", width: 200 },
-    { title: "공정명", field: "process_name", width: 380 },
+    { title: "작업공정코드", field: "work_process_code", width: 100, visible: false  },
+    { title: "공정코드", field: "process_code", width: 200, visible: false  },
+    { title: "공정명", field: "process_name", width: 150 },
     { title: "공정순서", field: "process_seq", hozAlign: "right", width: 150 },
-    { title: "작업시작시간", field: "process_start_date", hozAlign: "center", width: 200 }, // ⭐ 컬럼 정의 ⭐
-    { title: "작업종료시간", field: "process_end_date", hozAlign: "center", width: 200 }, // 미리 추가
+    { title: "지시수량", field: "inst_qty", hozAlign: "right", width: 150 },
+    { title: "생산수량", field: "prod_qty", hozAlign: "right", width: 150 },
 ];
 
 const processFlowTabulatorOptions = {
@@ -241,8 +242,7 @@ const fetchProcessFlow = async (workInstCode) => {
             processFlowData.value = response.data.data.map(item => ({
                 ...item,
                 isSelected: false,
-                process_start_date: item.process_start_date || '', // 백엔드에서 주면 그대로 사용, 아니면 빈 값
-                process_end_date: item.process_end_date || ''    // 백엔드에서 주면 그대로 사용, 아니면 빈 값
+
             }));
         } else {
             console.error('공정 흐름도 불러오기 실패:', response.data.message);
@@ -388,10 +388,14 @@ const isModalOpen = ref(false);
 
 const openModal = () => {
     isModalOpen.value = true;
+
 };
 const closeModal = () => {
     isModalOpen.value = false;
+
 };
+
+
 
 const endWorkHandler = async () => { /* ... */ };
 
@@ -546,17 +550,13 @@ onMounted(() => {
                                     <button
                                         type="button"
                                         class="btn btn-danger me-2"
-                                        @click="openModal"
-                                    >
-                                        작업 종료
-                                    </button>
-                                    <button
-                                        type="button"
-                                        class="btn btn-danger me-2"
                                         :disabled="!isEndButtonEnabled"
+                                        @click="openModal"
+                                        
                                     >
                                         작업 종료
                                     </button>
+                                 
                                     <button
                                         type="button"
                                         class="btn btn-info"
@@ -569,6 +569,14 @@ onMounted(() => {
                                 <PrdPrefModal
                                     v-bind:isModalOpen="isModalOpen"
                                     v-on:close-modal="closeModal"
+                                    :prefProps="[
+                                    
+                                  currentWorkOrder.work_inst_code,
+                                  currentWorkOrder.prod_code,
+                                  currentWorkOrder.inst_qty,
+                                  selectedProcess.inst_qty ,
+                                  selectedProcess.work_process_code  
+                                  ]"
                                 />
                             </div>
                         </div>

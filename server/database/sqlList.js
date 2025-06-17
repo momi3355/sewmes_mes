@@ -28,6 +28,7 @@ const prdReceive = require('./sqls/prdReceive.js');
 const prdInbound = require('./sqls/prdInbound.js');
 const loginSql=require('./sqls/login.js');
 const workProcessSql=require('./sqls/workProcess.js');
+const prdPrefSql= require("./sqls/prdPref.js");
 module.exports = {
   ...processMaster, // 공정관리
   ...qualityMaster,
@@ -51,4 +52,5 @@ module.exports = {
   ...prdInbound, // 완제품 입고 검수
   ...loginSql, // 로그인
   ...workProcessSql,//작업공정
+  ...prdPrefSql,//작업실적
 }
