@@ -121,9 +121,11 @@ router.get('/groupCode/dc/:code', async(req, res) => {
 
 //설비 전체 조회
 router.get('/equipment', async(req, res) => {
-  let equiList = await equipmentService.equiList().catch(err => console.log(err));
+  const equiSearch = req.query;
+  const equiList = await equipmentService.equiList(equiSearch)
+                                         .catch(err => console.log(err));
   res.send(equiList);
-})
+});
 
 //설비 단건 조회
 router.get('/equipment/:code', async(req, res) => {

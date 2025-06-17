@@ -4,6 +4,7 @@ import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import axios from "axios";
 import groupcodelist from "../../assets/js/utils/groupcodelist.js";
 import moment from 'moment';
+import Swal from 'sweetalert2';
 
 let equiList = ref([]);
 let equiInfo = ref({});
@@ -93,41 +94,89 @@ const EquiSearchReset = () => {
 }
 
 const saveEquiMaster = async () => {
+ if (!equiInfo.value.equi_name?.trim()) {
+    Swal.fire({ text: '설비명을 입력해주세요.', icon: 'warning' });
+    return;
+  }
+  if (!equiInfo.value.use_yn) {
+    Swal.fire({ text: '사용여부를 선택해주세요.', icon: 'warning' });
+    return;
+  }
+  if (!equiInfo.value.equi_type?.trim()) {
+    Swal.fire({ text: '설비유형을 선택해주세요.', icon: 'warning' });
+    return;
+  }
+
   const formData = new FormData();
+
+  const today = moment();
+  const lastCheck = equiInfo.value.last_check ? moment(equiInfo.value.last_check) : null;
+  const installDate = equiInfo.value.install_date ? moment(equiInfo.value.install_date) : today;
+  const checkInterval = parseInt(equiInfo.value.check_interval) || 0;
+
+  //점검 예정일 계산
+  let computedCheckDate = '';
+  if (lastCheck && checkInterval > 0) {
+    computedCheckDate = lastCheck.clone().add(checkInterval, 'days');
+  } else {
+    computedCheckDate = installDate.clone().add(30, 'days');
+  }
 
   formData.append('equi_name', equiInfo.value.equi_name || '');
   formData.append('use_yn', equiInfo.value.use_yn || '');
   formData.append('model_name', equiInfo.value.model_name || '');
   formData.append('maker', equiInfo.value.maker || '');
   formData.append('make_date', moment(equiInfo.value.make_date).format('YYYY-MM-DD HH:mm:ss') || '');
-  formData.append('install_date', moment(equiInfo.value.install_date).format('YYYY-MM-DD HH:mm:ss') || '');
+  formData.append('install_date', installDate.format('YYYY-MM-DD HH:mm:ss'));
   formData.append('equi_type', equiInfo.value.equi_type || '');
   formData.append('check_interval', equiInfo.value.check_interval || '');
   formData.append('equi_note', equiInfo.value.equi_note || '');
+  formData.append('check_date', computedCheckDate.format('YYYY-MM-DD HH:mm:ss'));
 
   let file = imageInput.value?.files[0];
   if(file){
     formData.append('image', file);
   }
 
+  //equi_code 없으면 등록
   if(!equiInfo.value.equi_code){
-    //equi_code가 없으면 등록
     let insertResult = await axios.post('/api/equipment', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     });
-    console.log(insertResult);
-  }else if(equiInfo.value.equi_code){
-    //equi_code가 있으면 수정
+
+    if (insertResult.data.isSuccessed) {
+      Swal.fire({
+        text: "설비 등록이 완료되었습니다.",
+        icon: "success"
+      });
+    } else {
+      Swal.fire({
+        text: "설비 등록 중 오류가 발생했습니다.",
+        icon: "error"
+      });
+    }
+  } else {
+    //있으면 수정
     formData.append('equi_code', equiInfo.value.equi_code);
     let updateResult = await axios.put(`/api/equipment/${equiInfo.value.equi_code}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     });
-    console.log(updateResult);
-  }
+    if (updateResult.data.isUpdated) {
+      Swal.fire({
+        text: "설비 수정이 완료되었습니다.",
+        icon: "success"
+      });
+    } else {
+      Swal.fire({
+        text: "설비 수정 중 오류가 발생했습니다.",
+        icon: "error"
+      });
+    }
+    }
 
   await getEquiList();
   equiInfo.value = {};
@@ -149,7 +198,6 @@ const saveEquiMaster = async () => {
   if (imageInput.value) {
     imageInput.value.value = ''
   };
-  
 }
 
 const tabulatorEvents = [
@@ -204,7 +252,7 @@ onMounted(() => {
           <label class="form-label">설비 유형</label>
            <select class="form-select" v-model="equiSchData.equiType">
             <option value="">-</option>
-            <option v-for="target in equiTypeCodeList" :key="target.detail_code" value="target.detail_code">{{ target.detail_name }}</option>
+            <option v-for="target in equiTypeCodeList" :key="target.detail_code" :value="target.detail_code">{{ target.detail_name }}</option>
            </select>
         </div>
         <div class="col-md-4">
@@ -238,10 +286,6 @@ onMounted(() => {
               {{ yn.detail_name }}
             </label>
           </div>
-        </div>
-        <div class="col-md-2">
-          <!-- <label class="form-label">점검 예정일 순으로 정렬</label> -->
-          <!-- <input type="text" class="form-control" v-model="equiSchData.testName" /> -->
         </div>
         <div class="col-md-2 d-flex align-items-end gap-2">
           <button class="btn btn-outline-secondary w-50" @click="EquiSearchReset">초기화</button>

@@ -2,18 +2,30 @@
 const selectEquiList = 
 `
 SELECT equi_code 
-	, equi_name 
-       , equi_type 
-       , use_yn
-       , equi_note 
+     , equi_name 
+     , equi_type 
+     , use_yn
+     , equi_note 
+     , install_date
+     , last_check
+     , check_date
 FROM   t_equipment
-`;
-/*
-검색조건은 조금나중에
 WHERE  ((? IS NULL OR ? = '') OR equi_name LIKE CONCAT('%', ?, '%'))
-AND ((? IS NULL OR ? = '') OR equi_type = ?)
-AND ((? IS NULL OR ? = '') OR use_yn = ?)
-*/
+  AND  ((? IS NULL OR ? = '') OR equi_type = ?)
+  AND (
+        (? IS NULL OR ? = '' OR ? = '') 
+        OR (
+            ? = '0v1v' AND install_date BETWEEN ? AND ?
+        )
+        OR (
+            ? = '0v2v' AND last_check BETWEEN ? AND ?
+        )
+        OR (
+            ? = '0v3v' AND check_date BETWEEN ? AND ?
+        )
+    )
+`;
+
 
 //설비 단건조회
 const selectEquiInfo = 
