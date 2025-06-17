@@ -38,7 +38,7 @@ const getNextOrderCode = async () => {
       nextNumber = numPart + 1;
     }
   }
-  return 'o' + nextNumber.toString().padStart(3, '0');
+  return 'O' + nextNumber.toString().padStart(3, '0');
 };
 
 // 주문 등록 서비스
@@ -57,7 +57,7 @@ const orderAdd = async (orderData) => {
     // 총수량 계산
     let totalQty = 0;
     for (let detail of orderData.orderDetails) {
-      totalQty += parseInt(detail.qty || 0);
+      totalQty += parseInt(detail.totalqty || 0);
     }
 
     // 헤더 insert
@@ -73,7 +73,7 @@ const orderAdd = async (orderData) => {
 
     // 상세 insert 반복
     for (let detail of orderData.orderDetails) {
-      const orderDetailCode = 'od' + lastDetailNumber.toString().padStart(3, '0');
+      const orderDetailCode = 'OD' + lastDetailNumber.toString().padStart(3, '0');
       lastDetailNumber += 1;
 
       await conn.query(sqlList["orderDetailAdd"], [
@@ -81,7 +81,7 @@ const orderAdd = async (orderData) => {
         orderCode,
         detail.prodcode,
         detail.standard,
-        parseInt(detail.qty || 0),
+        parseInt(detail.totalqty || 0),
         parseInt(detail.unitprice || 0),
         parseInt(detail.totalprice || 0),
         orderData.emp_num,
