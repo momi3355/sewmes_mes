@@ -20,12 +20,9 @@
     <a class="dropdown-item" href="#" @mousedown.prevent @click="selectCompany(company)">
       {{ company.cp_name }}
     </a>
-  </li>
-</ul>
+    </li>
+  </ul>
 </div>
-
-
-  
         <div class="col-md-3 fw-bold">업체 연락처:</div>
         <div class="col-md-9">
           <input type="text" class="form-control" v-model="companyTel" />
@@ -114,19 +111,16 @@
   const orderDate = ref("");
   const deadDate = ref("");
   const note = ref("");
-  const totalPrice = ref("");
-  const totalqty = ref("");
-  const selprice = ref(0);
 
     // 로그인 정보 가져오기
-    const store = useStore();
-    const user = computed(() => store.state.user);
+  const store = useStore();
+  const user = computed(() => store.state.user);
   // 영업 담당자 연락처와 이름 초기값 바인딩
   const salesTel = ref(""); 
-const salesManager = ref("");
+  const salesManager = ref("");
   // 드롭다운
   const companyTel = ref("");
-const address = ref("");
+  const address = ref("");
   const companyList = ref([]);
   const listOpen = ref(false);
   const searchTerm = ref("");
@@ -139,7 +133,7 @@ const address = ref("");
   // 선택시에 동작할것들
   const selectCompany = (company) => {
   searchTerm.value = company.cp_code;  // 선택한 회사명 input에 바인딩
-    companyTel.value = company.cp_tel;     // 업체 연락처
+  companyTel.value = company.cp_tel;     // 업체 연락처
   address.value = company.address;       // 주소
   listOpen.value = false;  // 드롭다운 닫기
 };
@@ -219,7 +213,7 @@ const filteredCompanyList = computed(() => {
       title: "제품단가", field: "unitprice", width: 200, editor:"input",
       cellEdited: function(cell) {
         const row = cell.getRow().getData();
-        row.totalprice = calculateTotalPrice(row);
+        row.selprice = calculateTotalPrice(row);
         cell.getRow().update(row);
       }
     },
@@ -281,15 +275,15 @@ console.log('🏢 DB에서 받아온 업체 데이터:', companyList.value);
     console.log('자식한테 받아온 데이터', modaldata);
     ordlist.value = modaldata;
   };
-  
+
   // 모달창
   const openModal = () => {
       isModalOpen.value = true; //isModalOpen 값 true 변경해 모달 열기
   };
   const closeModal = () => {
       isModalOpen.value = false;
-  
   };
+
   // 총 주문금액 계산
   const calculateTotalOrderPrice = () => {
   let total = 0;
@@ -299,18 +293,17 @@ console.log('🏢 DB에서 받아온 업체 데이터:', companyList.value);
   return total;
 };
   // 주문 등록
-  // 주문 등록
 const saveOrder = async () => {
   try {
     // 💡 먼저 selprice 계산부터 한다
     ordlist.value = ordlist.value.map(item => {
-      const qty = parseInt(item.qty || 0);
+      // const qty = parseInt(item.total_qty || 0);
       const unitprice = parseInt(item.unitprice || 0);
       const standardQty = parseInt(item.totalqty || 0);  // 총수량 기준
-      
       const selprice = standardQty * unitprice;
       return { ...item, selprice };  // selprice를 새로 계산해서 덮어씌움
     });
+    console.log('dfsfadas',ordlist.value)
 
     // 그리고 나서 데이터 전송 준비
     const orderData = {
@@ -324,6 +317,7 @@ const saveOrder = async () => {
     };
 
     console.log('보낼 주문 데이터:', orderData);
+    console.log('추가',ordlist);
 
     const res = await axios.post('/api/orderAdd', orderData);
 

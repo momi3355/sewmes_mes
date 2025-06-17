@@ -21,16 +21,14 @@ FROM t_order_detail a JOIN t_company b
 
 // 주문서등록 / 제품모달
 const productList =
-`SELECT a.prod_code,
-        a.prod_name,
-        a.category,
-        a.color,
-        a.size,
-        b.standard
-FROM t_product a JOIN t_order_detail b
-     ON (a.prod_code = b.prod_code)
-WHERE a.prod_type = '0k2k'
-AND a.use_yn = '0b1b'`
+`SELECT prod_code,
+        prod_name,
+        category,
+        color,
+        size
+FROM t_product
+WHERE prod_type = '0k2k'
+AND use_yn = '0b1b'`
 
 const orderDetailAdd = `
 INSERT INTO t_order_detail (
@@ -38,7 +36,7 @@ INSERT INTO t_order_detail (
   order_code, 
   prod_code, 
   standard, 
-  qty, 
+  total_qty, 
   unit_price, 
   total_price,
   emp_num,

@@ -4,6 +4,7 @@ const router = express.Router();
 const orderService = require(`../services/Sales/orderList.js`);
 const companyService = require(`../services/Sales/companyList.js`);
 const loginService = require(`../services/Sales/login.js`);
+const outProdCompanyService = require(`../services/Sales/outsouOrderList.js`);
 
 // 주문 전체 조회
 router.get('/orderList', async (req, res) => {
@@ -28,9 +29,9 @@ router.get('/companyList', async (req, res) => {
 });
 
 // 외주 업체 목록 가지고오기
-router.get('/companyList2', async (req, res) => {
+router.get('/outcompanyList', async (req, res) => {
   try {
-    const companyOrderList = await companyService.findAll3();
+    const companyOrderList = await outProdCompanyService.findAll3();
     res.send(companyOrderList);
   } catch (err) {
     console.error('주문 조회 중 오류 발생:', err);
@@ -38,8 +39,29 @@ router.get('/companyList2', async (req, res) => {
   }
 });
 
-// 외주 제품 가지고오기
+// 외주업체 클릭시 외주가능 제품 출력
+router.get('/yesOutProdList', async (req, res) => {
+  try {
+    const companyOrderList = await outProdCompanyService.yesOutProdList();
+    res.send(companyOrderList);
+  } catch (err) {
+    console.error('주문 조회 중 오류 발생:', err);
+    res.status(500).send('서버 오류');
+  }
+});
 
+// 외주업체 외주가능제품 등록
+router.post('/outProdCpInsert', async (req, res) => {
+  console.log("넘어온 데이터:", req.body);
+
+  try {
+    const result = await outProdCompanyService.outProdCompanyinsert(req.body);
+    console.log(result);
+    res.send(result);
+  } catch (err) {
+    res.status(500).send({ success: false, message: "등록 실패" });
+  }
+});
 
 // 로그인
 router.post('/login', async (req, res) => {

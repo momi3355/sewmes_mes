@@ -7,7 +7,7 @@ const companyListCheck =
         cp_manager,
         cp_ceo,
         address,
-        refion,
+        region,
         first_reg,
         note,
         cls,
@@ -32,8 +32,34 @@ const outCompany =
  FROM   t_company
  WHERE  cls = "0g1g"`
 
+
+ // 외주업체 가능제품 등록
+ const outProdCompany =
+ `INSERT INTO t_outsou_order_list (
+              outsou_list_code,
+              prod_code,
+              cp_code)
+  VALUES (?, ?, ?)`
+
+  // 해당 외주업체 의 가능외주제품 조회
+ const yesOutProdList =
+`SELECT b.prod_code,
+        b.prod_name,
+        b.category,
+        b.color,
+        b.size
+FROM t_outsou_order_list a join t_product b
+ON a.prod_code = b.prod_code
+WHERE a.cp_code = ?`
+
 module.exports = {
   companyListCheck,
   companyDropDown,
-  outCompany
+  outCompany,
+  outProdCompany,
+  yesOutProdList
 }
+
+
+
+
