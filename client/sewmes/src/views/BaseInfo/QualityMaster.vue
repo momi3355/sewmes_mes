@@ -75,7 +75,14 @@ const qualitySearchHandler = async () => {
   const res = await axios.get('/api/quality', {
     params
   });
-  qualityList.value = res.data;
+  const qualityFilter = res.data.filter(item => {
+    let matchUseYn = true;
+    if (params.useYn.length === 1) {
+      matchUseYn = params.useYn.includes(item.use_yn);
+    }
+    return matchUseYn;
+  })
+  qualityList.value = qualityFilter;
 };
 
 const qualitySearchReset = () => {

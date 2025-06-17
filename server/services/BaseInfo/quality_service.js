@@ -6,12 +6,11 @@ const { convertObjToAry } = require('../../utils/converts.js');
 // 실제 제공할 서비스 등록 영역
 
 //전체 조회 + 검색 조회
-const qualityList = async ({ testName, testTarget, testRef, useYn }) => {
+const qualityList = async ({ testName, testTarget, testRef}) => {
   const params = [
     testName, testName, testName,
     testTarget, testTarget, testTarget,
-    testRef, testRef, testRef,
-    useYn, useYn, useYn,
+    testRef, testRef, testRef
   ];
 
   let list = await mariadb.query("selectQualityList", params)
