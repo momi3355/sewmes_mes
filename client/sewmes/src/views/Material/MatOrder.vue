@@ -1,106 +1,27 @@
 <!--자재 발주서 -->
 <script setup>
+import { ref, onMounted } from "vue";
 import { TabulatorFull as Tabulator } from "tabulator-tables";
-import { ref, onMounted } from "vue"; // Import ref and onMounted
 import axios from "axios";
 
 import ArgonButton from "@/components/ArgonButton.vue";
-import DefaultInfoCard from "@/examples/Cards/DefaultInfoCard.vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 
-
-const searchField1 = ref('');
-const searchField2 = ref('');
+// --- 1. 상태(State) 정의 ---
 const materialData = ref([]);
-const productData = ref([]);
-
-let materialTabulatorInstance = null;
+const productData = ref([]); // '발주 요청서' 테이블의 데이터
+const companyList = ref([]);  // 공급처 목록
 const materialTableCard = ref(null);
+const productTableCardRef = ref(null); // '발주 요청서' 테이블을 감싸는 카드 컴포넌트의 ref
 
-// 추가 버튼 클릭하면 실행
-const addSelectedMaterials = () => {
-  console.log("추가 버튼 클릭됨");
-  
-  if(!materialTableCard.value || !materialTableCard.value.$el){
-    console.error("컴포넌트의 참조를 찾을 수 없음.");
-    return;
-  }
-  
-  const tabulatorElement = materialTableCard.value.$el.querySelector('.tabulator');
-    if(!tabulatorElement){
-      console.error("Tabulator에서 '.tabulator' 클래스 요소를 찾을 수 없음");
-      return;
-    }
-
-  const tabulatorInstance = Tabulator.findTable(tabulatorElement)[0];
-    if(!tabulatorInstance){
-      console.error("Tabulator 인스턴스를 찾을 수 없음");
-      return;
-    }
-    console.log("Tabulator 인스턴스를 성공적으로 찾음", tabulatorInstance);
-
-  const selectedData = tabulatorInstance.getSelectedData();
-  if (selectedData.length === 0) {
-      alert("추가할 자재를 선택해주세요");
-      return;
-    }
-    console.log("선택된 자재 데이터: ", selectedData);
-  
-  const newProducts = selectedData
-    .filter(material => !productData.value.some(p => p.material_code === material.material_code))
-    .map(material => ({
-      material_code: material.material_code,
-      material_name: material.material_name,
-      unit: material.unit || '',
-      order_qty: 1,
-      unit_price: material.unit_price || '0',
-      total_price: (1 * (material.unit_price || 0)),
-      color: material.color || '',
-      size: '',
-      company: '',
-      order_date: new Date().toISOString().split('T')[0],
-      deadline: ''
-    }));
-    if(newProducts.length > 0){
-      productData.value.push(...newProducts);
-    } else if(selectedData.length > 0){
-      alert("이미 추가된 자재입니다.");
-    }
-
-    tabulatorInstance.deselectRow();
-};
-
-onMounted(() => {
-  fetchMaterials();
-});
-
-const fetchMaterials = async() => {
-  try{
-    const response = await
-    axios.get('/api/matorder');
-    materialData.value = response.data;
-    console.log(response.data);
-    console.log("자재 목록 로딩 성공");
-  } catch(error){
-    console.error("자재 목록 로딩 오류", error);
-  }
-};
+// --- 2. Tabulator 컬럼 정의 (가장 안정적인 일반 상수 형태) ---
 
 const materialColumns = [
-  {
-  formatter: "rowSelection",  // 행 선택 체크박스를 생성합니다.
-  titleFormatter: "rowSelection", // 헤더에 '전체 선택' 체크박스를 생성합니다.
-  hozAlign: "center",
-  headerSort: false,          // 이 열은 정렬 기능을 비활성화합니다.
-  cellClick: function(e, cell) { // 셀의 아무 곳이나 클릭해도 체크되도록 합니다.
-    cell.getRow().toggleSelect();
-  },
-   width: 1
-},
-  { title: "자재코드", field: "material_code", width: 150, editor: "input" },
-  { title: "자재명", field: "material_name", hozAlign: "left"},
-  { title: "자재유형", field: "material_type", hozAlign: "left"},
-  { title: "재고량", field: "stock", hozAlign: "left"},
+  { formatter: "rowSelection", titleFormatter: "rowSelection", hozAlign: "center", headerSort: false, width: 60, cellClick: (e, cell) => cell.getRow().toggleSelect() },
+  { title: "자재코드", field: "material_code", width: 150 },
+  { title: "자재명", field: "material_name" },
+  { title: "자재유형", field: "material_type" },
+  { title: "현재고", field: "current_stock" },
 ];
 
 const productColumns = [
@@ -109,116 +30,173 @@ const productColumns = [
   { 
     title: "주문수량", 
     field: "order_qty", 
-    width: 150, hozAlign: "left", 
+    width: 150, hozAlign: "right", 
     editor: "input",
-    cellEdited: function(cell) {
-      const row = cell.getRow();
-      const data = row.getData();
-      const orderQty = Number(data.order_qty) || 0;
-      const unitPrice = Number(data.unit_price) || 0;
-      row.getCell("total_price").setValue(orderQty * unitPrice);
+    cellEdited: (cell) => {
+      const data = cell.getRow().getData();
+      cell.getRow().getCell("total_price").setValue((Number(data.order_qty) || 0) * (Number(data.unit_price) || 0));
     }
   },
   { 
     title: "단가", 
     field: "unit_price", 
-    width: 120, hozAlign: "left", 
+    width: 120, hozAlign: "right", 
     editor: "input", 
-    formatter:"money", formatterParams:{
-      symbol:"₩",
-      thousand: ",",
-      precision: 0,
-      decimal: ".",
-    },
-    cellEdited: function(cell) {
-      const row = cell.getRow();
-      const data = row.getData();
-      const orderQty = Number(data.order_qty) || 0;
-      const unitPrice = Number(data.unit_price) || 0;
-      row.getCell("total_price").setValue(orderQty * unitPrice);
+    formatter: "money", 
+    formatterParams: { symbol: "₩", precision: 0 },
+    cellEdited: (cell) => {
+      const data = cell.getRow().getData();
+      cell.getRow().getCell("total_price").setValue((Number(data.order_qty) || 0) * (Number(data.unit_price) || 0));
     }
   },
   { 
     title: "합계", 
     field: "total_price", 
-    width: 160, hozAlign: "left", 
-    formatter:"money", formatter:"money", 
-    formatterParams:{
-      symbol:"₩",
-      thousand: ",",
-      precision: 0,
-      decimal: ".",
-    },
+    width: 160, hozAlign: "right", 
+    formatter: "money", 
+    formatterParams: { symbol: "₩", precision: 0 }
   },
-  { title: "공급처", field: "company", editor: "input" },
+  { 
+    title: "공급처", 
+    field: "company", 
+    editor: "list",
+    formatter: (cell) => {
+      const value = cell.getValue();
+      const company = companyList.value.find(c => c.cp_code === value);
+      return company ? company.cp_name : value;
+    },
+    // 초기 옵션은 비워두고, 나중에 동적으로 채웁니다.
+    editorParams: { values: [], autocomplete: true, listOnEmpty: true, freetext: true }
+  },
   { title: "발주일자", field: "order_date" },
   { title: "납기일자", field: "deadline", editor: "date" },
 ];
 
-// 선택된 행들을 처리하는 함수
-const handleMatRowClick = (e, row) => {
-  console.log("Row clicked:", row.getData());
+// --- 3. 라이프사이클 훅 ---
+onMounted(() => {
+  fetchMaterials();
+  fetchCompanies();
+});
+
+// --- 4. 메소드(함수) 정의 ---
+
+// Tabulator 인스턴스를 가져오는 헬퍼 함수
+const getTabulatorInstance = (refInstance) => {
+  if (!refInstance.value || !refInstance.value.$el) return null;
+  const element = refInstance.value.$el.querySelector('.tabulator');
+  if (!element) return null;
+  return Tabulator.findTable(element)[0] || null;
 };
 
-// 선택된 행들을 가져오는 함수
-const getSelectedRows = (tableRef) => {
-  if (tableRef) {
-    const selectedRows = tableRef.getRows().filter(row => row.getData().selected);
-    console.log("Selected rows:", selectedRows.map(row => row.getData()));
-    return selectedRows;
+const fetchMaterials = async () => {
+  try {
+    const response = await axios.get('/api/matorder');
+    materialData.value = Array.isArray(response.data) ? response.data : [];
+  } catch (error) {
+    console.error("자재 목록 로딩 오류", error);
+    materialData.value = [];
   }
 };
 
-// 저장 버튼 클릭 시 실행될 함수 (유효성 검사 강화)
-const saveOrder = async () => {
-  // ✨ 1. 유효성 검사를 함수의 가장 앞으로 이동
-  if (productData.value.length === 0) {
-    alert("저장할 발주 요청서가 없습니다.");
-    return; // 함수 즉시 종료
+const fetchCompanies = async () => {
+  try {
+    const response = await axios.get('/api/companies');
+    companyList.value = response.data;
+    // 데이터를 가져온 후, 컬럼 에디터를 업데이트합니다.
+    updateCompanyColumnEditor();
+  } catch (error) {
+    console.error("공급처 목록 로딩 실패", error);
   }
+};
 
-  // 필수 입력 항목에 대한 유효성 검사도 추가 (권장)
-  const isInvalid = productData.value.some(p => 
-    !p.order_qty || !p.unit_price || !p.company || !p.deadline
-  );
-  if (isInvalid) {
-    alert("주문수량, 단가, 공급처, 납기일자는 필수 입력 항목입니다.");
+const addSelectedMaterials = () => {
+  const materialTableInstance = getTabulatorInstance(materialTableCard);
+  if (!materialTableInstance) return;
+  const selectedData = materialTableInstance.getSelectedData();
+  if (selectedData.length === 0) {
+    alert("추가할 자재를 선택해주세요");
     return;
   }
+  const newProducts = selectedData
+    .filter(material => !productData.value.some(p => p.material_code === material.material_code))
+    .map(material => ({
+       material_code: material.material_code,
+       material_name: material.material_name,
+       unit: material.unit || '',
+       order_qty: 1,
+       unit_price: material.unit_price || 0,
+       total_price: (1 * (material.unit_price || 0)),
+       color: material.color || '',
+       company: '',
+       order_date: new Date().toISOString().split('T')[0],
+       deadline: ''
+    }));
 
-  // ✨ 2. 'processedData'를 올바르게 정의
-  // (서버로 보내기 전에 합계 등을 다시 계산하는 안정적인 데이터)
-  const processedData = productData.value.map(p => ({
-    ...p,
-    total_price: Number(p.order_qty) * Number(p.unit_price)
+  if (newProducts.length > 0) {
+    // ✨ Vue의 반응형 데이터를 직접 수정합니다.
+    productData.value.push(...newProducts);
+  } else if (selectedData.length > 0) {
+    alert("이미 추가된 자재입니다.");
+  }
+  materialTableInstance.deselectRow();
+};
+
+const saveOrder = async () => {
+  const productTableInstance = getTabulatorInstance(productTableCardRef);
+  if (!productTableInstance) return;
+  
+  // Tabulator에서 현재 데이터를 직접 가져옵니다.
+  const currentTableData = productTableInstance.getData();
+  if (currentTableData.length === 0) {
+    alert("저장할 발주 요청서가 없습니다.");
+    return;
+  }
+  
+  // 유효성 검사
+  for (const row of currentTableData) {
+    if (!row.order_qty || !row.unit_price || !row.deadline || !row.company) {
+      alert(`'${row.material_name}'의 모든 필수 항목(주문수량, 단가, 납기일자, 공급처)을 입력/선택해주세요.`);
+      return;
+    }
+  }
+  
+  const processedData = currentTableData.map(p => ({
+    material_code: p.material_code,
+    deadline: p.deadline,
+    cp_code: p.company,
+    unit_price: p.unit_price,
+    total_price: Number(p.order_qty) * Number(p.unit_price),
+    order_qty: p.order_qty,
   }));
 
   try {
-    // ✨ 3. 백엔드 API 경로 수정 ('/api' 추가) 및 올바른 데이터 전송
     const response = await axios.post('/api/matorder/save', processedData);
-    
-    // 성공 메시지 출력
     alert(response.data.message);
 
-    // ✨ 4. orderedMaterialCodes 생성 시 올바른 속성 이름(material_code) 사용
     const orderedMaterialCodes = processedData.map(p => p.material_code);
-    
-    // 목록에서 저장된 자재 제거
-    materialData.value = materialData.value.filter(material => 
-      !orderedMaterialCodes.includes(material.material_code)
-    );
-    
-    // 발주 요청서 테이블 비우기
-    productData.value = [];
-
+    materialData.value = materialData.value.filter(material => !orderedMaterialCodes.includes(material.material_code));
+    productData.value = []; // 이 데이터를 비우면, :table-data 바인딩에 의해 테이블이 비워집니다.
   } catch (error) {
-    // API 호출 실패 시 에러 처리
     console.error("저장 실패:", error);
-    alert(error.response?.data?.message || "저장에 실패했습니다. 서버 로그를 확인해주세요.");
+    alert(error.response?.data?.message || "저장에 실패했습니다.");
   }
 };
 
+const updateCompanyColumnEditor = () => {
+  const tabulatorInstance = getTabulatorInstance(productTableCardRef);
+  if (!tabulatorInstance) {
+    // 인스턴스가 아직 준비되지 않았으면, 100ms 후에 다시 시도합니다.
+    setTimeout(updateCompanyColumnEditor, 100);
+    return;
+  }
+  const column = tabulatorInstance.getColumn("company");
+  if (!column) return;
 
+  const newOptions = companyList.value.map(c => ({ label: c.cp_name, value: c.cp_code }));
+  column.updateDefinition({
+    editorParams: { values: newOptions, autocomplete: true, listOnEmpty: true, freetext: true }
+  });
+};
 </script>
 
 <template>
@@ -265,6 +243,7 @@ const saveOrder = async () => {
           </div>
             <div class="col-12 mt-4">
               <tabulator-card
+              ref="productTableCardRef"
                 card-title="발주 요청서 작성"
                 :table-data="productData"
                 :table-columns="productColumns"
