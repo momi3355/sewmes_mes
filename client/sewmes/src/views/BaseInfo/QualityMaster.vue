@@ -93,6 +93,18 @@ const qualitySearchReset = () => {
 };
 
 const saveQualityMaster = async () => {
+const testName = qualityInfo.value.test_name ?.trim();
+const testTarget = qualityInfo.value.test_target?.trim();
+
+// 기본 유효성 검사
+if (!testName || !testTarget) {
+  Swal.fire({
+    text: '검사명과 대상품목은 필수입니다.',
+    icon: 'warning'
+  });
+  return;
+}
+
   const formData = new FormData();
 
   formData.append('test_name', qualityInfo.value.test_name || '');
@@ -166,7 +178,12 @@ onMounted(() => {
         </div>
         <div class="col-md-2">
           <label class="form-label">대상품목</label>
-          <input type="text" class="form-control" v-model="qualSchData.testTarget" />
+          <select class="form-select form-select-sm" v-model="qualSchData.testTarget">
+              <option value="">선택하세요</option>
+              <option v-for="target in testTargetCodeList" :key="target.detail_code" :value="target.detail_code">
+                {{ target.detail_name }}
+              </option>
+            </select>
         </div>
         <div class="col-md-2">
           <label class="form-label">참조</label>

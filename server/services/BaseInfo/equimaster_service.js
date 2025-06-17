@@ -1,9 +1,16 @@
 const mariadb = require("../../database/mapper.js");
 
-//설비 전체조회
-const equiList = async () => {
-  let list = await mariadb.query("selectEquiList");
+const equiList = async ({ equiName, equiType, schDate, startDate, endDate }) => {
+  const queryParams = [
+    equiName, equiName, equiName,
+    equiType, equiType, equiType,
+    schDate, startDate, endDate, // 조건 존재 여부 확인용
+    schDate, startDate, endDate, // 0v1v
+    schDate, startDate, endDate, // 0v2v
+    schDate, startDate, endDate  // 0v3v
+  ];
 
+  let list = await mariadb.query("selectEquiList", queryParams).catch(err => console.log(err));
   return list;
 };
 
