@@ -310,6 +310,24 @@ const routes = [
     }
   },
   {
+    path: '/outsouReleaseList',
+    name: 'OutsouReleaseList',
+    component: () => import('@/views/Production/OutsouReleaseList.vue'),
+    meta: {
+      title: '외주출고 자재 조회',
+      group: '생산'
+    }
+  },
+  {
+    path: '/prdInboundMngment',
+    name: 'PrdInboundMngment',
+    component: () => import('@/views/Production/PrdInboundMngment.vue'),
+    meta: {
+      title: '완제품 입고 관리',
+      group: '생산'
+    }
+  },
+  {
     path: '/releaseHistory',
     name: 'ReleaseHistory',
     component: () => import('@/views/Production/ReleaseHistory.vue'),

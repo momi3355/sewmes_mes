@@ -1,4 +1,5 @@
 const { defineConfig } = require('@vue/cli-service');
+const webpack = require('webpack');
 const target = 'http://localhost:3000';
 
 module.exports = defineConfig({
@@ -12,11 +13,13 @@ module.exports = defineConfig({
         ws : false,
         pathRewrite : { '^/api' :'/' }
       },
-      '^/production-plans':{ //정민 생산계획모달
-        target,
-        changeOrigin:true,
-        ws:false,
-      },
     }
-  }
+  },
+  configureWebpack: {
+    plugins: [
+      new webpack.DefinePlugin({
+        __VUE_PROD_HYDRATION_MISMATCH_DETAILS__: JSON.stringify(false),
+      }),
+    ],
+  },
 });
