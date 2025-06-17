@@ -1,11 +1,17 @@
 <script setup>
 import axios from 'axios';
-import { ref } from 'vue';
+import { useStore } from "vuex";
+import { ref, nextTick  } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
 import OrderProdListModal from "./OrderProdListModal.vue";
 
 // tabulatorCardRef 컴포넌트의 ref 선언
 const tabulatorCardRef = ref(null);
+
+// 사원정보 가져오기
+const store = useStore();
+const userCode = store.state.user.emp_num;
+
 
 // 검색 객체
 const searchProdName = ref('');
@@ -44,10 +50,10 @@ const searchProdPlan = async () => {
       prodName: item.prod_name,
       startDate: formatDate(item.start_date),
       endDate: formatDate(item.end_date),
-      orderQty: formatInt(item.order_qty),
+      orderQty: formatInt(item.total_qty),
       prodQty: formatInt(item.prod_qty),
       complete: convertCode(item.complete),
-      empNum: item.empNum
+      empName: item.emp_name
     }));
     prodPlanData.value = converted;
   } catch (err) {
@@ -77,8 +83,42 @@ const addRow = () => {
     prodPlanData.value.push(newRow);
 
 }
+// 저장 기능
+const saveProcess = async () => {
+  await nextTick(); // DOM 업데이트 이후 실행 보장
 
+  const tableInstance = tabulatorCardRef.value?.getTabulator?.();
+  if (!tableInstance) {
+    console.warn("Tabulator 인스턴스를 찾을 수 없음");
+    return;
+  }
 
+  const selectedRows = tableInstance.getSelectedData();
+  if (selectedRows.length === 0) {
+    alert("저장할 데이터를 선택해주세요.");
+    return;
+  }
+
+  const payload = selectedRows.map(item  => ({
+    prodPlanCode: item.prodPlanCode || '', // 신규는 ''
+    orderDetailCode: item.orderDetailCode || null,
+    prodCode: item.prodCode || '',
+    prodQty: parseInt(item.prodQty || '0', 10),
+    startDate: item.startDate || '',
+    endDate: item.endDate || '',
+    complete: '1a2a',
+    empNum: userCode,
+  }));
+
+  try {
+    await axios.post('/api/saveProdPlans', { plans: payload });
+    alert("저장 완료");
+    await searchProdPlan(); // 목록 갱신
+  } catch (err) {
+    console.error("저장 실패:", err);
+    alert("저장 중 오류 발생");
+  }
+};
 // 공통코드 변환환
 const convertCode = (code) => {
   switch (code) {
@@ -91,18 +131,18 @@ const prodPlanColumns = [
   {
     formatter: "rowSelection", titleFormatter: "rowSelection",
     hozAlign: "center", headerSort: false, width: 40,
-    cssClass: 'tabulator-checkbox-column'
+    cssClass: 'non-editable-cell'
   },
-  { title: "No", field: "rowNum", width: 80 },
-  { title: '주문번호', field: 'orderCode', width: 200 },
-  { title: '품번', field: 'prodCode', width: 200 },
-  { title: '품명', field: 'prodName', width: 300 },
-  { title: '시작일', field: 'startDate', width: 200 },
-  { title: '종료일', field: 'endDate', width: 200 },
-  { title: '주문수량', field: 'orderQty', width: 200 },
-  { title: '생산수량', field: 'prodQty', width: 200 },
-  { title: '완료여부', field: 'complete', width: 150 },
-  { title: '사원번호', field: 'empNum', width: 150 }
+  { title: "No", field: "rowNum", width: 80, cssClass: 'non-editable-cell' },
+  { title: '주문상세번호', field: 'orderDetailCode', width: 150, cssClass: 'non-editable-cell' },
+  { title: '품번', field: 'prodCode', editor: "input", width: 150 },
+  { title: '품명', field: 'prodName', editor: "input", width: 300 },
+  { title: '시작일', field: 'startDate', editor: "input", width: 150 },
+  { title: '종료일', field: 'endDate', editor: "input", width: 150 },
+  { title: '주문수량', field: 'orderQty', width: 150, cssClass: 'non-editable-cell' },
+  { title: '생산수량', field: 'prodQty', editor: "input", width: 150 },
+  { title: '완료여부', field: 'complete', width: 150, cssClass: 'non-editable-cell' },
+  { title: '사원이름', field: 'empName', width: 150, cssClass: 'non-editable-cell' }
 ];
 const tabulatorOptions = {
   selectable: true,
@@ -124,7 +164,7 @@ const tabulatorEvent = [
     eventName: "rowClick",
     eventAction: 
       async (e, row) => {
-        row.toggleSelect()
+        
 
       const tableInstance = tabulatorCardRef.value?.$el?.querySelector('.tabulator')?.__tabulator__;
       if (tableInstance) {
@@ -148,7 +188,7 @@ const handleSelectedOrder = (plans) => {
         rowNum: prodPlanData.value.length + index + 1,
         prodPlanCode: '',
         orderDetailCode: plan.orderDetailCode,
-        orderCode: '',
+        orderCode: plan.orderCode,
         prodCode: plan.prodCode,
         prodName: plan.prodName,
         startDate: '',
@@ -327,4 +367,8 @@ const formatToDate = (input) => {
   border-radius: 15px;
   background-color: #FFF;
 }
+::v-deep(.non-editable-cell) {
+  background-color: #f0f0f0 !important;
+  color: #777 !important;
+} 
 </style>
