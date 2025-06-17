@@ -41,6 +41,11 @@ const outCompany =
               cp_code)
   VALUES (?, ?, ?)`
 
+ const getNextOrderCode =
+`SELECT outsou_list_code 
+FROM t_outsou_order_list 
+ORDER BY outsou_list_code DESC LIMIT 1`
+
   // 해당 외주업체 의 가능외주제품 조회
  const yesOutProdList =
 `SELECT b.prod_code,
@@ -52,12 +57,18 @@ FROM t_outsou_order_list a join t_product b
 ON a.prod_code = b.prod_code
 WHERE a.cp_code = ?`
 
+// 업체별 외주가능제품 삭제
+const yesOutProdDelite =
+`DELETE FROM t_outsou_order_list WHERE cp_code = ? AND prod_code = ?`
+
 module.exports = {
   companyListCheck,
   companyDropDown,
   outCompany,
   outProdCompany,
-  yesOutProdList
+  yesOutProdList,
+  getNextOrderCode,
+  yesOutProdDelite
 }
 
 

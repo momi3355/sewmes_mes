@@ -19,7 +19,7 @@ const orderListCheck2 =
 FROM t_order_detail a JOIN t_company b
      ON(a.cp_code = b.cp_code)`
 
-// 주문서등록 / 제품모달
+// 완제품출력 모달 (주문서등록)
 const productList =
 `SELECT prod_code,
         prod_name,
@@ -28,6 +28,17 @@ const productList =
         size
 FROM t_product
 WHERE prod_type = '0k2k'
+AND use_yn = '0b1b'`
+
+// 반제품출력 모달 (외주업체 외주가능제품)
+const productList2 =
+`SELECT prod_code,
+        prod_name,
+        category,
+        color,
+        size
+FROM t_product
+WHERE prod_type = '0k1k'
 AND use_yn = '0b1b'`
 
 const orderDetailAdd = `

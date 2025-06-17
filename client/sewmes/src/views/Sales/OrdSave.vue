@@ -111,6 +111,8 @@
   const orderDate = ref("");
   const deadDate = ref("");
   const note = ref("");
+  // 드롭다운에서 업체명 선택시 업체코드 따로 저장
+  const selectedCompanyCode = ref("");
 
     // 로그인 정보 가져오기
   const store = useStore();
@@ -132,10 +134,11 @@
 };
   // 선택시에 동작할것들
   const selectCompany = (company) => {
-  searchTerm.value = company.cp_code;  // 선택한 회사명 input에 바인딩
-  companyTel.value = company.cp_tel;     // 업체 연락처
-  address.value = company.address;       // 주소
-  listOpen.value = false;  // 드롭다운 닫기
+  searchTerm.value = company.cp_name;  // 인풋에는 업체명 표시
+  companyTel.value = company.cp_tel;
+  address.value = company.address;
+  selectedCompanyCode.value = company.cp_code;  // 선택된 업체코드는 따로 보관
+  listOpen.value = false;
 };
 // 필터검색
 const filteredCompanyList = computed(() => {
@@ -307,14 +310,14 @@ const saveOrder = async () => {
 
     // 그리고 나서 데이터 전송 준비
     const orderData = {
-      cp_code: searchTerm.value,
-      emp_num: user.value.emp_num,
-      orderDate: orderDate.value,
-      deadDate: deadDate.value,
-      note: note.value || '',
-      totalprice: calculateTotalOrderPrice(), // 이때는 selprice가 다 들어가있음
-      orderDetails: ordlist.value
-    };
+  cp_code: selectedCompanyCode.value,  // 이렇게 수정
+  emp_num: user.value.emp_num,
+  orderDate: orderDate.value,
+  deadDate: deadDate.value,
+  note: note.value || '',
+  totalprice: calculateTotalOrderPrice(),
+  orderDetails: ordlist.value
+};
 
     console.log('보낼 주문 데이터:', orderData);
     console.log('추가',ordlist);

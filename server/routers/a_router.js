@@ -41,8 +41,9 @@ router.get('/outcompanyList', async (req, res) => {
 
 // 외주업체 클릭시 외주가능 제품 출력
 router.get('/yesOutProdList', async (req, res) => {
+  const cp_code = req.query.cpcode;
   try {
-    const companyOrderList = await outProdCompanyService.yesOutProdList();
+    const companyOrderList = await outProdCompanyService.yesOutProdList(cp_code);
     res.send(companyOrderList);
   } catch (err) {
     console.error('주문 조회 중 오류 발생:', err);
@@ -53,16 +54,17 @@ router.get('/yesOutProdList', async (req, res) => {
 // 외주업체 외주가능제품 등록
 router.post('/outProdCpInsert', async (req, res) => {
   console.log("넘어온 데이터:", req.body);
+  const { cp_code, prod_code } = req.body;
 
   try {
-    const result = await outProdCompanyService.outProdCompanyinsert(req.body);
-    console.log(result);
+    const result = await outProdCompanyService.outProdCompanyinsert(prod_code, cp_code);
     res.send(result);
   } catch (err) {
+    console.error(err);
     res.status(500).send({ success: false, message: "등록 실패" });
   }
 });
-
+// 외주업체 외주가능제품 삭제
 // 로그인
 router.post('/login', async (req, res) => {
   const { emp_num, login_pw } = req.body;

@@ -9,7 +9,7 @@ const findAll = async () => {
   return list;
 };
 
-// 안전한 order_detail_code 생성기
+// order_detail_code 주문상세코드 자동으로 + 1생성
 const getNextOrderDetailCode = async () => {
   const rows = await mariadb.query("getNextOrderDetailCode");
   let nextNumber = 1;
@@ -25,7 +25,7 @@ const getNextOrderDetailCode = async () => {
   return nextNumber; // 여기서는 숫자만 리턴 (나중에 반복문에서 가공)
 };
 
-// 안전한 order_code 생성기
+// order_code 주문코드 자동으로 + 1생성
 const getNextOrderCode = async () => {
   const rows = await mariadb.query("getNextOrderCode");
   let nextNumber = 1;
