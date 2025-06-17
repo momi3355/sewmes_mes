@@ -140,4 +140,60 @@ router.get('/processes/:processCode/equipment', async (req, res) => {
     }
 });
 
+router.get('/getWorkInstDetails', async (req, res) => {
+    const { work_inst_code } = req.query; // GET 요청의 쿼리 파라미터는 req.query로 받습니다.
+    console.log('Received work_inst_code for details:', work_inst_code);
+    try {
+        // workInstService에서 getWorkInstDetails를 호출해야 합니다.
+        // ProductionService는 공정 관련 서비스이므로 workInst.js의 서비스 함수를 사용해야 합니다.
+        const data = await ProductionService.getWorkInstDetails(work_inst_code);
+        if (data) { // getWorkInstDetails는 단일 객체 또는 null을 반환합니다.
+            res.json({ success: true, data });
+        } else {
+            res.status(404).json({ success: false, message: '해당 작업지시 상세 정보를 찾을 수 없습니다.' });
+        }
+    } catch (error) {
+        console.error(`Error fetching workInst details for ${work_inst_code}:`, error);
+        res.status(500).json({ success: false, message: '작업지시 상세 정보를 불러오는 데 실패했습니다.', error: error.message });
+    }
+});
+router.post('/startWork', async (req, res) => {
+    const { work_inst_code, process_code, equi_code, start_date, user_code } = req.body; // 프론트에서 보낸 payload
+
+    console.log(`[Router] 작업 시작 요청 수신: 작업지시=${work_inst_code}, 공정=${process_code}, 설비=${equi_code}, 시작시간=${start_date}, 사용자=${user_code}`);
+
+    try {
+        // ProductionService의 startWorkProcess 함수를 호출합니다.
+        const result = await ProductionService.startWorkProcess(
+            work_inst_code,
+            process_code,
+            equi_code,
+            start_date, // 서비스 함수에서 NOW()를 쓴다면 이 파라미터는 서비스 내부에서 사용되지 않습니다.
+            user_code   // 서비스 함수에서 work_start_worker_code를 업데이트한다면 이 파라미터가 필요합니다.
+        );
+
+        if (result.success) {
+            res.json({
+                success: true,
+                message: result.message || '작업이 성공적으로 시작되었습니다.',
+                data: result.data // 서비스에서 반환하는 추가 데이터가 있다면 포함
+            });
+        } else {
+            // 서비스에서 실패 응답을 직접 처리하는 경우도 있으므로, 여기서는 기본 실패 메시지 제공
+            res.status(400).json({
+                success: false,
+                message: result.message || '작업 시작에 실패했습니다.',
+                error: result.error || '알 수 없는 오류'
+            });
+        }
+    } catch (error) {
+        console.error(`[Router] 작업 시작 중 서버 오류 발생:`, error);
+        res.status(500).json({
+            success: false,
+            message: '작업 시작 중 서버 내부 오류가 발생했습니다.',
+            error: error.message
+        });
+    }
+});
+
 module.exports = router;

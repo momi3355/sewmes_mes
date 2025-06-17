@@ -165,7 +165,7 @@ const selectMaxHoldId=
 const selectInboundMaterialsForFab=`
         SELECT
             inbound_code,
-            lot_code,
+            lot,
             inbound_qty,
             stock_status
         FROM t_material_inbound
@@ -219,6 +219,7 @@ const deleteWorkInst = `
     WHERE work_inst_code = ?
 `;
 
+
 //작업지시 테이블 bom_code로 소요량 조회회
 module.exports = {
     selectProdPlansList,
@@ -242,4 +243,3 @@ module.exports = {
     deleteWorkInst,
     selectInboundMaterialsForFab,
 }
-
