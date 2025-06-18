@@ -11,7 +11,7 @@ const props = defineProps({
   userInfo: Object,
 });
 
-const emit = defineEmits(['close', 'saved']);
+const emit = defineEmits(['close', 'save', 'refresh']);
 
 // 총 불합격 수량 계산
 const defectTotal = computed(() => {
@@ -56,23 +56,47 @@ const save = async () => {
     inboundCheckCode: props.checkData.inbound_check_code,
     userCode: props.userInfo.emp_num,
     materialCode: props.checkData.material_code,
-    qualityData: materialQualityTest.value.map(e => {
-      return {
+    qualityData: materialQualityTest.value.map(e => ({
         quality_code: e.qualityCode,
         defect_qty: e.defect_qty,
-      };
-    }),
+    })),
     passQty: passQty.value,
   };
-  const result = await axios.post('/api/material/complete-check', inboundData);
-  if (result?.status === 200) {
-    Swal.fire({
-      title: "성공",
-      text: "자재가 입고처리 되었습니다.",
-      icon: "success"
+  
+  try{
+    const result = await axios.post('/api/material/complete-check', inboundData);
+
+    if (result?.status === 200) {
+     await Swal.fire({
+       title: "성공",
+       text: "자재가 입고처리 되었습니다.",
+       icon: "success"
+      });
+
+     emit('save')
+     emit('close')
+     emit('refresh')
+    }
+  } catch (err) {
+    console.error('저장 실패: ', err);
+      Swal.fire({
+      title: "오류",
+      text: "저장에 실패했습니다.",
+      icon: "error"
     });
   }
-}
+};
+
+// async function onComplete(){
+//   try{
+//     await save()
+//     emit('close')
+//     emit('refresh')
+//   } catch (error) {
+//     console.error('저장 실패: ', error)
+//     alert('저장에 실패했습니다.')
+//   }
+// };
 
 </script>
 

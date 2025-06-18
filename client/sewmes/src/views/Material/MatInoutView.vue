@@ -26,7 +26,6 @@ const userColumns = [
 },
   { title: "자재코드", field: "mat_code", editor: "input" },
   { title: "자재명", field: "mat_name", hozAlign: "left", sorter: "number" },
-  { title: "LOT", field: "lot", hozAlign: "left", formatter: "link" },
   { title: "공급처", field: "company", hozAlign: "left"},
   { title: "수량", field: "qty", hozAlign: "left"},
   { title: "유형", field: "category", hozAlign: "left"},
@@ -58,7 +57,7 @@ const getSelectedRows = (tableRef) => {
         <!-- 상단 검색 영역 (변경 없음) -->
         <div class="row searchbox mb-3">
           <div class="col-md-2">
-            <label class="form-label">LOT</label>
+            <label class="form-label">자재코드</label>
             <input type="text" class="form-control" v-model="searchField1">
           </div>
           <div class="col-md-2">

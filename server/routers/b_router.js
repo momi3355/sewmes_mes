@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const matOrderService = require('../services/Material/matOrder.js');
 const matCheckService = require('../services/Material/matCheck.js');
-const checkedMatService = require('../services/Material/matCheckView.js')
+const checkedMaterialService = require('../services/Material/matCheckView.js')
 const companyService = require('../services/Material/company.js');
 
 
@@ -38,7 +38,7 @@ router.get("/matquality", async (req, res) => {
 
 router.get("/matcheckview", async (req, res) => {
   try {
-    const result = await checkedMatService.checkedMaterialList();
+    const result = await checkedMaterialService.checkedMaterialList();
     res.send(result);
   } catch (err) {
     console.error(err);
@@ -85,9 +85,25 @@ router.post("/material/complete-check", async (req, res) => {
   }
 });
 
+router.get("/material/matcheckdetail/:inbound_check_code", async (req, res) => {
+  try {
+    // URL의 :inbound_check_code 파라미터 값을 가져옵니다.
+    const { inbound_check_code } = req.params;
+    
+    // 이전에 만들어둔 matCheckView.js 서비스의 함수를 호출합니다.
+    const result = await checkedMaterialService.getCheckDetailInfo(inbound_check_code);
+    
+    // 조회된 결과를 프론트로 보냅니다.
+    res.send(result);
+  } catch (err) {
+    console.error("상세 정보 조회 라우터 오류:", err);
+    res.status(500).send({ message: "상세 정보 조회 중 오류 발생" });
+  }
+});
+
 router.get("/material/matcheckview", async (req, res) => {
   try {
-    const result = await checkedMatService.checkedMaterialList();
+    const result = await checkedMaterialService.checkedMaterialList();
     res.send(result);
   } catch (err){
     res.status(500).send({ message: "완료 목록 조회 중 오류 발생" });

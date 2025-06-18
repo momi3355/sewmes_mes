@@ -122,13 +122,6 @@ const getSelectedRows = (tableRef) => {
 };
 
 const handleCheckComplete = async (checkData) => {
-
-  console.log("==============================================");
-  console.log("서버로 전송하기 직전의 최종 데이터 (checkData):");
-  console.log(JSON.stringify(checkData, null, 2)); // 객체를 예쁘게 출력
-  console.log("==============================================");
-   console.log("typeof checkData.qualified_qty:", typeof checkData.qualified_qty);
-  console.log("typeof checkData.inbound_check_code:", typeof checkData.inbound_check_code);
   if (checkData.details && typeof checkData.details.color !== 'undefined') {
     console.log("typeof checkData.details.color:", typeof checkData.details.color);
   }
@@ -143,14 +136,6 @@ const handleCheckComplete = async (checkData) => {
     } 
   } catch(error){
       console.error('검사 결과 저장 API 호출 오류', error);
-      if(error.response){
-        console.error('에러 응답 데이터: ', error.response.data);
-        console.error('에러 응답 상태: ', error.response.status);
-      }else if(error.request){
-        console.error('응답 없음: ', error.request);
-      }else{
-        console.error('요청 설정 오류: ', error.message);
-      }
       alert('서버에 저장하는 도중 오류가 발생했습니다.');
     }
   };
@@ -164,7 +149,10 @@ const handleCheckComplete = async (checkData) => {
     }
   };
 
-
+function refreshPage() {
+  location.reload()
+  loadData?.()
+};
 </script>
 
 <template>
@@ -232,7 +220,7 @@ const handleCheckComplete = async (checkData) => {
     :checkData="selectedMaterial"
     :userInfo="userInfo"
     @close="isTestModalOpen = false"
-    @saved="handleAfterTestSaved"
+    @refresh="refreshPage"
   />
 </template>
 <style scoped>
@@ -242,7 +230,7 @@ const handleCheckComplete = async (checkData) => {
  .searchbox{
   background-color: #FFFFFF;
   border-radius: 1rem;
-  margin: 30px;
+  margin: 0px;
  }
  .btn{
   padding: 10px;
@@ -275,5 +263,27 @@ const handleCheckComplete = async (checkData) => {
   height: 100%;
   opacity: 0; 
   cursor: pointer;
+}
+.form-label {
+  font-size: large;
+  margin: 10px;
+  margin-top: 12px;
+}
+.mb-3 {
+  height: 120px;
+}
+.form-control {
+  margin-left: 5px;
+}
+.btn.btn-secondary.me-2 {
+  margin: 13px;
+  width: 80px;
+}  
+.btn.btn-primary {
+  margin: 13px;
+  width: 60px;
+}
+.col-md-2 {
+  padding-bottom: 15px;
 }
 </style>
