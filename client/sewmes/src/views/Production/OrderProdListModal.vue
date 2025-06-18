@@ -21,7 +21,8 @@ const modalTableColumns = [
     { title: "품번", field: "prodCode", width: 150 },
     { title: "품명", field: "prodName", width: 150 },
     { title: "주문수량", field: "totalQty", width: 150 },
-    { title: "납기일자", field: "deadDate", width: 150 }
+    { title: "납기일자", field: "deadDate", width: 150 },
+    { title: "주문코드", field: "orderCode", width: 150 }
 ];
 
 const fetchOrderProdList = async () => {
@@ -33,6 +34,7 @@ const fetchOrderProdList = async () => {
         orderProdList.value = result.data.map((item, idx) => ({
         rowNum: idx + 1,
         orderDetailCode: item.order_detail_code,
+        orderCode: item.order_code,
         prodCode: item.prod_code,
         prodName: item.prod_name,
         deadDate: formatDate(item.dead_date),
@@ -139,7 +141,7 @@ const tabulatorEvent = [
     padding: 20px;
     border-radius: 8px;
     width: 80%; /* 모달 너비 조절 */
-    max-width: 900px; /* 최대 너비 설정 */
+    max-width: 1000px; /* 최대 너비 설정 */
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
     display: flex;
     flex-direction: column;

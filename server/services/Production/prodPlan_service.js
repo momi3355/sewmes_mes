@@ -63,10 +63,55 @@ const findOrderProdList = async ({
   console.log(finalSql);
   return await mariadb.directQuery(finalSql, params);
 };
+// 생산계획 저장
+const saveProdPlans = async (plans) => {
+  const conn = await mariadb.getConnection();
+  try {
+    await conn.beginTransaction();
 
+    for (const plan of plans) {
+      const {
+        prodPlanCode, orderDetailCode, prodCode,
+        prodQty, startDate, endDate, empNum
+      } = plan;
+
+      if (!prodCode || !prodQty || !startDate || !endDate) continue;
+
+      if (!prodPlanCode) {
+        // 신규 코드 생성
+        const [maxResult] = await conn.query(sqlList.getMaxProdPlanCode);
+        const nextCode = maxResult.max_code ? maxResult.max_code + 1 : 1;
+        const newCode = `PP${String(nextCode).padStart(5, '0')}`;
+
+        await conn.query(sqlList.insertProdPlan, [
+          newCode, orderDetailCode, prodCode, prodQty, startDate, endDate, empNum
+        ]);
+
+        // 주문상세 상태 업데이트
+        if (orderDetailCode) {
+          await conn.query(sqlList.updateOrderDetailState, [orderDetailCode]);
+        }
+      } else {
+        // 기존 수정
+        await conn.query(sqlList.updateProdPlan, [
+          prodCode, prodQty, startDate, endDate, empNum, prodPlanCode
+        ]);
+      }
+    }
+
+    await conn.commit();
+    return { success: true };
+  } catch (err) {
+    await conn.rollback();
+    throw err;
+  } finally {
+    conn.release();
+  }
+};
 
 
 module.exports ={
   findProdPlanByConditions,
-  findOrderProdList
+  findOrderProdList,
+  saveProdPlans
 };

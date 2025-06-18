@@ -11,10 +11,12 @@ const selectProdPlanByConditions = `
     o.total_qty,
     pp.prod_qty,
     pp.emp_num,
+    e.emp_name,
     pp.complete
   FROM t_prod_plan pp
   LEFT JOIN t_order_detail o ON pp.order_detail_code = o.order_detail_code
   LEFT JOIN t_product p ON pp.prod_code = p.prod_code
+  LEFT JOIN t_employees e ON pp.emp_num = e.emp_num
   WHERE 1 = 1
         /**조건절**/
   ORDER BY pp.start_date DESC`;
@@ -24,6 +26,7 @@ const selectOrderProdList =`
   SELECT 
     od.order_detail_code,
     od.prod_code,
+    od.order_code,
     p.prod_name,
     od.total_qty,
     od.dead_date
@@ -32,9 +35,29 @@ const selectOrderProdList =`
   WHERE 1 = 1
         /**조건절**/
   ORDER BY od.order_date DESC`;
-
+// 생산계획 저장 SQL문 집합
+const getMaxProdPlanCode = `
+  SELECT MAX(CAST(SUBSTRING(prod_plan_code, 3) AS UNSIGNED)) AS max_code 
+  FROM t_prod_plan`;
+const insertProdPlan = `
+  INSERT INTO t_prod_plan (
+    prod_plan_code, order_detail_code, prod_code,
+    prod_qty, start_date, end_date, reg_date, complete, emp_num
+  ) VALUES (?, ?, ?, ?, ?, ?, NOW(), '1a2a', ?)`;
+const updateProdPlan = `
+  UPDATE t_prod_plan SET
+    prod_code = ?, prod_qty = ?, start_date = ?, end_date = ?, emp_num = ?
+  WHERE prod_plan_code = ?`;
+const updateOrderDetailState = `
+  UPDATE t_order_detail 
+  SET state = '0n2n' 
+  WHERE order_detail_code = ?`;
 
 module.exports ={
   selectProdPlanByConditions,
-  selectOrderProdList
+  selectOrderProdList,
+  getMaxProdPlanCode,
+  insertProdPlan,
+  updateProdPlan,
+  updateOrderDetailState
 };

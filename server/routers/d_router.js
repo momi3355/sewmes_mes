@@ -175,6 +175,17 @@ router.get('/prodPlanList', async (req, res)=>{
     res.status(500).send({ message: "검색 중 오류 발생" });
   }
 });
+// 생산계획 저장
+router.post('/saveProdPlans', async (req, res) => {
+  try {
+    const plans = req.body.plans;
+    const result = await prodPlanService.saveProdPlans(plans);
+    res.send({ message: '저장 성공', result });
+  } catch (err) {
+    console.error("저장 중 오류:", err);
+    res.status(500).send({ message: '저장 실패', error: err.message });
+  }
+});
 
 
 // ==============================================================
