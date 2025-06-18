@@ -4,6 +4,7 @@ import { useStore } from "vuex";
 import { ref, nextTick  } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
 import OrderProdListModal from "./OrderProdListModal.vue";
+import Swal from 'sweetalert2';
 
 // tabulatorCardRef 컴포넌트의 ref 선언
 const tabulatorCardRef = ref(null);
@@ -95,7 +96,7 @@ const saveProcess = async () => {
 
   const selectedRows = tableInstance.getSelectedData();
   if (selectedRows.length === 0) {
-    alert("저장할 데이터를 선택해주세요.");
+    Swal.fire({ title: "미선택", text: "저장할 데이터를 선택해주세요", icon: "error" });
     return;
   }
 
@@ -113,10 +114,11 @@ const saveProcess = async () => {
   try {
     await axios.post('/api/saveProdPlans', { plans: payload });
     alert("저장 완료");
+    Swal.fire({ title: "저장 완료", text: "저장이 완료 되었습니다.", icon: "success" });
     await searchProdPlan(); // 목록 갱신
   } catch (err) {
     console.error("저장 실패:", err);
-    alert("저장 중 오류 발생");
+    Swal.fire({ title: "오류", text: "저장 중 오류 발생", icon: "error" });
   }
 };
 // 공통코드 변환환
@@ -136,7 +138,7 @@ const prodPlanColumns = [
   { title: "No", field: "rowNum", width: 80, cssClass: 'non-editable-cell' },
   { title: '주문상세번호', field: 'orderDetailCode', width: 150, cssClass: 'non-editable-cell' },
   { title: '품번', field: 'prodCode', editor: "input", width: 150 },
-  { title: '품명', field: 'prodName', editor: "input", width: 300 },
+  { title: '품명', field: 'prodName', width: 300, cssClass: 'non-editable-cell' },
   { title: '시작일', field: 'startDate', editor: "input", width: 150 },
   { title: '종료일', field: 'endDate', editor: "input", width: 150 },
   { title: '주문수량', field: 'orderQty', width: 150, cssClass: 'non-editable-cell' },
