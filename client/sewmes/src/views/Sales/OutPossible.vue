@@ -150,13 +150,17 @@ const outcompanyList = async() => {
   const tabulatorOptionsDetail = {};
 
   // 모달창
-  const openModal = () => {
-    ModalState.value = true;
-  };
+const openModal = () => {
+  if (!selectCpcode.value) {
+    alert("업체를 선택하세요.");
+    return;
+  }
+  ModalState.value = true;
+};
 
-  const closeModal = () => {
-    ModalState.value = false;
-  };
+const closeModal = () => {
+  ModalState.value = false;
+};
 
   // 모달에서 선택한 제품 데이터
 const getlist = (modaldata) => {
@@ -216,6 +220,7 @@ const getlist = (modaldata) => {
     }
 
     alert('저장되었습니다.');
+    location.reload();
   } catch (err) {
     console.error('저장 중 오류 발생:', err);
     alert('저장에 실패했습니다.');

@@ -6,10 +6,22 @@ const companyService = require(`../services/Sales/companyList.js`);
 const loginService = require(`../services/Sales/login.js`);
 const outProdCompanyService = require(`../services/Sales/outsouOrderList.js`);
 
-// 주문 전체 조회
+// 주문서 관리(조회) 목록 출력 라우터
 router.get('/orderList', async (req, res) => {
   try {
     const orderList = await orderService.findAll();
+    res.send(orderList);
+  } catch (err) {
+    console.error('주문 조회 중 오류 발생:', err);
+    res.status(500).send('서버 오류');
+  }
+});
+
+// 주문서 관리(조회) 단건 상세조회 라우터
+router.get('/orderDetailList/:code', async (req, res) => {
+  try {
+    let order_code = req.params.code;
+    const orderList = await orderService.findOrderInfo(order_code);
     res.send(orderList);
   } catch (err) {
     console.error('주문 조회 중 오류 발생:', err);

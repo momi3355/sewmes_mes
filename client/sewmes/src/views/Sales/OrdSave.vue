@@ -53,14 +53,14 @@
         v-model="deadDate">
         </div>
   
-        <div class="col-md-3 fw-bold">영업 담당자 연락처:</div>
-        <div class="col-md-9">
-          <input type="text" class="form-control" v-model="salesTel" />
-        </div>
-  
         <div class="col-md-3 fw-bold">영업 담당자:</div>
         <div class="col-md-9">
           <input type="text" class="form-control" v-model="salesManager" />
+        </div>
+        
+        <div class="col-md-3 fw-bold">영업 담당자 연락처:</div>
+        <div class="col-md-9">
+          <input type="text" class="form-control" v-model="salesTel" />
         </div>
   
         <div class="col-md-3 fw-bold">비고:</div>
@@ -326,6 +326,7 @@ const saveOrder = async () => {
 
     if (res.data.success) {
       alert('주문서가 성공적으로 저장되었습니다.');
+      location.reload();
     } else {
       alert('저장에 실패했습니다.');
     }
