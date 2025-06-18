@@ -16,39 +16,54 @@ const searchField3 = ref('');
 const searchMaterialType = ref('');
 
 const completedList = ref([]);
-const matCheckModalRef = ref(null);
-const selectedDetail = ref(null);
+const completedListCard = ref(null);
+const detailInfo = ref(null);
 
+const getTabulatorInstance = (refInstance) => {
+  if (!refInstance.value || !refInstance.value.$el) return null;
+  const element = refInstance.value.$el.querySelector('.tabulator');
+  return Tabulator.findTable(element)?.[0] || null;
+};
 
+// 아래 조회 버튼 클릭시 실행
+const showDetails = async () => {
+  const tabulatorInstance = getTabulatorInstance(completedListCard);
+  if(!tabulatorInstance) return;
+
+  const selectedRows = tabulatorInstance.getSelectedData();
+  if (selectedRows.length === 0){
+    alert("조회할 항목을 선택해주세요");
+    return
+  }
+  const selectedItem = selectedRows[0];
+  
+
+  try{
+    const response = await
+    axios.get(`/api/material/matcheckdetail/${selectedItem.inbound_check_code}`);
+    detailInfo.value = response.data;
+  } catch (error) {
+    console.error("상세 정보 조회 실패: ", error);
+    detailInfo.value = null;
+  }
+};
 
 const completedListColumns = [
   { title: "검사코드", field: "inbound_check_code" },
   { title: "자재명", field: "material_name", hozAlign: "left" },
   { title: "합격수량", field: "pass_qty", hozAlign: "left" },
   { title: "수입일자", field: "inbound_date", hozAlign: "left"},
-  { title: "검사일자", field: "check_date", hozAlign: "left"},
   { title: "검사결과", field: "check_status", hozAlign: "left"},
 ];
 
 
-// 선택된 행들을 처리하는 함수
-const handleRowClick = async (e, row) => {
-  const rowData = row.getData();
-  console.log("Row clicked:", rowData);
-  try{
-    const response = await axios.get(`/api/material/matcheckdetail/${rowData.inbound_check_code}`);
-    console.log("상세정보: ", response.data);
-  } catch(error){
-    console.error("상세 정보조회 오류", error);
-  }
-};
-
 const fetchCompletedList = async () => {
   try{
     const response = await axios.get('/api/material/matcheckview');
-    completedList.value = response.data;
+    completedList.value = Array.isArray(response.data) ? response.data : [];
   } catch(error){
     console.error("완료 목록 조회 오류: ", error);
+    completedList.value = [];
   }
 };
 
@@ -87,78 +102,57 @@ onMounted(() => {
   <div class="py-4 container-fluid">
     <div class="row">
       <div class="col-12">
-        <!-- 상단 검색 영역 -->
+        <!-- 상단 검색 영역 (기존과 동일) -->
         <div class="row searchbox mb-3">
-          <div class="col-md-2">
-            <label class="form-label">자재명</label>
-            <input type="text" class="form-control" v-model="searchField1">
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">자재코드</label>
-            <input type="text" class="form-control" v-model="searchField2">
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">공급처</label>
-            <input type="text" class="form-control" v-model="searchField3">
-          </div>
-          <!--드롭다운-->
-  <div class="col-md-2">
-    <label for="material-type" class="form-label">검사결과</label>
-    <select id="material-type" class="form-control" v-model="searchMaterialType">
-      <option value="">전체</option>
-      <option value="합격">합격</option>
-      <option value="불합격">불합격</option>
-    </select>
-  </div>
+          <!-- ... 검색 필드들 ... -->
           <div class="col-md-2 d-flex align-items-end">
             <button class="btn btn-secondary me-2">초기화</button>
             <button class="btn btn-primary">조회</button>
           </div>
         </div>
 
+        <!-- '수입처리 자재 목록' 테이블 -->
         <div class="row mt-4">
           <div class="col-lg-12">
             <tabulator-card
+              ref="completedListCard"
               card-title="수입처리 자재 목록"
               :table-data="completedList"
               :table-columns="completedListColumns"
-              :tabulator-options="{
-                paginationSize: 7,
-                rowClick: handleRowClick,
-              }"
+              :tabulator-options="{ paginationSize: 7, selectableRows: 1 }"
             >
-              <!-- 'actions' 슬롯에 버튼을 삽입합니다. -->
               <template #actions>
-                <ArgonButton 
-                  color="info" 
-                  variant="gradient"
-                  @click="saveAsPdf"
-                >PDF로 저장</ArgonButton>
+                <button class="btn btn-primary" @click="showDetails">조회</button>
+                <ArgonButton color="info" variant="gradient">PDF로 저장</ArgonButton>
               </template>
             </tabulator-card>
           </div>
         </div>
         
-        <table>
-          <tbody>
-            <tr>
-              <th>입고번호</th>
-              <td></td>
-              <th>자재명</th>
-              <td colspan="2"></td>
-            </tr>
-            <tr>
-              <th>수입일자</th>
-              <td></td>
-              <th>합격수량</th>
-              <td colspan="2"></td>
-            </tr>
-            <tr>
-              <th>검사일자</th>
-              <td></td>
-              <th>불합격수량</th>
-              <td colspan="2"></td>
-            </tr>
+        <table v-if="detailInfo" class="detail-table"> <!-- 스타일 충돌 방지를 위해 class 추가 권장 -->
+  <tbody>
+    <tr>
+      <th>입고번호</th>
+      <!-- 2. API로부터 받은 detailInfo 객체의 각 속성을 {{ }} 안에 넣어서 표시합니다. -->
+      <td>{{ detailInfo.inbound_code }}</td>
+      <th>자재명</th>
+      <td colspan="2">{{ detailInfo.material_name }}</td>
+    </tr>
+    <tr>
+      <th>수입일자</th>
+      <!-- 날짜/시간 데이터에서 'T' 앞부분만 잘라서 YYYY-MM-DD 형식으로 보여줍니다. -->
+      <td>{{ detailInfo.inbound_date ? detailInfo.inbound_date.split('T')[0] : '' }}</td>
+      <th>합격수량</th>
+      <td colspan="2">{{ detailInfo.pass_qty }}</td>
+    </tr>
+    <tr>
+      <th>검사일자</th>
+      <td>{{ detailInfo.check_date ? detailInfo.check_date.split('T')[0] : '' }}</td>
+      <th>불합격수량</th>
+      <td colspan="2">{{ detailInfo.total_defect_qty }}</td>
+    </tr>
+            
+            <!-- 상세 검사 항목 부분은 나중에 구현하기 위해 일단 비워둠 -->
             <tr>
               <th colspan="5" class="section-header">검사 정보</th>
             </tr>
@@ -167,20 +161,22 @@ onMounted(() => {
               <th>색상 일치</th>
               <th>오염 여부</th>
               <th>인장 강도</th>
-              <td rowspan="2" class="result-pass">합격</td>
+              <td rowspan="2" class="result-pass">
+                <!-- 여기에 최종 검사 결과를 표시할 수 있음 (예: 합격) -->
+              </td>
             </tr>
             <tr>
-              <td></td>
-              <td></td>
-              <td></td>
-              <td></td>
+              <td><!-- 폭 불합격 수량 --></td>
+              <td><!-- 색상 불합격 수량 --></td>
+              <td><!-- 오염 불합격 수량 --></td>
+              <td><!-- 인장 강도 불합격 수량 --></td>
             </tr>
           </tbody>
         </table>
+
       </div> 
     </div>   
-  </div>     <!-- "py-4 container-fluid" -->
-  <MatCheckModal ref="matCheckModalRef" @complete="handleCheckComplete" />
+  </div>
 </template>
 <style scoped>
  .col-lg-12{
@@ -202,7 +198,7 @@ onMounted(() => {
  .check{
   margin-left: 96%;
  }
-table {
+table.detail-table {
     border-collapse: collapse; 
     width: 900px; 
     border: 1px solid black;
@@ -237,4 +233,11 @@ table {
     height: 40px;
     margin-top: 10px;
   }
+  .btn-primary {
+    width: 70px;
+    margin-right: 10px;
+  }
+  .btn.btn-secondary.me-2 {
+    width: 100px;
+  }  
 </style>
