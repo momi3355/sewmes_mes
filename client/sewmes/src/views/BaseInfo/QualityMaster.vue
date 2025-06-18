@@ -151,6 +151,10 @@ if (!testName || !testTarget) {
 
 };
   
+const tabulatorOptions = {
+    selectableRows: 1, //행선택가능
+    selectableRowsPersistence: false, //페이지변경시 선택상태 유지 안함
+};
 
 const tabulatorEvents = [
   {
@@ -219,8 +223,13 @@ onMounted(() => {
     <div class="content-area d-flex gap-3">
       <!-- 좌측 목록 -->
       <div class="col-md-7 d-flex flex-column overflow-auto">
-        <tabulator-card class="flex-grow-1" card-title="품질 기준 목록" :table-data="qualityList"
-          :table-columns="qualityColumns" :on="tabulatorEvents" height="576px" />
+        <tabulator-card class="flex-grow-1" 
+        card-title="품질 기준 목록" 
+        :table-data="qualityList"
+        :table-columns="qualityColumns" 
+        :on="tabulatorEvents" 
+        :tabulatorOptions="tabulatorOptions"
+        height="576px" />
       </div>
 
       <!-- 우측 상세 + 이력 -->
@@ -228,7 +237,7 @@ onMounted(() => {
         <!-- 상세 카드 -->
         <div class="card mb-2 detail-card">
           <div class="card-header header-fixed mb-3 mt-3">
-            <span>검사항목 상세</span>
+            <h5 class="mt-0 text-start">검사항목 상세</h5>
             <button class="btn btn-sm btn-success" @click="saveQualityMaster">저장</button>
           </div>
           <div class="card-body detail-body">
