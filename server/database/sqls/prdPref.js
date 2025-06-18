@@ -54,6 +54,7 @@ const updateWorkProcess=`
  WHERE work_process_code= ?
 `;
 
+//반제품 입고전 
 //반제품 입고 
 const inSemiPrdForProcess=`
  INSERT INTO t_semi_prod_in (
@@ -68,11 +69,12 @@ VALUES(
         ?
         ,NOW()
         ,?
-        ,?
+        ,'0y1y'
         ,?
         ,?
 )
 `
+
 
 //외주발주테이블 입고
 const inOunSoInboundForProcess=
@@ -84,20 +86,41 @@ INSERT INTO t_outsou_order(
                                 ,order_qty
                                 ,release_state
                                 ,reg_date
-                                ,cp_code
+                                 ,comp_code
                            )
 VALUES(
                                 ?
                                 ,?
                                 ,?
                                 ,?
-                                ,release_state
-                                ,reg_date
-                                ,cp_code
+                                ,'0o1o'
+                                ,NOW()
+                                ,NULL
+
 
 
 )
 `
+// // --- 새로운 쿼리: `v_bom_codes` 뷰를 사용하여 완제품 코드로부터 봉제/재단 반제품 코드 조회 ---
+    // `details.prod_code`로 가져옴 
+ const getSemiProdCodesFromBomView= `
+        SELECT
+            bongban_code,
+            jaeban_code
+        FROM v_bom_codes
+        WHERE wan_code = ?;
+    `;
+    
+const getMaterialHoldForRelease=`
 
 
-module.exports={insertPrdPref,selectWorkProcess,updateWorkProcess,inSemiPrdForProcess}
+`
+module.exports={
+        inOunSoInboundForProcess,
+        getSemiProdCodesFromBomView,
+        insertPrdPref,
+        selectWorkProcess,
+        updateWorkProcess,
+        inSemiPrdForProcess,
+        getMaterialHoldForRelease
+}

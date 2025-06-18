@@ -37,7 +37,7 @@ const getProductionPlans=async()=>{
     }
 };
 
-//작업지시조회 (여기 수정)
+//작업지시조회 
 const getWorkInstAll= async(searchParams = {}) => { // searchParams를 인자로 받도록 수정
     try{
         let sql = sqlList['allworkInstList']; // sqlList에서 기본 SQL 쿼리 가져옴
@@ -204,10 +204,10 @@ const saveWorkInstructions = async (workInstructions) => {
 
                         const availableLots = await conn.query(sqlList['selectInboundMaterialsForFab'], [material_code]);
 
-                        if (!availableLots || availableLots.length === 0) {
-                            // 실제 재고가 없어도 홀드를 생성하지 못할 수 있으므로, 재고 부족 메시지는 유효합니다.
-                            throw new Error(`FAB 자재 '${material_code}'에 대한 유효한 재고가 부족합니다. (재고 없음)`);
-                        }
+                        // if (!availableLots || availableLots.length === 0) {
+                        //     // 실제 재고가 없어도 홀드를 생성하지 못할 수 있으므로, 재고 부족 메시지는 유효합니다.
+                        //     throw new Error(`FAB 자재 '${material_code}'에 대한 유효한 재고가 부족합니다. (재고 없음)`);
+                        // }
 
                         for (const lot of availableLots) {
                             if (remainingQtyToAllocate <= 0) break; // 필요한 수량을 모두 할당했으면 종료
@@ -245,11 +245,11 @@ const saveWorkInstructions = async (workInstructions) => {
                             }
                         }
 
-                        if (remainingQtyToAllocate > 0) {
-                            // 필요한 수량을 모두 할당하지 못했을 경우 (홀드 부족 메시지)
-                            // 실제 재고가 부족한 상황이므로 여전히 오류로 처리해야 합니다.
-                            throw new Error(`FAB 자재 '${material_code}'의 재고가 ${remainingQtyToAllocate} 부족하여 홀드할 수 없습니다. (작업지시: ${currentWorkInstCode})`);
-                        }
+                        // if (remainingQtyToAllocate > 0) {
+                        //     // 필요한 수량을 모두 할당하지 못했을 경우 (홀드 부족 메시지)
+                        //     // 실제 재고가 부족한 상황이므로 여전히 오류로 처리해야 합니다.
+                        //     throw new Error(`FAB 자재 '${material_code}'의 재고가 ${remainingQtyToAllocate} 부족하여 홀드할 수 없습니다. (작업지시: ${currentWorkInstCode})`);
+                        // }
 
                     } else {
                         // 일반 자재 (부자재) 처리: LOT 할당 없이 수량만 홀드

@@ -4,6 +4,7 @@ import TabulatorCard from "@/examples/Cards/TabulatorCard.vue"; // 이 경로가
 import ProductionPlanModal from "./ProductionPlanModal.vue";
 import axios from 'axios';
 import moment from 'moment';
+import Swal from 'sweetalert2';
 // 실제 작업지시 데이터
 const workInstData = ref([]); //초기에는 빈값
 
@@ -184,11 +185,19 @@ const saveWorkInstructions = async (workInstructionsToSave) => { // 인자 이�
         const response = await axios.post('/api/workInstMngment/save', workInstructionsToSave);
 
         if (response.data.success) {
-            alert("작업지시가 성공적으로 저장되었습니다!");
+            Swal.fire({ // 성공 알림
+                title: "저장 성공",
+                text: "작업지시가 성공적으로 저장되었습니다!",
+                icon: "success"
+            });
             await fetchWorkInstructions();
 
         } else {
-            alert(`작업지시 저장 실패: ${response.data.message}`);
+            Swal.fire({ // 실패 알림
+                title: "저장 실패",
+                text: `작업지시 저장 실패: ${response.data.message}`,
+                icon: "error"
+            });
             console.error("작업지시 저장 실패:", response.data.message);
         }
 
