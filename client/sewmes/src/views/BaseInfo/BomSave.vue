@@ -182,6 +182,24 @@ const bomClickhandler = async () => {
     return;
   }
 
+  // '[
+  //    {"need": 1.500, "item_type": "0w1w", "item_code": "ITEMA001"},
+  //    {"need": 2.250, "item_type": "0w2w", "item_code": "ITEMB002"},
+	//    {"need": 0.750, "item_type": "0w1w", "item_code": "ITEMC003"}
+  // ]';
+  //TODO: 단위를 보고 소수점이나 숫자를 유효성검사.
+  let bomDetailInfo = bomTable.map(e => {
+    let detailInfo = {
+      need: e.need,
+      item_type: e.item_type.includes("0k") ? bomtype.value[1].detail_code : bomtype.value[0].detail_code,
+      item_code: e.item_code,
+    };
+    if (e?.bom_detail_code) {
+      detailInfo.bom_detail_code = e.bom_detail_code
+    }
+    return detailInfo;
+  });
+
   for (const bom of bomDetailInfo) {
     if (!Number(bom.need)) {
       Swal.fire({
@@ -193,33 +211,50 @@ const bomClickhandler = async () => {
     }
   } 
 
-  // '[
-  //    {"need": 1.500, "item_type": "0w1w", "item_code": "ITEMA001"},
-  //    {"need": 2.250, "item_type": "0w2w", "item_code": "ITEMB002"},
-	//    {"need": 0.750, "item_type": "0w1w", "item_code": "ITEMC003"}
-  // ]';
-  //TODO: 단위를 보고 소수점이나 숫자를 유효성검사.
-  const bomDetailInfo = bomTable.map(e => {
-    return {
-      need: e.need,
-      item_type: e.item_type.includes("0k") ? bomtype.value[1].detail_code : bomtype.value[0].detail_code,
-      item_code: e.item_code,
-    };
-  });
-
   const bomInfo = {
     prod_code: prodCode,
     user_code: user.emp_num,
     bom_info: bomDetailInfo,
   };
 
-  const query = await axios.post("/api/bomDetail", bomInfo);
-  if (query?.data?.affectedRows) {
-    Swal.fire({
-      title: "성공",
-      text: "BOM정보가 추가되었습니다.",
-      icon: "success"
+  if (detailFields.value.bom_code) {
+    //put
+    // console.log({
+    //   bomCode: detailFields.value.bom_code,
+    //   bomInfo: bomDetailInfo,
+    // });
+    bomDetailInfo = bomDetailInfo.map(e => {
+      return {
+        bom_detail_code: e.bom_detail_code ? e.bom_detail_code : null,
+        need: e.need,
+        item_type: e.item_type,
+        item_code: e.item_code
+      };
     });
+
+    const bomUpdate = {
+      bomCode: detailFields.value.bom_code,
+      bomInfo: bomDetailInfo,
+    }
+    console.log(bomUpdate);
+    const query = await axios.put("/api/bomDetail", bomUpdate);
+    if (query?.status === 200) {
+      Swal.fire({
+        title: "성공",
+        text: "BOM정보가 수정되었습니다.",
+        icon: "success"
+      });
+    }
+  } else {
+    // post
+    const query = await axios.post("/api/bomDetail", bomInfo);
+    if (query?.data?.affectedRows) {
+      Swal.fire({
+        title: "성공",
+        text: "BOM정보가 추가되었습니다.",
+        icon: "success"
+      });
+    }
   }
 }
 
@@ -251,6 +286,17 @@ const handleAfterModalSaved = async (prdData) => {
 
   detailFields.value.prod_name = selectRow.prod_name;
   detailFields.value.prod_code = selectRow.prod_code;
+
+  const tabulator = bom_table.value.getTabulator();
+  await tabulator.setData("/api/bomDetail", {
+      item_code: selectRow.prod_code,
+  });
+  bomData.value = tabulator.getData();
+  console.log(bomData.value);
+
+  if (bomData.value[0]?.bom_code)
+    detailFields.value.bom_code = bomData.value[0].bom_code;
+  //bom 없으면 pass
 };
 
 const findProd = async () => {
@@ -382,6 +428,7 @@ onMounted(async () => {
         <tabulator-card
           ref="bom_table"
           card-title="BOM 상세 정보"
+          height="280px"
           :table-data="bomData"
           :table-columns="bomColumns"
           :tabulator-options="bomOptions"
@@ -391,6 +438,7 @@ onMounted(async () => {
         <tabulator-card
           ref="item_table"
           card-title="품목 리스트"
+          height="540px"
           :table-data="itemData"
           :table-columns="itemColumns"
           :tabulator-options="itemOptions"

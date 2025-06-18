@@ -269,8 +269,6 @@ onMounted(async() => {
             </option>
           </select>
         </div>
-      </div>
-      <div class="row mb-3">
         <div class="col-md-2">
           <label class="form-label">카테고리</label>
           <select class="form-select" v-model="searchData.category">
