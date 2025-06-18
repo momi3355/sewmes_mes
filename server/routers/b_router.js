@@ -6,9 +6,9 @@ const checkedMatService = require('../services/Material/matCheckView.js')
 const companyService = require('../services/Material/company.js');
 
 
-router.get("/matorder", async (req, res) => {
+router.get("/matorderview", async (req, res) => {
   try {
-    const result = await matOrderService.getMaterialOrderList();
+    const result = await matOrderService.getMaterialList();
     res.send(result);
   } catch (err) {
     console.error(err);
@@ -18,7 +18,17 @@ router.get("/matorder", async (req, res) => {
 
 router.get("/matcheck", async (req, res) => {
   try {
-    const result = await matCheckService.getMaterialCheckList();
+    const result = await matCheckService.getMaterialCheckListView();
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "조회 중 오류 발생" });
+  }
+});
+
+router.get("/matquality", async (req, res) => {
+  try {
+    const result = await matCheckService.getMaterialQualityTest();
     res.send(result);
   } catch (err) {
     console.error(err);
@@ -29,6 +39,16 @@ router.get("/matcheck", async (req, res) => {
 router.get("/matcheckview", async (req, res) => {
   try {
     const result = await checkedMatService.checkedMaterialList();
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "조회 중 오류 발생"});
+  }
+});
+
+router.get("/matorder", async (req, res) => {
+  try {
+    const result = await matOrderService.getMaterialOrderList();
     res.send(result);
   } catch (err) {
     console.error(err);
@@ -74,16 +94,16 @@ router.get("/material/matcheckview", async (req, res) => {
   }
 });
 
-router.post("/material/start-check", async (req, res) => {
-  try {
-    // 발주 코드를 받아서 '검수 시작' 처리
-    const { material_order_code } = req.body;
-    const result = await matCheckService.startMaterialCheck(material_order_code);
-    res.send(result);
-  } catch (err) {
-    res.status(500).send({ success: false, message: "검수 시작 처리 중 오류" });
-  }
-});
+//router.post("/material/start-check", async (req, res) => {
+//  try {
+//    // 발주 코드를 받아서 '검수 시작' 처리
+//    const { material_order_code } = req.body;
+//    const result = await matCheckService.startMaterialCheck(material_order_code);
+//    res.send(result);
+//  } catch (err) {
+//    res.status(500).send({ success: false, message: "검수 시작 처리 중 오류" });
+//  }
+//});
 
 module.exports = router;
 

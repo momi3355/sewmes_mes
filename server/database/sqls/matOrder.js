@@ -1,5 +1,5 @@
 // 자재 발주 필요한 목록 조회
-const matorderList = `
+const materialList = `
   SELECT
     material_code,
     material_name,
@@ -12,6 +12,18 @@ const matorderList = `
   FROM
     v_material_order
 `;
+
+const materialOrderList = `
+SELECT material_order_code
+      ,material_code
+      ,material_order_date
+      ,deadline
+      ,cp_code
+      ,unit_price
+      ,total_price
+      ,order_qty
+FROM t_material_order
+ORDER BY material_order_code`;
 
 const createMatOrder = `
   INSERT INTO t_material_order
@@ -28,14 +40,13 @@ const createMatOrder = `
 `;
 
 const createInboundCheckShell = `
-  INSERT INTO t_matinbound_check 
-    (inbound_check_code, material_order_code, check_date, check_qty, pass_qty, emp_num)
-  VALUES 
-    (?, ?, NOW(), 0, 0, NULL) -- ✨ NULL 대신 NOW() 함수를 사용하여 현재 시간을 기록
+  INSERT INTO t_matinbound_check (inbound_check_code, material_order_code, check_qty, pass_qty, inbound_date)
+  VALUES (?, ?, ?, 0, NOW())
 `;
 
 module.exports = {
-  matorderList,
+  materialList,
+  materialOrderList,
   createMatOrder,
   createInboundCheckShell,
 }

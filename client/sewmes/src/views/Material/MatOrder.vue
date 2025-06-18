@@ -3,6 +3,7 @@
 import { ref, onMounted } from "vue";
 import { TabulatorFull as Tabulator } from "tabulator-tables";
 import axios from "axios";
+import Swal from 'sweetalert2';
 
 import ArgonButton from "@/components/ArgonButton.vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
@@ -17,7 +18,8 @@ const productTableCardRef = ref(null); // '발주 요청서' 테이블을 감싸
 // --- 2. Tabulator 컬럼 정의 (가장 안정적인 일반 상수 형태) ---
 
 const materialColumns = [
-  { formatter: "rowSelection", titleFormatter: "rowSelection", hozAlign: "center", headerSort: false, width: 60, cellClick: (e, cell) => cell.getRow().toggleSelect() },
+  { formatter: "rowSelection", titleFormatter: "rowSelection", hozAlign: "center",
+    headerSort: false, width: 60, cellClick: (e, cell) => cell.getRow().toggleSelect() },
   { title: "자재코드", field: "material_code", width: 150 },
   { title: "자재명", field: "material_name" },
   { title: "자재유형", field: "material_type" },
@@ -25,6 +27,8 @@ const materialColumns = [
 ];
 
 const productColumns = [
+  { formatter: "rowSelection", titleFormatter: "rowSelection", hozAlign: "center",
+    headerSort: false, width: 60, cellClick: (e, cell) => cell.getRow().toggleSelect() },
   { title: "자재명", field: "material_name", width: 250 },
   { title: "단위", field: "unit", width: 80 },
   { 
@@ -90,7 +94,7 @@ const getTabulatorInstance = (refInstance) => {
 
 const fetchMaterials = async () => {
   try {
-    const response = await axios.get('/api/matorder');
+    const response = await axios.get('/api/matorderview');
     materialData.value = Array.isArray(response.data) ? response.data : [];
   } catch (error) {
     console.error("자재 목록 로딩 오류", error);
@@ -141,6 +145,20 @@ const addSelectedMaterials = () => {
   materialTableInstance.deselectRow();
 };
 
+const delOrder = async () => {
+  const productTableInstance = getTabulatorInstance(productTableCardRef);
+  if (!productTableInstance) return;
+  const selectedData = productTableInstance.getSelectedRows();
+  if (selectedData?.length > 0) {
+    selectedData.forEach(e => {
+      if (e.getData()) {
+        const row = productData.value.filter(el => el.material_name !== e.getData().material_name);
+        if (row) productData.value = row;
+      }
+    });
+  }
+};
+
 const saveOrder = async () => {
   const productTableInstance = getTabulatorInstance(productTableCardRef);
   if (!productTableInstance) return;
@@ -148,14 +166,22 @@ const saveOrder = async () => {
   // Tabulator에서 현재 데이터를 직접 가져옵니다.
   const currentTableData = productTableInstance.getData();
   if (currentTableData.length === 0) {
-    alert("저장할 발주 요청서가 없습니다.");
+    Swal.fire({
+      title: "필수 입력 항목",
+      text: "저장할 발주 요청서가 없습니다.",
+      icon: "error"
+    });
     return;
   }
   
   // 유효성 검사
   for (const row of currentTableData) {
     if (!row.order_qty || !row.unit_price || !row.deadline || !row.company) {
-      alert(`'${row.material_name}'의 모든 필수 항목(주문수량, 단가, 납기일자, 공급처)을 입력/선택해주세요.`);
+      Swal.fire({
+        title: "필수 입력 항목",
+        text: "주문수량, 단가, 납기일자, 공급처을 입력해주세요.",
+        icon: "error"
+      });
       return;
     }
   }
@@ -169,17 +195,14 @@ const saveOrder = async () => {
     order_qty: p.order_qty,
   }));
   
-
-  try {
-    const response = await axios.post('/api/matorder/save', processedData);
-    alert(response.data.message);
-
-    const orderedMaterialCodes = processedData.map(p => p.material_code);
-    materialData.value = materialData.value.filter(material => !orderedMaterialCodes.includes(material.material_code));
-    productData.value = []; // 이 데이터를 비우면, :table-data 바인딩에 의해 테이블이 비워집니다.
-  } catch (error) {
-    console.error("저장 실패:", error);
-    alert(error.response?.data?.message || "저장에 실패했습니다.");
+  //console.log(processedData);
+  const response = await axios.post('/api/matorder/save', processedData);
+  if (response?.status === 200) {
+    Swal.fire({
+      title: "성공",
+      text: "자재 발주 되었습니다.",
+      icon: "success"
+    });
   }
 };
 
@@ -249,19 +272,10 @@ const updateCompanyColumnEditor = () => {
                 :table-data="productData"
                 :table-columns="productColumns"
               >
-               <template #actions>
-  <!-- 기존 ArgonButton은 잠시 주석 처리 -->
-  <!-- 
-  <ArgonButton class="savebtn" color="success" variant="gradient" @click="saveOrder">
-    저장
-  </ArgonButton> 
-  -->
-
-  <!-- ✨ 테스트를 위해 일반 button 태그로 변경 -->
-  <button class="btn btn-success" @click="saveOrder">
-    저장
-  </button>
-</template>
+                <template #actions>
+                  <button class="btn btn-secondary" @click="delOrder">삭제</button>
+                  <button class="btn btn-success" @click="saveOrder">저장</button>
+                </template>
               </tabulator-card>
             </div>
           </div>
@@ -274,11 +288,6 @@ const updateCompanyColumnEditor = () => {
   background-color: #ffffff;
   border-radius: 1rem;
   margin: 30px;
-}
-
-.btn {
-  padding: 10px;
-  margin: 0;
 }
 
 .btn.btn-secondary.me-2 {
