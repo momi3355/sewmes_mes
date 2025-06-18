@@ -8,8 +8,7 @@ const selectPrdReceive =
        cp_code,
        cp_name,
        cls,
-       address,
-       order_detail_code
+       address
 FROM v_product_receive
 WHERE 1 = 1
 `;

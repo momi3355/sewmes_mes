@@ -48,15 +48,15 @@ const findProdPlanByConditions = async ({
 
 // 주문제품목록 모달 서비스 =========================================
 const findOrderProdList = async ({
-  state
+  order_state
 }) => {
   let baseSql = sqlList.selectOrderProdList;
   const whereClauses = [];
   const params = [];
 
-  if (state) {
-    whereClauses.push("AND od.state = ?");
-    params.push(state);
+  if (order_state) {
+    whereClauses.push("AND od.order_state = ?");
+    params.push(order_state);
   }
 
   const finalSql = baseSql.replace("/**조건절**/", whereClauses.join("\n"));

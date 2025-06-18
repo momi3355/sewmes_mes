@@ -88,7 +88,7 @@ const orderAdd =
 `INSERT INTO t_order(
   order_code,
   total_price,
-  state,
+  order_state,
   total_qty
 ) 
 VALUES (?, ?, ?, ?)`

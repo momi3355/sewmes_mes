@@ -86,7 +86,7 @@ INSERT INTO t_outsou_order(
                                 ,order_qty
                                 ,release_state
                                 ,reg_date
-                                 ,comp_code
+                                 ,cp_code
                            )
 VALUES(
                                 ?
