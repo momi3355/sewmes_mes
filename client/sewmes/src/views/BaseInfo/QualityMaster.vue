@@ -13,8 +13,8 @@ let useYnDetail = ref([]);
 
 //품질기준정보 컬럼
 const qualityColumns = [
-  { title: "품질코드", field: "quality_code"},
-  { title: "검사명", field: "test_name"}, 
+  { title: "품질코드", field: "quality_code", width: 120},
+  { title: "검사명", field: "test_name", width: 160}, 
   {
     title: "대상품목",
     field: "test_target",
@@ -22,7 +22,8 @@ const qualityColumns = [
       const code = cell.getValue();
       const matched = testTargetCodeList.value.find(item => item.detail_code == code);
       return matched ? matched.detail_name : code;
-    }
+    }, 
+    width: 120
   },
   { title: "참조", field: "test_ref"},
   {
@@ -32,13 +33,14 @@ const qualityColumns = [
       const code = cell.getValue();
       const matched = useYnDetail.value.find(item => item.detail_code == code);
       return matched ? matched.detail_name : code;
-    }
+    },
+    width: 120
   },
 ];
 
 //품질기준정보 이력 컬럼
 const qualityHistoryColumns = [
-  { title: "버전", field: "qualityVer"},
+  { title: "버전", field: "qualityVer", width: 80},
   { title: "검사명", field: "testName"}, 
   { title: "대상 품목", field: "testTarget"},
   { title: "검사 방법", field: "testMethod"},
@@ -64,7 +66,14 @@ const getQualityList = async () => {
       params
     })
     .catch(err => console.log(err));
-  qualityList.value = list.data;
+    const qualityFilter = list.data.filter(item => {
+    let matchUseYn = true;
+    if (params.useYn.length === 1) {
+      matchUseYn = params.useYn.includes(item.use_yn);
+    }
+    return matchUseYn;
+  })
+  qualityList.value = qualityFilter;
   groupcodelist.detailCodeInfo(list.data[0].use_yn);
 }
 
@@ -179,11 +188,11 @@ onMounted(() => {
         <div class="col-md-2">
           <label class="form-label">대상품목</label>
           <select class="form-select form-select-sm" v-model="qualSchData.testTarget">
-              <option value="">선택하세요</option>
-              <option v-for="target in testTargetCodeList" :key="target.detail_code" :value="target.detail_code">
-                {{ target.detail_name }}
-              </option>
-            </select>
+            <option value="">선택하세요</option>
+            <option v-for="target in testTargetCodeList" :key="target.detail_code" :value="target.detail_code">
+              {{ target.detail_name }}
+            </option>
+          </select>
         </div>
         <div class="col-md-2">
           <label class="form-label">참조</label>
@@ -210,101 +219,99 @@ onMounted(() => {
     <div class="content-area d-flex gap-3">
       <!-- 좌측 목록 -->
       <div class="col-md-7 d-flex flex-column overflow-auto">
-        <tabulator-card
-          class="flex-grow-1"
-          card-title="품질 기준 목록"
-          :table-data="qualityList"
-          :table-columns="qualityColumns"
-          :on="tabulatorEvents"
-        />
+        <tabulator-card class="flex-grow-1" card-title="품질 기준 목록" :table-data="qualityList"
+          :table-columns="qualityColumns" :on="tabulatorEvents" height="576px" />
       </div>
 
       <!-- 우측 상세 + 이력 -->
       <div class="col-md-5 d-flex flex-column overflow-hidden">
         <!-- 상세 카드 -->
         <div class="card mb-2 detail-card">
-  <div class="card-header header-fixed mb-3 mt-3">
-    <span>검사항목 상세</span>
-    <button class="btn btn-sm btn-success" @click="saveQualityMaster">저장</button>
-  </div>
-  <div class="card-body detail-body">
-    <table class="table table-bordered table-sm align-middle mb-2">
-      <tbody>
-        <tr>
-          <th style="width: 15%;">검사명</th>
-          <td style="width: 35%;">
-            <input type="text" :key="qualityInfo.quality_code" class="form-control form-control-sm" v-model="qualityInfo.test_name">
-          </td>
-          <th style="width: 15%;">사용여부</th>
-          <td style="width: 35%;">
-            <div class="d-flex align-items-center">
-              <div v-for="yn in useYnDetail" :key="yn.detail_code" class="form-check form-check-inline me-2">
-                <input type="radio" :value="yn.detail_code" :id="'info'+yn.detail_code" v-model="qualityInfo.use_yn" class="form-check-input">
-                <label :for="'info'+yn.detail_code" class="form-check-label">{{ yn.detail_name }}</label>
-              </div>
-            </div>
-          </td>
-        </tr>
-        <tr>
-          <th>대상품목</th>
-          <td colspan="3">
-            <select class="form-select form-select-sm" v-model="qualityInfo.test_target">
-              <option value="">선택하세요</option>
-              <option v-for="target in testTargetCodeList" :key="target.detail_code" :value="target.detail_code">
-                {{ target.detail_name }}
-              </option>
-            </select>
-          </td>
-        </tr>
-        <tr>
-          <th>검사방법</th>
-          <td colspan="3">
-            <input type="text" class="form-control form-control-sm" v-model="qualityInfo.test_method">
-          </td>
-        </tr>
-        <tr>
-          <th>참조</th>
-          <td colspan="3">
-            <input type="text" class="form-control form-control-sm" v-model="qualityInfo.test_ref">
-          </td>
-        </tr>
-        <tr>
-          <th>검사기준</th>
-          <td colspan="3">
-            <input type="text" class="form-control form-control-sm" v-model="qualityInfo.test_standard">
-          </td>
-        </tr>
-        <tr>
-          <th>비고</th>
-          <td colspan="3">
-            <textarea class="form-control" v-model="qualityInfo.test_note"></textarea>
-          </td>
-        </tr>
-        <tr>
-          <th>참고자료</th>
-          <td colspan="3">
-            <input type="file" ref="imageInput" />
-            <div v-if="qualityInfo.ref_img" class="image-preview mt-2">
-              <img :src="`/api/getimgs/${qualityInfo.ref_img}`" style="max-height: 150px;" />
-            </div>
-            <div v-else>
-              <span class="text-muted">참고 이미지가 없습니다.</span>
-            </div>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</div>
+          <div class="card-header header-fixed mb-3 mt-3">
+            <span>검사항목 상세</span>
+            <button class="btn btn-sm btn-success" @click="saveQualityMaster">저장</button>
+          </div>
+          <div class="card-body detail-body">
+            <table class="table table-bordered table-sm align-middle mb-2">
+              <tbody>
+                <tr>
+                  <th style="width: 15%;">검사명</th>
+                  <td style="width: 35%;">
+                    <input type="text" :key="qualityInfo.quality_code" class="form-control form-control-sm"
+                      v-model="qualityInfo.test_name">
+                  </td>
+                  <th style="width: 15%;">사용여부</th>
+                  <td style="width: 35%;">
+                    <div class="d-flex align-items-center">
+                      <div v-for="yn in useYnDetail" :key="yn.detail_code" class="form-check form-check-inline me-2">
+                        <input type="radio" :value="yn.detail_code" :id="'info'+yn.detail_code"
+                          v-model="qualityInfo.use_yn" class="form-check-input">
+                        <label :for="'info'+yn.detail_code" class="form-check-label">{{ yn.detail_name }}</label>
+                      </div>
+                    </div>
+                  </td>
+                </tr>
+                <tr>
+                  <th>대상품목</th>
+                  <td colspan="3">
+                    <select class="form-select form-select-sm" v-model="qualityInfo.test_target">
+                      <option value="">선택하세요</option>
+                      <option v-for="target in testTargetCodeList" :key="target.detail_code"
+                        :value="target.detail_code">
+                        {{ target.detail_name }}
+                      </option>
+                    </select>
+                  </td>
+                </tr>
+                <tr>
+                  <th>검사방법</th>
+                  <td colspan="3">
+                    <input type="text" class="form-control form-control-sm" v-model="qualityInfo.test_method">
+                  </td>
+                </tr>
+                <tr>
+                  <th>참조</th>
+                  <td colspan="3">
+                    <input type="text" class="form-control form-control-sm" v-model="qualityInfo.test_ref">
+                  </td>
+                </tr>
+                <tr>
+                  <th>검사기준</th>
+                  <td colspan="3">
+                    <input type="text" class="form-control form-control-sm" v-model="qualityInfo.test_standard">
+                  </td>
+                </tr>
+                <tr>
+                  <th>비고</th>
+                  <td colspan="3">
+                    <textarea class="form-control" v-model="qualityInfo.test_note"></textarea>
+                  </td>
+                </tr>
+                <tr>
+                  <th>참고자료</th>
+                  <td colspan="3">
+                    <input type="file" ref="imageInput" />
+                    <div v-if="qualityInfo.ref_img" class="image-preview mt-2">
+                      <img :src="`/api/getimgs/${qualityInfo.ref_img}`" style="max-height: 150px;" />
+                    </div>
+                    <div v-else>
+                      <span class="text-muted">참고 이미지가 없습니다.</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
 
+        <div class="card mb-2 detail-card">
         <!-- 이력 카드 -->
         <div class="card flex-grow-1 overflow-auto">
-          <tabulator-card
-            card-title="품질기준 이력"
-            :table-data="qualityHistoryList"
-            :table-columns="qualityHistoryColumns"
-            height="auto"
-          />
+          <tabulator-card card-title="품질기준 이력" 
+          :table-data="qualityHistoryList" 
+          :table-columns="qualityHistoryColumns"
+          height="137px" />
+        </div>
         </div>
       </div>
     </div>
@@ -313,7 +320,7 @@ onMounted(() => {
 
 <style scoped>
 .full-height {
-  height: 100vh;
+  height: 840px;
   display: flex;
   flex-direction: column;
 }
@@ -354,6 +361,7 @@ onMounted(() => {
 
 .detail-card {
   flex-shrink: 0;
+  width: 656px;
 }
 
 .detail-body {
