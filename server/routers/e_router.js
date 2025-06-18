@@ -213,11 +213,12 @@ router.post('/endWork', async (req, res) => {
 });
 
 router.post('/prdPref', async (req, res) => {
-    const { work_inst_code, work_process_code,input_qty, prod_qty,defect_qty, pref_note,defect_type, emp_num} = req.body;
+    const { work_inst_code, prod_code, work_process_code,input_qty, prod_qty,defect_qty, pref_note,defect_type, emp_num} = req.body;
     try {
         // details 객체를 생성하여 전달
         const details = {
             work_inst_code,
+            prod_code,
             work_process_code,
             input_qty,
             prod_qty,
