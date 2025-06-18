@@ -45,8 +45,20 @@ const yesOutProdList = async(cp_code) =>{
 console.log("쿼리 결과:", list);
 return list;
 };
+
+// 봉제제품 만 출력 (모달) bongJaeProd
+const bongJaeProd = async() =>{
+  // 변수 mariadb에 등록된 query 함수를 통해 서비스에서 필요한 SQL문을 실행하도록 요청
+  // -> 비동기작업이므로 await/async를 활용해서 동기식으로 동작하도록 진행
+  let list = await mariadb.query("bongJaeProd")
+  .catch(err => console.log(err));
+console.log("쿼리 결과:", list);
+return list;
+};
+
 module.exports = { 
   outProdCompanyinsert,
   findAll3,
-  yesOutProdList
+  yesOutProdList,
+  bongJaeProd
 };
