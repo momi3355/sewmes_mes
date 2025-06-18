@@ -194,10 +194,10 @@ router.post('/saveProdPlans', async (req, res) => {
 router.get('/orderProdList', async (req, res)=>{
   try {
     const {
-      state
+      order_state
     } = req.query;
     const result = await prodPlanService.findOrderProdList({
-      state
+      order_state
     });
     res.send(result);
   } catch (err) {

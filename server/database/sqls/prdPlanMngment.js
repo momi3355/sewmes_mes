@@ -50,7 +50,7 @@ const updateProdPlan = `
   WHERE prod_plan_code = ?`;
 const updateOrderDetailState = `
   UPDATE t_order_detail 
-  SET state = '0n2n' 
+  SET order_detail_state = '0n2n' 
   WHERE order_detail_code = ?`;
 
 module.exports ={
