@@ -274,6 +274,7 @@ onMounted(async () => {
         <tabulator-card
           ref="table"
           card-title="자재 품목 리스트"
+          height="500px"
           :table-data="materialData"
           :table-columns="materialColumns"
           :tabulator-options="tabulatorOptions"

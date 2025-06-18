@@ -116,6 +116,26 @@ router.post("/bomDetail", async (req, res) => {
   }
 });
 
+router.put("/bomDetail", async (req, res) => {
+    try {
+    const result = await bomService.upsertBomDetail(req.body);
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "추가 중 오류 발생" });
+  }
+});
+
+router.get("/bomDetail", async (req, res) => {
+  try {
+    const result = await bomService.getBomDetailList(req.query);
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "추가 중 오류 발생" });
+  }
+});
+
 router.get("/prdReceive", async (req, res) => {
   try {
     const result = await prdReceiveService.getProductReceiveList(req.query);
