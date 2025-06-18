@@ -195,24 +195,47 @@ router.post('/startWork', async (req, res) => {
         });
     }
 });
+
+router.post('/endWork', async (req, res) => {
+    // 프론트엔드에서 work_inst_code, process_code만 보낼 것으로 가정
+    const { work_inst_code, process_code } = req.body;
+
+    try {
+        const result = await ProductionService.endWorkProcess(
+            work_inst_code,
+            process_code
+        );
+        res.status(200).json(result);
+    } catch (error) {
+        console.error('API /endWork 오류:', error);
+        res.status(500).json({ success: false, message: error.message || '서버 오류 발생' });
+    }
+});
+
 router.post('/prdPref', async (req, res) => {
     const { work_inst_code, work_process_code,input_qty, prod_qty,defect_qty, pref_note,defect_type, emp_num} = req.body;
-    try{
-        const result = await ProductionService.insertPrdPref([
-            
+    try {
+        // details 객체를 생성하여 전달
+        const details = {
             work_inst_code,
             work_process_code,
             input_qty,
             prod_qty,
             defect_qty,
             pref_note,
-            defect_type, 
+            defect_type,
             emp_num
-        ]);
-        res.send(result);
-    }catch(error){
+        };
 
+        // 디버깅을 위해 전달되는 details 객체 로그 출력 (배포 시에는 제거)
+        console.log('[Router] Sending details to service:', details);
+
+        const result = await ProductionService.insertPrdPref(details);
+        res.send(result);
+    } catch (error) {
+        console.error('Error in /prdPref route:', error); // 에러 로그 추가
+        res.status(500).json({ success: false, message: '작업실적 등록 실패', error: error.message }); // 에러 응답 추가
     }
-})
+});
 
 module.exports = router;
