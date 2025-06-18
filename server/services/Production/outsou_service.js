@@ -61,14 +61,19 @@ const findOutsouOrderNotDeadList = async () => {
 
 const updateOutsouDeadDate = async (updates) => {
   for (const row of updates) {
-    const { outsouOrderCode, deadDate } = row;
+    const { outsouOrderCode, deadDate, cpCode } = row;
 
     // 납기일자 업데이트
-    await mariadb.query("updateOutsouDeadDate", [deadDate, outsouOrderCode]);
+    await mariadb.query("updateOutsouDeadDate", [deadDate,cpCode, outsouOrderCode]);
   
     // 출고자재 등록 프로시저 실행
     await mariadb.query("callRegOutsouMaterial", [outsouOrderCode]);
   }
+};
+// 외주물품별 외주처 모달 정보 가져오기
+const getCpListByProdCode = async (prodCode) => {
+  const result = await mariadb.query("getCpListByProdCodeSql", [prodCode]);
+  return result;
 };
 
 // ==============================================================
@@ -134,6 +139,22 @@ const findOutsouReleaseMaterialByConditions = async ({
   console.log(finalSql);
   return await mariadb.directQuery(finalSql, params);
 };
+// 외주입고 등록 처리
+const autoInsertOutsouInbound = async ({ outsouOrderCode, inboundQty, regDate, prodCode, cpCode }) => {
+  const result  = await mariadb.directQuery(sqlList.getNextOutsouInboundCode);
+  console.log(result);
+  const code = `OR${result[0].next_num}`;
+
+  await mariadb.query("insertOutsouReceive", [
+    code,
+    outsouOrderCode,
+    inboundQty,
+    regDate,
+    prodCode,
+    cpCode
+  ]);
+};
+
 // ==============================================================
 
 // 외주입고 페이지 서비스 =========================================
@@ -260,9 +281,11 @@ module.exports ={
   // 외주발주 모달
   findOutsouOrderNotDeadList,
   updateOutsouDeadDate,
+  getCpListByProdCode,
   // 외주출고
   findOutsouReleaseMaterialByConditions, // 외주자재출고 조회 페이지지
   getReleaseMaterialByOutsouOrderCode,
+  autoInsertOutsouInbound,
   // 외주입고
   findInboundReceiveByConditions,
   getSemiProductQualityTest,

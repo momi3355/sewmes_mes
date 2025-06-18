@@ -2,6 +2,7 @@
 import { ref, watch } from 'vue';
 import axios from 'axios';
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
+import Swal from 'sweetalert2';
 
 const props = defineProps({
     isModalOpen: Boolean
@@ -66,7 +67,7 @@ const handleSelectedOrder = (plans) => {
             emit('selectOrder', selectedData);
             emit('closeModal');
         } else {
-            alert("주문 목록을 선택해주세요.");
+            Swal.fire({ title: "미선택", text: "주문 목록을 선택해주세요", icon: "error" });
         }
     }
 };

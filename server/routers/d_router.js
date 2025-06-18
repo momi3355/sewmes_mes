@@ -263,8 +263,17 @@ router.put('/updateOutsouDeadDate', async (req, res) => {
     res.status(500).send({ message: '업데이트 실패' });
   }
 });
-
-
+// 외주물품별 외주처 모달 정보 가져오기
+router.get('/getCpListByProdCode', async (req, res) => {
+  try {
+    const { prodCode } = req.query;
+    const result = await outsouService.getCpListByProdCode(prodCode);
+    res.send(result);
+  } catch (err) {
+    console.error("업체 리스트 조회 오류:", err);
+    res.status(500).send({ message: '서버 오류 발생' });
+  }
+});
 
 // ==============================================================
 
@@ -309,7 +318,23 @@ router.post('/outsouReleaseProc', async (req, res) => {
     res.status(500).send({ message: '출고처리 실패' });
   }
 });
-
+// 외주입고 등록 처리
+router.post('/outsouInboundAutoInsert', async (req, res) => {
+  try {
+    const { outsouOrderCode, orderQty, deadDate, prodCode, cpCode } = req.body;
+    await outsouService.autoInsertOutsouInbound({
+      outsouOrderCode,
+      inboundQty: orderQty,
+      regDate: deadDate,
+      prodCode,
+      cpCode
+    });
+    res.send({ message: '입고 등록 완료' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: '입고 등록 실패' });
+  }
+});
 // ==============================================================
 
 // 외주입고 페이지 라우터 =========================================

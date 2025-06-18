@@ -6,6 +6,7 @@ import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
 import OutsouInboundTestModal from './OutsouInboundTestModal.vue';
 import ArgonButton from "@/components/ArgonButton.vue";
 import moment from 'moment';
+import Swal from 'sweetalert2';
 
 const productTableRef = ref(null);
 // 사원정보 가져오기
@@ -121,12 +122,11 @@ const resetFilter = () => {
 
 // 외주입고검수 페이지 출력
 const openModal = () => {
-  if (!selectedOutsouInboundCode.value) return alert("외주입고 건을 먼저 선택하세요.");
+  if (!selectedOutsouInboundCode.value) return Swal.fire({ title: "미선택", text: "외주입고 건을 먼저 선택하세요", icon: "error" });
   
   const testStatus = getTestStatus(selectedOutsouInboundCode.value);
   if (testStatus !== "검사 전") {
-    return alert(`이미 검사가 진행된 건입니다. (상태: ${testStatus})`);
-  }
+    return Swal.fire({ title: "선택 불가", text: `이미 검사가 진행된 건입니다. (상태: ${testStatus})`, icon: "error" });}
   
   isTestModalOpen.value = true;
 };
