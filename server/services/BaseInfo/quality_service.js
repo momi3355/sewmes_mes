@@ -33,6 +33,7 @@ const qualityAdd = async (qualityInfo) => {
   let creCode = await mariadb.query("createCodeProc", [ 't_quality', 'quality_code', 'Q' ]);
   // 결과가 affectedRows, 값 들어있는 배열 두개라서 두번째 배열의 0번째 값을 가져옴
   let newCode = creCode[1][0].newCode;
+  console.log(creCode);
   qualityInfo.quality_code = newCode;
 
   //qualityInfo가 formData라서 객체로 들어가도록 별도 처리
