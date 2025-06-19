@@ -4,6 +4,7 @@ import { ref, onMounted } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
 import OutsouNullDeadListModal from './OutsouNullDeadListModal.vue';
 import ArgonButton from "@/components/ArgonButton.vue";
+import moment from 'moment';
 
 const tabulatorCardRef = ref(null);
 // 검색 객체
@@ -97,10 +98,13 @@ const fetchNullDeadCount = async () => {
 // 형태 변환
 const formatDate = (str) => {
   if (!str) return '';
-  return new Date(str).toISOString().slice(0, 10);
+  const date = moment(str);
+  return date.isValid() ? date.format('YYYY-MM-DD') : '';
 };
 const formatInt = (val) => {
-  return parseInt(val, 10);
+  if (val === null || val === undefined || val === '') return '';
+  const parsed = parseInt(val, 10);
+  return isNaN(parsed) ? '' : parsed;
 };
 // 모달 스크립트 영역 ===============================================================
 const isModalOpen = ref(false); //초기상태

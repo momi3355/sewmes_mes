@@ -21,7 +21,7 @@ router.get('/processList', async (req, res)=>{
     res.status(500).send({ message: "검색 중 오류 발생" });
   }
 });
-// 신규데이터 추가
+// 신규 공정 데이터 추가
 router.post('/processInsert', async (req, res) => {
   try {
     const newCode = await processService.insertProcess(req.body);

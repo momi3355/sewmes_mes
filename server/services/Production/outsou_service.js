@@ -141,9 +141,11 @@ const findOutsouReleaseMaterialByConditions = async ({
 };
 // 외주입고 등록 처리
 const autoInsertOutsouInbound = async ({ outsouOrderCode, inboundQty, regDate, prodCode, cpCode }) => {
-  const result  = await mariadb.directQuery(sqlList.getNextOutsouInboundCode);
-  console.log(result);
-  const code = `OR${result[0].next_num}`;
+  // 프로시저 호출로 코드 생성
+  const result = await mariadb.directQuery(sqlList.getNextOutsouInboundCode);
+  const code = result[1][0]?.newCode;
+
+  if (!code) throw new Error("outsou_inbound_code 생성 실패");
 
   await mariadb.query("insertOutsouReceive", [
     code,
