@@ -163,6 +163,15 @@ const saveEquiMaster = async () => {
     computedCheckDate = installDate.clone().add(30, 'days');
   }
 
+// 점검 예정일 계산
+if (!equiInfo.value.check_date) {
+  if (lastCheck && checkInterval > 0) {
+    equiInfo.value.check_date = lastCheck.clone().add(checkInterval, 'days').format('YYYY-MM-DD');
+  } else {
+    equiInfo.value.check_date = installDate.clone().add(30, 'days').format('YYYY-MM-DD');
+  }
+}
+
   formData.append('equi_name', equiInfo.value.equi_name || '');
   formData.append('use_yn', equiInfo.value.use_yn || '');
   formData.append('model_name', equiInfo.value.model_name || '');
@@ -240,6 +249,11 @@ const saveEquiMaster = async () => {
     imageInput.value.value = ''
   };
 }
+
+const tabulatorOptions = {
+    selectableRows: 1, //행선택가능
+    selectableRowsPersistence: false, //페이지변경시 선택상태 유지 안함
+};
 
 const tabulatorEvents = [
   {
@@ -346,6 +360,7 @@ onMounted(() => {
         :table-data="equiList" 
         :table-columns="equiListColumns"
         :on="tabulatorEvents" 
+        :tabulatorOptions="tabulatorOptions"
         height="576px" />
       </div>
 
@@ -354,7 +369,7 @@ onMounted(() => {
         <!-- 상세 카드 -->
         <div class="card mb-2 detail-card">
           <div class="card-header header-fixed mb-3 mt-3">
-            <span>설비 상세</span>
+            <h5 class="mt-0 text-start">설비 상세</h5>
             <button class="btn btn-sm btn-success" @click="saveEquiMaster">저장</button>
           </div>
           <div class="card-body detail-body">
