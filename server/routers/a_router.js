@@ -76,7 +76,6 @@ router.post('/outProdCpInsert', async (req, res) => {
     res.status(500).send({ success: false, message: "등록 실패" });
   }
 });
-// 외주업체 외주가능제품 삭제
 
 // 봉제제품 만 출력 (모달) bongJaeProd
 router.get('/bongJaeProdModal', async (req, res) => {
@@ -130,7 +129,20 @@ router.delete('/processDelete/:code', async(req, res) => {
         console.log(err);
         res.status(500).send({ success : false, message : "삭제 중 오료" })
     }
+}) // 임시
+
+// 외주업체 외주가능제품 삭제
+router.delete('/yesOutProdListDelete/:code', async(req, res) => {
+  try {
+      const outsou_list_code = req.params.code;
+      await outProdCompanyService.deleteProcess(outsou_list_code);
+      res.send({ success : true, message : "삭제 완료" });
+  } catch (err) {
+      console.log(err);
+      res.status(500).send({ success : false, message : "삭제 중 오료" })
+  }
 })
+
 // 완제품목록 모달
 router.get('/productList', async (req, res) => {
   try {

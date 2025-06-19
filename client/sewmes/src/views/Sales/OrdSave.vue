@@ -175,26 +175,23 @@ const filteredCompanyList = computed(() => {
   };
   console.log("로그인 유저 정보:", user.value);
   // 선택한 제품 리스트 출력
-  const OrderColumns = [
+const OrderColumns = [
   {
-  title: "", field: "selected", width: 50, hozAlign: "center", headerSort: false,
-  formatter: function(cell) {
-    const value = cell.getValue();
-    return `<input type="checkbox" ${value ? 'checked' : ''} />`;
+    title: "", 
+    formatter: "rowSelection", 
+    titleFormatter: "rowSelection", 
+    headerSort: false, 
+    hozAlign: "center", 
+    width: 50
   },
-  cellClick: function(e, cell) {
-    const current = cell.getValue();
-    cell.setValue(!current); // true/false 토글
-  }
-},
     { title: "제품명", field: "prodname", width: 350},
-    { title: "색상", field: "color", width: 80,
+    { title: "색상", field: "prodcolor", width: 80,
         formatter: function(cell) {
         const code = cell.getValue();
         return colorMap.value[code] || code;
       }
     },
-    { title: "사이즈", field: "size", width: 150,
+    { title: "사이즈", field: "prodsize", width: 150,
               formatter: function(cell) {
         const code = cell.getValue();
         return sizeMap.value[code] || code;
@@ -262,8 +259,8 @@ const filteredCompanyList = computed(() => {
       console.log('item 데이터', item);
       return {
         prodname: item.prod_name,
-        color: item.color,
-        size: item.size,
+        prodcolor: item.color,
+        prodsize: item.size,
         standard: item.standard,
         qty: 0,
         totalqty: 0,
@@ -355,33 +352,7 @@ const saveOrder = async () => {
     alert('저장 중 오류가 발생했습니다.');
   }
 }
-// const saveOrder = async () => {
-//   try {
-//     const orderData = {
-//       cp_code: searchTerm.value,  // 업체코드 (업체명 선택시 cp_code를 받아야 함)
-//       emp_num: user.value.emp_num,       // 로그인 유저 사번
-//       orderDate: orderDate.value,
-//       deadDate: deadDate.value,
-//       note: note.value || '',
-//       totalprice: calculateTotalOrderPrice(),
-//       orderDetails: ordlist.value  // 제품 상세 리스트 (배열)
 
-//     };
-
-//     console.log('보낼 주문 데이터:', orderData);
-
-//     const res = await axios.post('/api/orderAdd', orderData);
-
-//     if (res.data.success) {
-//       alert('주문서가 성공적으로 저장되었습니다.');
-//     } else {
-//       alert('저장에 실패했습니다.');
-//     }
-//   } catch (err) {
-//     console.error('저장 중 오류:', err);
-//     alert('저장 중 오류가 발생했습니다.');  // 👈 이렇게 수정
-//   }
-// }
   </script>
   
   <style>
