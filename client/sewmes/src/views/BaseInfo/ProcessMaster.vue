@@ -33,7 +33,7 @@ const searchProcess = async () => {
       processCode: item.process_code,
       processName: item.process_name,
       detail: item.detail,
-      equiType: item.equi_type,
+      equiType: convertCode(item.equi_type),
       needTime: item.need_time,
       processType: item.process_type,
       useYn: item.use_yn
@@ -151,7 +151,7 @@ const deleteProcess = async () => {
 };
 
 onBeforeMount(() => {
-  // getProcessList();
+
 })
 const tabulatorEvent = [
   {
@@ -183,6 +183,17 @@ const tabulatorEvent = [
     }
   }
 ];
+// 공통코드 변환환
+const convertCode = (code) => {
+  switch (code) {
+    case '1c1c': return '재단';
+    case '1c2c': return '단추';
+    case '1c3c': return '지퍼';
+    case '1c4c': return '자수';
+    case '1c5c': return '프린트';
+    default: return code;
+  }
+};
 </script>
 
 <template>
@@ -255,7 +266,14 @@ const tabulatorEvent = [
               </div>
               <div class="col-md-12">
                 <label class="form-label">설비 유형</label>
-                <input type="text" class="form-control" v-model="detailFields.equiType">
+                <select class="form-select" v-model="detailFields.equiType">
+                  <option value="">선택하세요</option>
+                  <option value="1c1c">재단</option>
+                  <option value="1c2c">단추</option>
+                  <option value="1c3c">지퍼</option>
+                  <option value="1c4c">자수</option>
+                  <option value="1c5c">프린트</option>
+                </select>
               </div>
               <div class="col-md-12">
                 <label class="form-label">소요시간</label>

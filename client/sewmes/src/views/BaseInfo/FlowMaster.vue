@@ -39,7 +39,7 @@ const searchProduct = async () => {
 const productColumns = [
   { title: "No", field: "rowNum", width: 80 },
   { title: '품번', field: 'prodCode', width: 150 },
-  { title: '품명', field: 'prodName', width: 250 },
+  { title: '품명', field: 'prodName', width: 200 },
   { title: '카테고리', field: 'category', width: 150 }
 ];
 
@@ -83,7 +83,7 @@ const processColumns = [
         onImageUploadClick(row.flowCode);
       }
     },
-    width: 100
+    width: 110
   },
     {
     title: '순서',
@@ -151,14 +151,22 @@ const onRowMoved = () => {
 };
 // 공정흐름 한번에 저장장
 const saveProcesses = async () => {
+  if (!selectedProdCode.value) {
+    alert("제품코드를 선택하세요.");
+    return;
+  }
+  const flows = processList.value
+  .filter(p => p.processCode && p.processSeq)  // 필수 값만
+  if (flows.length === 0) {
+    alert("저장할 공정 순서가 없습니다.");
+    return;
+  }
   try {
-    const flows = processList.value
-      .filter(p => p.processCode && p.processSeq)  // 필수 값만
-      .map((row, idx) => ({
-        flowCode: row.flowCode || null, // 기존 있던 flowCode 유지
-        processCode: row.processCode,
-        processSeq: Number(row.processSeq)
-      }));
+    const payload = flows.map((row, idx) => ({
+      flowCode: row.flowCode || null, // 기존 있던 flowCode 유지
+      processCode: row.processCode,
+      processSeq: Number(row.processSeq)
+    }));
 
     await axios.post('/api/flowSave', {
       prodCode: selectedProdCode.value,
@@ -223,53 +231,49 @@ const onImageUploadClick = async (flowCode) => {
 
   fileInput.click();
 };
-const tabulatorEvent = [
+const productTableEvents = [
   {
     eventName: "rowClick",
-    eventAction: 
-      async (e, row) => {
+    eventAction: async (e, row) => {
       const data = row.getData();
       selectedProdCode.value = data.prodCode;
       selectedProdName.value = data.prodName;
       await loadProcesses();
 
       const tableInstance = productTableRef.value?.$el?.querySelector('.tabulator')?.__tabulator__;
-      if (tableInstance) {
-        tableInstance.redraw(true);
-      }
+      if (tableInstance) tableInstance.redraw(true);
     }
-  },
+  }
+];
+const flowTableEvents = [
   {
     eventName: "rowMoved",
     eventAction: onRowMoved
   },
   {
-    eventName: "rowClick", // 행 클릭 시 flow_code를 기준으로 이미지 불러오기기
-    eventAction: 
-    async (e, row) => {
+    eventName: "rowClick",
+    eventAction: async (e, row) => {
       const rowData = row.getData();
       selectedProcessFlowCode.value = rowData.flowCode;
       if (!allowedNames.includes(rowData.processName)) return;
-      
+
       if (!rowData.flowCode) {
         selectedImage.value = null;
         return;
       }
+
       try {
-        const url = `/api/flowImage/${rowData.flowCode}?t=${Date.now()}`; // 캐시 방지용 타임스탬프
+        const url = `/api/flowImage/${rowData.flowCode}?t=${Date.now()}`;
         selectedImage.value = url;
       } catch (err) {
         console.error("이미지 불러오기 실패", err);
         selectedImage.value = null;
       }
-      
-      const tableInstance = flowTableRef.value?.$el?.querySelector('.tabulator')?.__tabulator__;
-      if (tableInstance) {
-        tableInstance.redraw(true);
-      }
-    }
-  },
 
+      const tableInstance = flowTableRef.value?.$el?.querySelector('.tabulator')?.__tabulator__;
+      if (tableInstance) tableInstance.redraw(true);
+    }
+  }
 ];
 const tabulatorOptions = {
   selectableRows: 1,
@@ -314,7 +318,7 @@ const tabulatorOptions = {
     </div>
 
     <div class="row">
-      <div class="col-md-6 d-flex flex-column">
+      <div class="col-md-5 d-flex flex-column">
         <tabulator-card
           ref="productTableRef"
           card-title="제품목록"
@@ -322,18 +326,18 @@ const tabulatorOptions = {
           :table-data="prodData"
           :table-columns="productColumns"
           :tabulator-options="tabulatorOptions"
-          :on="tabulatorEvent"
+          :on="productTableEvents"
         />
       </div>
 
-      <div class="col-md-6 d-flex flex-column">
+      <div class="col-md-7 d-flex flex-column">
         <tabulator-card
           ref="flowTableRef"
           card-title="공정순서"
           :table-data="processList"
           :table-columns="processColumns"
           :tabulator-options="tabulatorOptions"
-          :on="tabulatorEvent"
+          :on="flowTableEvents"
         />
         <div class="d-flex justify-content-between mt-2 mb-2">
           <button class="btn btn-success" @click="loadProcesses">불러오기</button>
