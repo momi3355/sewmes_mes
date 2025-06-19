@@ -311,9 +311,7 @@ const insertPrdPref = async (details) => {
                     }
 
                     // --- 2-1. 반제품 입고 테이블 인서트 (재단반제품) ---
-                    // if (!cuttingSemiProdCode) {
-                    //      throw new Error("재단반제품 코드를 찾을 수 없어 반제품 입고가 불가능합니다.");
-                    // }
+                   
                     let creSemiInboundCodeResult = await connection.query(sqlList["createCodeProc"], ['t_semi_prod_in', 'semi_inbound_code', 'SPI']);
                     const newSemiInboundCode = creSemiInboundCodeResult[1][0].newCode || (creSemiInboundCodeResult[1] && creSemiInboundCodeResult[1][0] ? creSemiInboundCodeResult[1][0].newCode : null);
                     if (!newSemiInboundCode) throw new Error("새로운 반제품 입고 코드를 생성하지 못했습니다.");
@@ -358,68 +356,76 @@ const insertPrdPref = async (details) => {
                     }
 
 
-                    // --- 2-3. 자재 출고 테이블 인서트 및 자재 홀드 업데이트 ---
-                    // const workInstDetailsData = await getWorkInstDetails(details.work_inst_code);
-                    // const materials = workInstDetailsData ? workInstDetailsData.materials : [];
+                   
+                    const workInstDetailsData = await getWorkInstDetails(details.work_inst_code);
+                    const materials = workInstDetailsData ? workInstDetailsData.materials : [];
 
-                    // if (materials && materials.length > 0) {
-                    //     console.log(`[PrdPrefService] 자재 출고 및 홀드 로직 시작. 총 자재 항목: ${materials.length}`);
-                    //     for (const material of materials) {
-                    //         const requiredForThisPerformance = material.required_quantity * details.input_qty;
+                   if (materials && materials.length > 0) {
+                    console.log(`[PrdPrefService] 자재 출고 및 홀드 로직 시작. 총 자재 항목: ${materials.length}`);
+                    for (const material of materials) {
+                        // 이번 실적 처리 시 필요한 자재 수량 계산
+                        const requiredForThisPerformance = material.required_quantity * details.input_qty;
 
-                    //         if (requiredForThisPerformance > 0) {
-                    //             const creMatOutCodeResult = await connection.query(sqlList["createCodeProc"], ['t_material_release', 'work_inst_code', 'MR']);
-                    //             const newMatOutCode = creMatOutCodeResult[1][0].newCode || (creMatOutCodeResult[1] && creMatOutCodeResult[1][0] ? creMatOutCodeResult[1][0].newCode : null);
-                    //             if (!newMatOutCode) throw new Error("새로운 자재 출고 코드를 생성하지 못했습니다.");
+                        if (requiredForThisPerformance > 0) {
+                            // 1. 새로운 자재 출고 코드 생성
+                            const creMatOutCodeResult = await connection.query(sqlList["createCodeProc"], ['t_material_release', 'work_inst_code', 'MR']);
+                            const newMatOutCode = creMatOutCodeResult[1][0].newCode || (creMatOutCodeResult[1] && creMatOutCodeResult[1][0] ? creMatOutCodeResult[1][0].newCode : null);
+                            if (!newMatOutCode) throw new Error("새로운 자재 출고 코드를 생성하지 못했습니다.");
 
-                    //             const holdInfoResult = await connection.query(sqlList['getMaterialHoldForRelease'], [
-                    //                 details.work_inst_code,
-                    //                 material.item_code,
-                    //                 material.lot_number
-                    //             ]);
+                            // 2. 해당 자재의 홀드 정보 조회
+                            // 여기서 'getMaterialHoldForRelease'는 제공된 'getWorkInstMaterials' 쿼리와 유사합니다.
+                            const holdInfoResult = await connection.query(sqlList['getMaterialHoldForRelease'], [
+                                details.work_inst_code,
+                                material.item_code, // 자재 코드
+                                material.lot_number // LOT 번호
+                            ]);
 
-                    //             if (holdInfoResult[0] && holdInfoResult[0].length > 0) {
-                    //                 const hold = holdInfoResult[0][0];
-                    //                 const holdIdToUse = hold.hold_id;
-                    //                 const currentUsedQty = hold.used_qty || 0;
-                    //                 const availableHoldQty = hold.hold_qty - currentUsedQty;
+                            // 3. 홀드 정보 유효성 검증 및 수량 확인
+                            if (holdInfoResult[0] && holdInfoResult[0].length > 0) {
+                                const hold = holdInfoResult[0][0];
+                                const holdIdToUse = hold.hold_id;
+                                const currentUsedQty = hold.used_qty || 0;
+                                const availableHoldQty = hold.hold_qty - currentUsedQty; // 가용 홀드 수량
 
-                    //                 if (availableHoldQty < requiredForThisPerformance) {
-                    //                     console.warn(`[PrdPrefService] 경고: 자재(${material.item_code}, Lot:${material.lot_number})의 홀드량 부족. 필요: ${requiredForThisPerformance}, 가용: ${availableHoldQty}`);
-                    //                     throw new Error(`자재(${material.item_code}) 홀드량이 부족하여 출고 및 작업 진행 불가. (가용: ${availableHoldQty}, 필요: ${requiredForThisPerformance})`);
-                    //                 }
+                                // 4. 가용 홀드 수량 부족 시 에러 발생 (롤백 유도)
+                                if (availableHoldQty < requiredForThisPerformance) {
+                                    console.warn(`[PrdPrefService] 경고: 자재(${material.item_code}, Lot:${material.lot_number})의 홀드량 부족. 필요: ${requiredForThisPerformance}, 가용: ${availableHoldQty}`);
+                                    throw new Error(`자재(${material.item_code}) 홀드량이 부족하여 출고 및 작업 진행 불가. (가용: ${availableHoldQty}, 필요: ${requiredForThisPerformance})`);
+                                }
 
-                    //                 const insertMaterialOutParams = [
-                    //                     newMatOutCode,
-                    //                     details.work_inst_code,
-                    //                     newPerfCode,
-                    //                     material.item_code,
-                    //                     currentProcessRow.process_code, // process 대신 currentProcessRow 사용
-                    //                     requiredForThisPerformance,
-                    //                     material.lot_number
-                    //                 ];
-                    //                 await connection.query(sqlList['insertMaterialOut'], insertMaterialOutParams);
-                    //                 console.log(`[PrdPrefService] ✅ 자재(${material.item_code}) 출고 (t_material_out) 성공: 코드=${newMatOutCode}, 수량=${requiredForThisPerformance}`);
+                                // 5. 자재 출고 내역 't_material_release' 테이블에 삽입
+                                const insertMaterialOutParams = [
+                                    newMatOutCode,               // 새로 생성된 출고 코드
+                                    details.work_inst_code,      // 작업 지시 코드
+                                    newPerfCode,                 // 현재 작업 실적 코드
+                                    material.item_code,          // 출고할 자재 코드
+                                    currentProcessRow.process_code, // 현재 공정 코드
+                                    requiredForThisPerformance,  // 출고 수량
+                                    material.lot_number          // 자재 LOT 번호
+                                ];
+                                await connection.query(sqlList['materialReleaseForProcess'], insertMaterialOutParams);
+                                console.log(`[PrdPrefService] ✅ 자재(${material.item_code}) 출고 (t_material_out) 성공: 코드=${newMatOutCode}, 수량=${requiredForThisPerformance}`);
 
-                    //                 await connection.query(sqlList['updateMaterialHold'], [
-                    //                     'N', // 이 공통 코드가 무엇을 의미하는지 확인 필요 ('N'은 '홀드 해제 안 됨'으로 가정)
-                    //                     requiredForThisPerformance,
-                    //                     holdIdToUse,
-                    //                     material.item_code,
-                    //                     material.lot_number
-                    //                 ]);
-                    //                 console.log(`[PrdPrefService] ✅ 자재(${material.item_code}) 홀드(${holdIdToUse}) 업데이트 성공: used_qty +${requiredForThisPerformance}`);
-                    //             } else {
-                    //                 console.warn(`[PrdPrefService] 경고: 자재(${material.item_code}, Lot:${material.lot_number})에 대한 유효한 홀드 정보를 찾을 수 없습니다. (work_inst_code: ${details.work_inst_code})`);
-                    //                 throw new Error(`자재(${material.item_code})에 대한 유효한 홀드 정보가 없어 출고 및 작업 진행 불가.`);
-                    //             }
-                    //         }
-                    //     }
-                    // } else {
-                    //     console.log(`[PrdPrefService] 이 작업지시(${details.work_inst_code})에 필요한 자재가 없거나 BOM 정보가 불완전합니다. 자재 출고 로직 건너뜀.`);
-                    // }
-                } 
-                
+                                // 6. 't_hold' 테이블의 자재 홀드 정보 업데이트
+                                // 첫 번째 파라미터 'N'은 'use_yn' 필드를 의미하는 것으로 보입니다.
+                                await connection.query(sqlList['updateMaterialHold'], [
+                                    'N', // 'N'은 홀드 사용 중 또는 아직 완전히 해제되지 않음을 의미하는 것으로 추정됩니다.
+                                    requiredForThisPerformance, // 사용된 수량에 추가될 값
+                                    holdIdToUse,                // 업데이트할 홀드 ID
+                                    material.item_code,         // 자재 코드 (WHERE 조건에 사용될 수 있음)
+                                    material.lot_number         // LOT 번호 (WHERE 조건에 사용될 수 있음)
+                                ]);
+                                console.log(`[PrdPrefService] ✅ 자재(${material.item_code}) 홀드(${holdIdToUse}) 업데이트 성공: used_qty +${requiredForThisPerformance}`);
+                            } else {
+                                console.warn(`[PrdPrefService] 경고: 자재(${material.item_code}, Lot:${material.lot_number})에 대한 유효한 홀드 정보를 찾을 수 없습니다. (work_inst_code: ${details.work_inst_code})`);
+                                throw new Error(`자재(${material.item_code})에 대한 유효한 홀드 정보가 없어 출고 및 작업 진행 불가.`);
+                            }
+                        }
+                    }
+    } else {
+        console.log(`[PrdPrefService] 이 작업지시(${details.work_inst_code})에 필요한 자재가 없거나 BOM 정보가 불완전합니다. 자재 출고 로직 건너뜀.`);
+    }
+}
                 break; // 현재 실적 대상 공정을 찾고 처리했으므로, 더 이상 루프를 돌 필요가 없음
             } // End of if (process.work_process_code === details.work_process_code)
         } // End of for loop
