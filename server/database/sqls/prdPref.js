@@ -110,7 +110,8 @@ VALUES(
         FROM v_bom_codes
         WHERE wan_code = ?;
     `;
-//자재출고,홀드 업데이트 전 작업지시별 홀드조회    
+//자재출고,홀드 업데이트 전 작업지시별 홀드조회
+
  const getWorkInstMaterials= `
         SELECT 
             material_code,
@@ -152,6 +153,7 @@ UPDATE t_hold
 SET ?
 WHERE hold_id=?`;
 
+//마지막공정 반제품출고
 const insertSemiProdOut = `
 INSERT INTO  (semi_release_code
 release_date
@@ -161,6 +163,13 @@ perf_code
 prod_code
 lot)
 `;
+
+
+
+//작업공정의 작업
+// 생산계획업데이트(완료여부 Y update)
+
+//주문테이블(주문서상태 생산완료) 
 
 module.exports={
         inOunSoInboundForProcess,
