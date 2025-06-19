@@ -41,10 +41,16 @@ const outCompany =
               cp_code)
   VALUES (?, ?, ?)`
 
+  // 외주업체 가능제품 삭제
  const getNextOrderCode =
 `SELECT outsou_list_code 
 FROM t_outsou_order_list 
 ORDER BY outsou_list_code DESC LIMIT 1`
+
+// 외주업체 가능제품 삭제
+const outProdCompanyDelect =
+`DELCTE FROM t_outsou_order_list
+ WHERE outsou_list_code = ?`
 
   // 해당 외주업체 의 가능외주제품 조회
  const yesOutProdList =
@@ -68,10 +74,6 @@ const bongJaeProd = `
   WHERE prod_name LIKE '%봉제%'
 `;
 
-// 업체별 외주가능제품 삭제
-const yesOutProdDelite =
-`DELETE FROM t_outsou_order_list WHERE cp_code = ? AND prod_code = ?`
-
 module.exports = {
   companyListCheck,
   companyDropDown,
@@ -79,8 +81,8 @@ module.exports = {
   outProdCompany,
   yesOutProdList,
   getNextOrderCode,
-  yesOutProdDelite,
   bongJaeProd,
+  outProdCompanyDelect,
 }
 
 
