@@ -77,6 +77,19 @@ router.post('/outProdCpInsert', async (req, res) => {
   }
 });
 // 외주업체 외주가능제품 삭제
+
+// 봉제제품 만 출력 (모달) bongJaeProd
+router.get('/bongJaeProdModal', async (req, res) => {
+  const cp_code = req.query.cpcode;
+  try {
+    const companyOrderList = await outProdCompanyService.bongJaeProd();
+    res.send(companyOrderList);
+  } catch (err) {
+    console.error('주문 조회 중 오류 발생:', err);
+    res.status(500).send('서버 오류');
+  }
+});
+
 // 로그인
 router.post('/login', async (req, res) => {
   const { emp_num, login_pw } = req.body;
@@ -107,7 +120,17 @@ router.post('/orderAdd', async (req, res) => {
     res.status(500).send({ success: false, message: "등록 실패" });
   }
 });
-
+// 주문서 모달창 에서 등록한 제품 삭제
+router.delete('/processDelete/:code', async(req, res) => {
+    try {
+        const processCode = req.params.code;
+        await processService.deleteProcess(processCode);
+        res.send({ success : true, message : "삭제 완료" });
+    } catch (err) {
+        console.log(err);
+        res.status(500).send({ success : false, message : "삭제 중 오료" })
+    }
+})
 // 완제품목록 모달
 router.get('/productList', async (req, res) => {
   try {

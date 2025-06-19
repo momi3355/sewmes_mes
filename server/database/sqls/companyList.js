@@ -28,7 +28,7 @@ const outCompany =
         cp_name,
         region,
         use_yn,
-        first_reg
+        DATE_FORMAT(first_reg, '%Y-%m-%d') AS first_reg
  FROM   t_company
  WHERE  cls = "0g1g"`
 
@@ -57,6 +57,17 @@ FROM t_outsou_order_list a join t_product b
 ON a.prod_code = b.prod_code
 WHERE a.cp_code = ?`
 
+// 외주(봉제) 제품 조회
+const bongJaeProd = `
+  SELECT prod_code,
+         prod_name,
+         category,
+         color,
+         size
+  FROM t_product
+  WHERE prod_name LIKE '%봉제%'
+`;
+
 // 업체별 외주가능제품 삭제
 const yesOutProdDelite =
 `DELETE FROM t_outsou_order_list WHERE cp_code = ? AND prod_code = ?`
@@ -68,7 +79,8 @@ module.exports = {
   outProdCompany,
   yesOutProdList,
   getNextOrderCode,
-  yesOutProdDelite
+  yesOutProdDelite,
+  bongJaeProd,
 }
 
 
