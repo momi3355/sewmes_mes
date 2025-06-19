@@ -418,7 +418,7 @@ const insertPrdPref = async (details) => {
                     // } else {
                     //     console.log(`[PrdPrefService] 이 작업지시(${details.work_inst_code})에 필요한 자재가 없거나 BOM 정보가 불완전합니다. 자재 출고 로직 건너뜀.`);
                     // }
-                } // End of 공정순서 1 로직
+                } 
                 
                 break; // 현재 실적 대상 공정을 찾고 처리했으므로, 더 이상 루프를 돌 필요가 없음
             } // End of if (process.work_process_code === details.work_process_code)

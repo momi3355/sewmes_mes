@@ -110,11 +110,67 @@ VALUES(
         FROM v_bom_codes
         WHERE wan_code = ?;
     `;
-    
-const getMaterialHoldForRelease=`
+//자재출고,홀드 업데이트 전 작업지시별 홀드조회
+
+ const getWorkInstMaterials= `
+        SELECT 
+            material_code,
+            hold_qty,
+            lot_code,
+            hold_id,       
+            use_yn,
+            work_inst_code
+        FROM t_hold 
+        WHERE work_inst_code = ?
+        AND   use_yn = '0b1b'
+`;
 
 
+
+
+//자재출고
+const materialReleaseForProcess =`
+INSERT INTO t_material_release(work_inst_code
+                                ,release_qty
+                                ,process_code
+                                ,material_code
+                                ,lot
+                                ,work_perf_code
+                                ,hold_id)
+VALUES(
+                                ?
+                                ,?
+                                ,?
+                                ,?
+                                ,?
+                                ,?
+                                ,?)                               
 `
+//자재홀드 없데이트
+const updateMaterialHold=
+`
+UPDATE t_hold
+SET ?
+WHERE hold_id=?`;
+
+//마지막공정 반제품출고
+const insertSemiProdOut = `
+INSERT INTO  (semi_release_code
+release_date
+release_qty
+perf_type
+perf_code
+prod_code
+lot)
+`;
+
+
+
+//작업공정의 작업
+// 생산계획업데이트(완료여부 Y update)
+
+//주문테이블(주문서상태 생산완료) 
+
 module.exports={
         inOunSoInboundForProcess,
         getSemiProdCodesFromBomView,
@@ -122,5 +178,8 @@ module.exports={
         selectWorkProcess,
         updateWorkProcess,
         inSemiPrdForProcess,
-        getMaterialHoldForRelease
+        getWorkInstMaterials,
+        materialReleaseForProcess,
+        updateMaterialHold,
+        insertSemiProdOut
 }
