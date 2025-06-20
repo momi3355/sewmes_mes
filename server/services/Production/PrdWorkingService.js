@@ -409,7 +409,7 @@ const insertPrdPref = async (details) => {
                                 // 6. 't_hold' 테이블의 자재 홀드 정보 업데이트
                                 // 첫 번째 파라미터 'N'은 'use_yn' 필드를 의미하는 것으로 보입니다.
                                 await connection.query(sqlList['updateMaterialHold'], [
-                                    'N', // 'N'은 홀드 사용 중 또는 아직 완전히 해제되지 않음을 의미하는 것으로 추정됩니다.
+                                    '0b2b', // 'N'은 홀드 사용 중 또는 아직 완전히 해제되지 않음을 의미하는 것으로 추정됩니다.
                                     requiredForThisPerformance, // 사용된 수량에 추가될 값
                                     holdIdToUse,                // 업데이트할 홀드 ID
                                     material.item_code,         // 자재 코드 (WHERE 조건에 사용될 수 있음)
@@ -422,66 +422,180 @@ const insertPrdPref = async (details) => {
                             }
                         }
                     }
-    } else {
-        console.log(`[PrdPrefService] 이 작업지시(${details.work_inst_code})에 필요한 자재가 없거나 BOM 정보가 불완전합니다. 자재 출고 로직 건너뜀.`);
-    }
-}
-                break; // 현재 실적 대상 공정을 찾고 처리했으므로, 더 이상 루프를 돌 필요가 없음
-            } // End of if (process.work_process_code === details.work_process_code)
-        } // End of for loop
-
-        // for 루프가 끝난 후 currentProcessRow가 null이면 에러 처리
-        if (!currentProcessRow) {
-            console.error(`[PrdPrefService] 치명적 오류: 실적 대상 공정(${details.work_process_code})이 조회되지 않았습니다.`);
-            throw new Error(`실적 대상 공정(${details.work_process_code})이 조회되지 않았습니다.`);
-        }
-
-
-        // ------------------------------------------------------------------
-        // 3. t_inst_perf (작업실적 테이블)에 새로운 실적 데이터 INSERT
-        // SELECT와 UPDATE가 모두 완료된 후에 최종적으로 실적을 기록
-        // ------------------------------------------------------------------
-        const insertPerfParams = [
-            newPerfCode,        // work_perf_code (새로 생성된 실적 코드)
-            details.work_inst_code,
-            details.work_process_code,
-            details.input_qty,
-            details.prod_qty,
-            details.defect_qty,
-            details.pref_note,
-            details.defect_type,
-            details.emp_num,
-        ];
-
-        try {
-            const insertResult = await connection.query(sqlList['insertPrdPref'], insertPerfParams);
-            if (insertResult.affectedRows === 0) {
-                throw new Error('작업실적 (t_inst_perf) 등록에 실패했습니다. (Affected Rows = 0)');
+                } else {
+                    console.log(`[PrdPrefService] 이 작업지시(${details.work_inst_code})에 필요한 자재가 없거나 BOM 정보가 불완전합니다. 자재 출고 로직 건너뜀.`);
+                }
             }
-            console.log(`[PrdPrefService] ✅ 작업실적 ${newPerfCode} 등록 성공 (모든 공정 처리 후).`);
-        } catch (error) {
-            console.error(`[PrdPrefService] t_inst_perf 삽입 쿼리 오류: ${error.message}`);
-            throw error;
-        }
+                        break; // 현재 실적 대상 공정을 찾고 처리했으므로, 더 이상 루프를 돌 필요가 없음
+                    } // End of if (process.work_process_code === details.work_process_code)
+                } // End of for loop
 
-        // ⭐ 4. 공정 순서 마지막 또는 전체 완료 여부 로직 (완전히 제거됨) ⭐
-        // 이 부분은 요청에 따라 완전히 제거되었습니다.
+                // for 루프가 끝난 후 currentProcessRow가 null이면 에러 처리
+                if (!currentProcessRow) {
+                    console.error(`[PrdPrefService] 치명적 오류: 실적 대상 공정(${details.work_process_code})이 조회되지 않았습니다.`);
+                    throw new Error(`실적 대상 공정(${details.work_process_code})이 조회되지 않았습니다.`);
+                }
 
 
-        await connection.commit();
-        console.log(`[PrdPrefService] 최종: 모든 작업실적 관련 로직 성공적으로 완료. 작업실적코드 = ${newPerfCode}`);
-        return { success: true, message: '작업실적이 성공적으로 등록되었습니다.', work_perf_code: newPerfCode };
+                // ------------------------------------------------------------------
+                // 3. t_inst_perf (작업실적 테이블)에 새로운 실적 데이터 INSERT
+                // SELECT와 UPDATE가 모두 완료된 후에 최종적으로 실적을 기록
+                // ------------------------------------------------------------------
+                const insertPerfParams = [
+                    newPerfCode,        // work_perf_code (새로 생성된 실적 코드)
+                    details.work_inst_code,
+                    details.work_process_code,
+                    details.input_qty,
+                    details.prod_qty,
+                    details.defect_qty,
+                    details.pref_note,
+                    details.defect_type,
+                    details.emp_num,
+                ];
 
-    } catch (error) {
-        await connection.rollback(); // 오류 발생 시 롤백
-        console.error(`[PrdPrefService] insertPrdPref 함수 전체 처리 중 오류 발생:`, error);
-        throw error; // 라우터로 오류 다시 던짐
-    } finally {
-        if (connection) {
-            connection.release(); // 커넥션 반환
-        }
-    }
-};
+                try {
+                    const insertResult = await connection.query(sqlList['insertPrdPref'], insertPerfParams);
+                    if (insertResult.affectedRows === 0) {
+                        throw new Error('작업실적 (t_inst_perf) 등록에 실패했습니다. (Affected Rows = 0)');
+                    }
+                    console.log(`[PrdPrefService] ✅ 작업실적 ${newPerfCode} 등록 성공 (모든 공정 처리 후).`);
+                } catch (error) {
+                    console.error(`[PrdPrefService] t_inst_perf 삽입 쿼리 오류: ${error.message}`);
+                    throw error;
+                }
+
+                // ------------------------------------------------------------------
+                // ⭐ 4. 최종 공정 완료 시 로직 (생산 완료 처리) ⭐
+                // ------------------------------------------------------------------
+                // 현재 공정이 완료되었고, 동시에 이 공정이 전체 공정 중 가장 마지막 공정인 경우
+                const isLastProcess = allWorkProcesses.every(p => p.process_seq <= currentProcessRow.process_seq);
+
+                if (isProcessCompleted && isLastProcess) {
+                    console.log(`[PrdPrefService] ⭐ 최종 공정(${currentProcessRow.work_process_code})이 완료되었습니다. 최종 처리 로직 시작. ⭐`);
+
+                    // 1. 반제품 출고 (t_semi_prod_out) 인서트 (완제품 생산 시)
+                    // `newProdQtyAccumulated`는 해당 공정의 누적 합격량입니다.
+                    let creSemiOutCodeResult = await connection.query(sqlList["createCodeProc"], ['t_semi_prod_out', 'semi_release_code', 'SPO']); // PK 컬럼명 일치
+                    const newSemiOutCode = creSemiOutCodeResult[1][0].newCode;
+                    if (!newSemiOutCode) throw new Error("새로운 반제품 출고 코드를 생성하지 못했습니다.");
+
+                    // `t_semi_prod_out` 테이블의 스키마와 `inSemiPrdOutForProcess` 쿼리 정의에 따라 파라미터 조정 필요.
+                    // 여기서는 `semi_release_code`, `release_date`, `release_qty`, `perf_type`, `perf_code`, `prod_code`, `work_inst_code`, `process_code`로 가정
+                    const insertSemiProdOutParams = [
+                        newSemiOutCode,              // semi_release_code (PK)
+                        newProdQtyAccumulated,       // release_qty (최종 생산 합격량)
+                        '0y1y',                 // perf_type: 실적에 의한 출고 (예시)
+                        newPerfCode,                 // perf_code (현재 작업 실적 코드)
+                        details.prod_code,           // prod_code (완제품 코드)
+                        details.work_inst_code,      // work_inst_code
+                        currentProcessRow.process_code // process_code
+                        // LOT 코드가 필요하다면 추가 (insertSemiProdOut 쿼리에도 lot 컬럼 추가 필요)
+                    ];
+                    await connection.query(sqlList['insertSemiProdOut'], insertSemiProdOutParams);
+                    console.log(`[PrdPrefService] ✅ 반제품 출고 (t_semi_prod_out) 성공: 코드=${newSemiOutCode}, 수량=${newProdQtyAccumulated}, 품목=${details.prod_code}`);
+
+                    // 2. 자재 홀드 업데이트 (작업 지시와 관련된 모든 홀드 '사용 완료' 처리)
+                    // `getWorkInstMaterials`는 `use_yn = '0b1b'`만 조회하므로, 이미 사용된 것은 포함되지 않음.
+                    // 전체 작업지시 관련 홀드를 가져와서 최종적으로 '사용 완료' 처리
+                    const [finalHoldUpdateResult] = await connection.query(sqlList['getWorkInstMaterials'], [details.work_inst_code]); // `use_yn='0b1b'`만 가져오므로, 이미 '0b2b'인 것은 가져오지 않음. 모든 홀드를 보려면 WHERE 조건 제거 또는 다른 쿼리 필요.
+                    if (finalHoldUpdateResult && finalHoldUpdateResult.length > 0) {
+                        for (const hold of finalHoldUpdateResult) {
+                            // 이 시점에서는 모든 홀드를 '0b3b' (사용 완료)로 마킹합니다.
+                            // 만약 잔여량이 있다면, 그 잔여량만큼 홀드를 해제하는 로직이 필요할 수 있습니다.
+                            await connection.query(sqlList['updateMaterialHoldUseYn'], ['0b3b', hold.hold_id]); // '0b3b': 사용 완료 상태 코드
+                            console.log(`[PrdPrefService] ✅ 자재 홀드(${hold.hold_id}) 최종 완료 (use_yn = '0b3b')`);
+                        }
+                    } else {
+                        console.log(`[PrdPrefService] 최종 공정 완료 후 추가로 처리할 사용 대기 중인 자재 홀드가 없습니다.`);
+                    }
+
+                    // 3. 작업 지시 (t_work_inst) 상태 업데이트 ('0s3s' 생산완료)
+                    const [workInstInfoRows] = await connection.query(sqlList['getWorkInstDetailsForCompletion'], [details.work_inst_code]);
+                    const workInstInfo = workInstInfoRows[0];
+                    if (!workInstInfo) throw new Error(`작업지시(${details.work_inst_code}) 정보를 찾을 수 없습니다.`);
+
+                    let updateWorkInstStatusFlag = false;
+                    let newWorkInstStatusCode = workInstInfo.inst_state; // 현재 상태 유지
+
+                    // 작업 지시의 누적 생산량이 지시 수량과 같거나 많으면 완료 처리
+                    // (여기서 newProdQtyAccumulated는 현재 공정의 누적 합격량. 전체 작업 지시의 총 합격량과 비교 필요)
+                    if (newProdQtyAccumulated >= workInstInfo.inst_qty) { // 이 조건은 현재 공정 기준이므로 전체 작업지시 완료 판단은 더 복잡할 수 있음
+                    newWorkInstStatusCode = '0s3s'; // 생산 완료 상태 코드
+                    updateWorkInstStatusFlag = true;
+                    console.log(`[PrdPrefService] 작업지시(${details.work_inst_code}) 생산 수량 충족. 상태를 '${newWorkInstStatusCode}'로 변경.`);
+                    }
+
+                    // 최종 공정이 완료되면, 작업 지시를 "생산 완료" 상태로 변경
+                    newWorkInstStatusCode = '0s3s'; // '0s3s': 생산 완료
+                    updateWorkInstStatusFlag = true;
+                    console.log(`[PrdPrefService] 최종 공정(${currentProcessRow.work_process_code})이 완료되었으므로, 작업지시(${details.work_inst_code}) 상태를 '${newWorkInstStatusCode}'로 변경.`);
+
+
+                    if (updateWorkInstStatusFlag) {
+                        await connection.query(sqlList['updateWorkInstStatus'], [
+                            newWorkInstStatusCode,  // inst_state = '0s3s'
+                            'Y',                    // complete_yn = 'Y'
+                            details.work_inst_code
+                        ]);
+                        console.log(`[PrdPrefService] ✅ 작업지시(${details.work_inst_code}) 상태 업데이트 성공: inst_state=${newWorkInstStatusCode}, complete_yn=Y`);
+                    }
+
+                    // 4. 생산 계획 (t_prod_plan) 완료 여부 업데이트
+                    // t_prod_plan은 work_inst_code를 직접 가지고 있지 않으므로, workInstInfo에서 prod_plan_code를 얻어 조회
+                    const [prodPlanInfoRows] = await connection.query(sqlList['getProdPlanByWorkInst'], [workInstInfo.prod_plan_code]); // 쿼리명 변경됨
+                    const prodPlanInfo = prodPlanInfoRows[0];
+                    if (!prodPlanInfo) throw new Error(`생산계획(${workInstInfo.prod_plan_code}) 정보를 찾을 수 없습니다.`);
+
+                    if (updateWorkInstStatusFlag) { // 작업 지시가 완료되었을 때만 생산 계획도 완료 처리
+                        await connection.query(sqlList['updateProdPlanComplete'], ['1a1a', prodPlanInfo.prod_plan_code]); // '1a1a': 완료 (t_prod_plan의 complete 컬럼)
+                        console.log(`[PrdPrefService] ✅ 생산계획(${prodPlanInfo.prod_plan_code}) 완료 여부 '1a1a'로 업데이트 성공.`);
+                    }
+
+                    // 5. 주문 상세 (t_order_detail) 및 상위 주문 (t_order) 상태 업데이트
+                    const [orderDetailInfoRows] = await connection.query(sqlList['getProdPlanByWorkInst'], [prodPlanInfo.prod_plan_code]);
+                    const orderDetailInfo = orderDetailInfoRows[0];
+                    if (!orderDetailInfo) throw new Error(`주문 상세(${prodPlanInfo.order_detail_code}) 정보를 찾을 수 없습니다.`);
+
+                    // 생산량이 주문 상세 수량 이상인지 확인 (orderDetailInfo.order_qty는 t_order_detail의 총 주문 수량)
+                    // 여기서는 currentProcessRow의 `newProdQtyAccumulated`를 사용하지만, 실제로는 `t_prod_plan.prod_qty`가 최종 생산량일 가능성이 높습니다.
+                    if (prodPlanInfo.prod_qty >= orderDetailInfo.order_qty) { // 생산계획의 prod_qty로 비교
+                        // 주문 상세 상태 업데이트 (생산 완료에 해당하는 상태 코드 '0s3s')
+                        await connection.query(sqlList['updateOrderDetailStatus'], ['0s3s', orderDetailInfo.order_detail_code]);
+                        console.log(`[PrdPrefService] ✅ 주문 상세(${orderDetailInfo.order_detail_code}) 상태 '0s3s'로 업데이트 성공.`);
+
+                        // 상위 주문 (t_order) 상태 업데이트 로직 (모든 상세 주문이 완료되었는지 확인 후)
+                        // getOrderInfoByOrderDetailCode 쿼리는 order_code를 기준으로 모든 상세 주문 완료 여부를 판단해야 합니다.
+                        const [orderMasterInfoRows] = await connection.query(sqlList['getOrderInfoByOrderDetailCode'], [orderDetailInfo.order_detail_code]);
+                        const orderMasterInfo = orderMasterInfoRows[0];
+
+                        if (orderMasterInfo && orderMasterInfo.total_detail_count === orderMasterInfo.completed_detail_count) {
+                            // 모든 주문 상세가 완료되면 상위 주문 상태도 업데이트
+                            await connection.query(sqlList['updateOrderStatus'], ['0s3s', orderMasterInfo.order_code]); // '0s3s': 주문 완료 상태 코드
+                            console.log(`[PrdPrefService] ✅ 상위 주문(${orderMasterInfo.order_code}) 상태 '0s3s'로 업데이트 성공 (모든 상세 완료).`);
+                        } else if (orderMasterInfo) {
+                            console.log(`[PrdPrefService] 상위 주문(${orderMasterInfo.order_code})은 아직 모든 상세 주문이 완료되지 않아 상태를 업데이트하지 않습니다.`);
+                        }
+                    } else {
+                        console.log(`[PrdPrefService] 주문 상세(${orderDetailInfo.order_detail_code})의 생산량(${prodPlanInfo.prod_qty})이 주문량(${orderDetailInfo.order_qty})에 미달하여 완료 처리하지 않습니다.`);
+                    }
+
+                    console.log(`[PrdPrefService] ⭐ 최종 공정 로직 완료. ⭐`);
+                }
+
+                await connection.commit();
+                console.log(`[PrdPrefService] 최종: 모든 작업실적 관련 로직 성공적으로 완료. 작업실적코드 = ${newPerfCode}`);
+                return { success: true, message: '작업실적이 성공적으로 등록되었습니다.', work_perf_code: newPerfCode };
+
+            } catch (error) {
+                await connection.rollback(); // 오류 발생 시 롤백
+                console.error(`[PrdPrefService] insertPrdPref 함수 전체 처리 중 오류 발생:`, error);
+                throw error; // 라우터로 오류 다시 던짐
+            } finally {
+                if (connection) {
+                    connection.release(); // 커넥션 반환
+                }
+            }
+        };
 
 
 
