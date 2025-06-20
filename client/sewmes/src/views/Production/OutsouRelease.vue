@@ -3,6 +3,7 @@ import axios from 'axios';
 import { ref, onMounted } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
 import ArgonButton from "@/components/ArgonButton.vue";
+import Swal from 'sweetalert2';
 
 const releaseMaterialTableRef = ref(null);
 const outsouOrderTableRef = ref(null);
@@ -46,6 +47,7 @@ const searchOutsouOrder = async () => {
       regDate: formatDate(item.reg_date),
       deadDate: formatDate(item.dead_date),
       cpName: item.cp_name,
+      cpCode: item.cp_code,
       orderQty: formatInt(item.order_qty),
       releaseState: item.release_state,                    // 실제 비교용
       releaseStateLabel: convertCode(item.release_state)   // 보기용
@@ -63,7 +65,8 @@ const outsouOrderColumns = [
   { title: '납기일', field: 'deadDate', width: 150 },
   { title: '외주업체명', field: 'cpName', width: 150 },
   { title: '주문수량', field: 'orderQty', width: 150 },
-  { title: '작업공정코드', field: 'workProcessCode', width: 150 }
+  { title: '작업공정코드', field: 'workProcessCode', width: 150 },
+  { title: "업체코드", field: "cpCode", visible: false }
 ];
 const tabulatorOptions = {
   selectableRows: 1,
@@ -131,7 +134,7 @@ const releaseMaterialColumns = [
 // 외주발주 출고처리 - 단일 선택된 건 처리
 const handleReleaseComplete = async () => {
   if (!selectedOutsouOrderCode.value) {
-    alert("출고 처리할 외주발주 건을 선택하세요.");
+    Swal.fire({ title: "미선택", text: "출고 처리할 외주발주 건을 선택하세요", icon: "error" });
     return;
   }
 
@@ -139,26 +142,51 @@ const handleReleaseComplete = async () => {
   const selectedRow = outsouOrderData.value.find(row => row.outsouOrderCode === selectedOutsouOrderCode.value);
 
   if (!selectedRow) {
-    alert("선택된 외주발주 건을 찾을 수 없습니다.");
+    Swal.fire({ title: "선택 오류", text: "선택된 외주발주 건을 찾을 수 없습니다", icon: "error" });
     return;
   }
 
   if (selectedRow.releaseState !== '0o1o') {
-    alert("이미 출고 완료된 건입니다.");
+    Swal.fire({ title: "선택 불가", text: "이미 출고 완료된 건입니다", icon: "error" });
     return;
   }
+  // 확인/취소 메시지 
+  const result = await Swal.fire({
+    title: '출고 완료 처리',
+    text: '정말로 출고 완료 처리하시겠습니까?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: '예, 진행합니다',
+    cancelButtonText: '취소'
+  });
+
+  if (!result.isConfirmed) return;
 
   try {
+    // 1. 출고 처리 API 실행
     await axios.post('/api/outsouReleaseProc', {
       outsouOrderCode: selectedOutsouOrderCode.value
     });
 
-    alert("출고 처리 완료");
-    await searchOutsouOrder();  // 목록 재조회
-    selectedOutsouOrderCode.value = ''; // 선택 초기화 필요 시
+    // 2. 외주입고 등록 API 실행
+    const inboundPayload = {
+      outsouOrderCode: selectedRow.outsouOrderCode,
+      orderQty: selectedRow.orderQty,
+      deadDate: selectedRow.deadDate,
+      prodCode: selectedRow.prodCode, // 이 정보가 없다면 백엔드에서 조회 필요
+      cpCode: selectedRow.cpCode
+    };
+
+    await axios.post('/api/outsouInboundAutoInsert', inboundPayload);
+
+    Swal.fire({ title: "출고 및 입고 완료", text: "출고 및 외주입고 등록 완료", icon: "success" });
+    await searchOutsouOrder();
+    selectedOutsouOrderCode.value = '';
   } catch (err) {
-    console.error("출고 처리 실패:", err);
-    alert("출고 처리 중 오류 발생");
+    console.error("출고 또는 입고 처리 실패:", err);
+    Swal.fire({ title: "오류", text: "출고 또는 입고 처리 중 오류 발생", icon: "error" });
   }
 };
 

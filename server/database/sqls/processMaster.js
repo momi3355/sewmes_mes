@@ -10,9 +10,9 @@ const selectProcessList =
     ORDER BY process_code`;
 
 // 공정 코드 자동 생성용
-const selectMaxCode = `
-    SELECT MAX(CAST(SUBSTRING(process_code, 3) AS UNSIGNED)) AS maxCode 
-    FROM t_process_master`;
+const getNextProcessCode = `
+    CALL createcode_proc('t_process_master', 'process_code', 'PM', @newCode);
+    SELECT @newCode AS processCode`;
 
 const processInsert = 
     `INSERT INTO t_process_master (
@@ -51,12 +51,10 @@ const selectProcessByConditions = `
         use_yn
     FROM t_process_master
     WHERE 1 = 1
-        /**조건절**/
-    ORDER BY CAST(SUBSTRING(process_code, 3) AS UNSIGNED)
-`;
+        /**조건절**/`;
 module.exports = {
     selectProcessList,
-    selectMaxCode,
+    getNextProcessCode,
     processInsert,
     processUpdate,
     processDelete,

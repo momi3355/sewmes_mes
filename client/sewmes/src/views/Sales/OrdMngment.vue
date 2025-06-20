@@ -1,29 +1,5 @@
 <template>
   <div class="container-fluid p-3">
-    <!-- 상단 검색 영역 -->
-    <div class="row mb-3 search-color">
-      <div class="col-md-2">
-        <label class="form-label">검색항목 1</label>
-        <input type="text" class="form-control" v-model="searchField1">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">검색항목 2</label>
-        <input type="text" class="form-control" v-model="searchField2">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">검색항목 3</label>
-        <input type="text" class="form-control" v-model="searchField3">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">검색항목 4</label>
-        <input type="text" class="form-control" v-model="searchField4">
-      </div>
-      <div class="col-md-2 d-flex align-items-end">
-        <button class="btn btn-secondary me-2">초기화</button>
-        <button class="btn btn-primary">조회</button>
-      </div>
-    </div>
-
     <!-- 📦 주문 목록 + 상세 -->
     <div class="container-fluid py-4" id="odlist">
       <div class="row gx-4">
@@ -33,9 +9,10 @@
             card-title="주문서 목록"
             :table-data="OrderData"
             :table-columns="OrderColumns"
-            :tabulator-options="tabulatorOptions"
+            :tabulator-options="tabulatorEvent"
             :on="tabulatorEvent"
             style="height: 800px;"
+            height="576px"
           />
         </div>
 
@@ -44,73 +21,68 @@
           <div class="card">
             <div class="card-body">
               <form>
-                <div class="row g-3">
-                  <div class="col-md-6">
-                    <label class="form-label">업체명</label>
-                    <div class="position-relative" @focusin="listOpen = true" @focusout="onFocusOut">
-                      <input type="text" class="form-control" v-model="searchTerm">
-                      <ul class="dropdown-menu show" v-if="listOpen" style="position:absolute; top:100%; left:0;">
-                        <li v-for="(company, index) in filteredCompanyList" :key="index">
-                          <a class="dropdown-item" href="#" @mousedown.prevent @click="selectCompany(company)">
-                            {{ company.cp_name }}
-                          </a>
-                        </li>
-                      </ul>
-                    </div>
-                  </div>
+              <div class="row g-3">
+                <div class="col-md-6 d-flex align-items-center">
+  <label class="form-label me-2 mb-0" style="min-width: 100px;">업체명:</label>
+  <div class="position-relative flex-grow-1" @focusin="listOpen = true" @focusout="onFocusOut">
+    <input type="text" class="form-control" v-model="ordercurrentOrder.cp_name">
+    <ul class="dropdown-menu show" v-if="listOpen" style="position:absolute; top:100%; left:0;">
+      <li v-for="(company, index) in filteredCompanyList" :key="index">
+        <a class="dropdown-item" href="#" @mousedown.prevent @click="selectCompany(company)">
+          {{ company.cp_name }}
+        </a>
+      </li>
+    </ul>
+  </div>
+</div>
 
-                  <div class="col-md-6">
-                    <label class="form-label">업체연락처</label>
-                    <input type="tel" class="form-control" v-model="companyTel" readonly />
-                  </div>
+                  <div class="col-md-6 d-flex align-items-center mb-2">
+  <label class="form-label me-2 mb-0" style="min-width: 100px;">업체연락처:</label>
+  <input type="tel" class="form-control flex-grow-1" v-model="ordercurrentOrder.cp_tel" />
+</div>
 
-                  <div class="col-12">
-                    <label class="form-label">주소</label>
-                    <input type="text" class="form-control" v-model="address" readonly />
-                  </div>
+<div class="col-md-12 d-flex align-items-center mb-2">
+  <label class="form-label me-2 mb-0" style="min-width: 100px;">주소:</label>
+  <input type="text" class="form-control flex-grow-1" v-model="ordercurrentOrder.address" />
+</div>
 
-                  <div class="col-md-6">
-                    <label class="form-label">주문일자</label>
-                    <input type="date" class="form-control" v-model="orderDate" />
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">납기일자</label>
-                    <input type="date" class="form-control" v-model="deadDate" />
-                  </div>
+<div class="col-md-6 d-flex align-items-center mb-2">
+  <label class="form-label me-2 mb-0" style="min-width: 100px;">주문일자:</label>
+  <input type="date" class="form-control flex-grow-1" v-model="orderDateStr" />
+</div>
 
-                  <div class="col-md-6">
-                    <label class="form-label">영업 담당자</label>
-                    <input type="text" class="form-control" v-model="salesManager" readonly />
-                  </div>
-                  <div class="col-md-6">
-                    <label class="form-label">영업 담당자 연락처</label>
-                    <input type="tel" class="form-control" v-model="salesTel" readonly />
-                  </div>
+<div class="col-md-6 d-flex align-items-center mb-2">
+  <label class="form-label me-2 mb-0" style="min-width: 100px;">납기일자:</label>
+  <input type="date" class="form-control flex-grow-1" v-model="deadDateStr" />
+</div>
 
-                  <div class="col-12">
-                    <label class="form-label">비고</label>
-                    <textarea class="form-control" rows="2" v-model="note"></textarea>
-                  </div>
-                </div>
-              </form>
-            </div>
+<div class="col-md-6 d-flex align-items-center mb-2">
+  <label class="form-label me-2 mb-0" style="min-width: 100px;">영업 담당자:</label>
+  <input type="text" class="form-control flex-grow-1" v-model="ordercurrentOrder.emp_name" />
+</div>
 
-            <!-- 버튼 영역 -->
-            <div class="card-footer d-flex justify-content-end pt-0">
-              <button class="btn btn-outline-secondary btn-sm me-2" @click="openModal">제품추가 🧾</button>
-              <argon-button color="secondary" variant="gradient" class="me-2">삭제</argon-button>
-              <argon-button color="success" variant="gradient" @click="saveOrder">저장</argon-button>
-            </div>
+<div class="col-md-6 d-flex align-items-center mb-2">
+  <label class="form-label me-2 mb-0" style="min-width: 100px;">영업 담당자 연락처:</label>
+  <input type="tel" class="form-control flex-grow-1" v-model="ordercurrentOrder.emp_tel" />
+</div>
 
-            <!-- 제품 테이블 -->
-            <tabulator-card
-              card-title=""
-              :table-data="ordlist"
-              :table-columns="OrderColumnsDetail"
-              :tabulator-options="tabulatorOptionsDetail"
-              style="height: 400px;"
-            />
-          </div>
+<div class="col-12 d-flex align-items-start mb-2">
+  <label class="form-label me-2 mb-0" style="min-width: 100px;">비고:</label>
+  <textarea class="form-control flex-grow-1" rows="2" v-model="ordercurrentOrder.note"></textarea>
+</div>
+</div>
+</form>
+</div>
+
+<tabulator-card
+  card-title=""
+  :table-data="orderInfo"
+  :table-columns="OrderColumnsDetail"
+  style="height: 420px;"
+/>
+
+<!-- 제품 테이블 -->
+</div>
         </div>
       </div>
     </div>
@@ -132,11 +104,7 @@ import ArgonButton from "@/components/ArgonButton.vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import prodModal from "./prodModal.vue";
 import groupcodelist from "../../assets/js/utils/groupcodelist.js"
-
-// 공통코드 변환
-const standardlist = ref([]);
-const sizelist = ref([]);
-const colorlist = ref([]);
+import moment from "moment";
 
 // 로그인 정보 및 데이터 초기화
 const store = useStore();
@@ -146,19 +114,19 @@ const isLoggedIn = computed(() => !!store.state.user);
 const OrderData = ref([]);
 const ordlist = ref([]);
 const isModalOpen = ref(false);
-
+// 상세조회
+const orderInfo = ref([]);
 // 등록용 데이터 바인딩
 const searchTerm = ref("");
 const companyTel = ref("");
 const address = ref("");
-const orderDate = ref("");
-const deadDate = ref("");
-const salesTel = ref("");
-const salesManager = ref("");
-const note = ref("");
-
 const companyList = ref([]);
 const listOpen = ref(false);
+// 공통코드
+const sizecode = ref([]);
+const colorcode = ref([]);
+const statecode = ref([]);
+const standardcode = ref([]);
 
 const onFocusOut = () => {
   setTimeout(() => listOpen.value = false, 100);
@@ -180,119 +148,139 @@ const filteredCompanyList = computed(() => {
 
 // 주문서 목록 테이블
 const OrderColumns = [
-  { title: "순번", field: "num", width: 70 },
-  { title: "주문코드", field: "ordercode", width: 100 },
-  { title: "업체명", field: "companyName", width: 130 },
-  { title: "총수량", field: "totalQty", width: 90 },
-  { title: "주문일자", field: "orderdate", width: 100 },
-  { title: "납기일자", field: "deaddate", width: 100 },
-  { title: "상태", field: "status", width: 100 }
+  { title: "순번", formatter: "rownum", width: 70 },
+  { title: "주문코드", field: "order_code", width: 100 },
+  { title: "업체명", field: "cp_name", width: 130 },
+  { title: "총수량", field: "total_qty", width: 90 },
+  { title: "주문일자", field: "order_date", width: 100 },
+  { title: "납기일자", field: "dead_date", width: 100 },
+  { title: "상태", field: "order_state", width: 100, 
+    formatter:(cell)=>{
+    const code = cell.getValue();
+    const matched = statecode.value.find(item => item.detail_code == code);
+    return matched ? matched.detail_name : code;
+  } }
 ];
 
-// 등록 폼 상세 제품 테이블 (임시)
+// 등록 폼 상세 제품 테이블
 const OrderColumnsDetail = [
-  { title: "제품명", field: "prodname", width: 150 },
-  { title: "색상", field: "color", width: 80 },
-  { title: "사이즈", field: "size", width: 80 },
-  { title: "규격", field: "standard", width: 100 },
-  { title: "수량", field: "qty", width: 80 },
-  { title: "총수량", field: "totalqty", width: 100 },
-  { title: "단가", field: "unitprice", width: 100 },
-  { title: "합계", field: "totalprice", width: 100 },
+  {formatter:"rowSelection", titleFormatter:"rowSelection", hozAlign:"center", headerSort:false, width: 20,},
+  { title: "제품명", field: "prod_name", width: 150 },
+  { title: "색상", field: "color", width: 80,
+    formatter:(cell)=>{
+    const code = cell.getValue();
+    const matched = colorcode.value.find(item => item.detail_code == code);
+    return matched ? matched.detail_name : code;
+  }
+  },
+  { title: "사이즈", field: "size", width: 80, 
+    formatter:(cell)=>{
+    const code = cell.getValue();
+    const matched = sizecode.value.find(item => item.detail_code == code);
+    return matched ? matched.detail_name : code;
+  }
+  },
+  { title: "규격", field: "standard", width: 100, 
+    formatter:(cell)=>{
+    const code = cell.getValue();
+    const matched = standardcode.value.find(item => item.detail_code == code);
+    return matched ? matched.detail_name : code;
+  }
+  },
+  { title: "수량", field: "total_qty", width: 80 },
+  { title: "단가", field: "unit_price", width: 100 },
+  { title: "합계", field: "sel_price", width: 100 },
+  { title: "상태", field: "order_detail_state", width: 100 ,
+    formatter:(cell)=>{
+    const code = cell.getValue();
+    const matched = statecode.value.find(item => item.detail_code == code);
+    return matched ? matched.detail_name : code;
+  }
+  },
 ];
+
+
+onMounted(async () => {
+  // 공통코드
+  groupcodelist.groupCodeList('0I', colorcode);
+  groupcodelist.groupCodeList('0N', statecode);
+  groupcodelist.groupCodeList('0Z', standardcode);
+  groupcodelist.groupCodeList('0H', sizecode);
+
+  try {
+    const res = await axios.get('/api/orderList'); // ✅ 백엔드 API 호출
+    OrderData.value = res.data
+    console.log('📦 DB에서 받아온 데이터:', OrderData.value);
+} catch (error) {
+  console.error('❌ 주문 목록 로딩 실패:', error.message);
+}
+});
+
+// 주문 상세 정보
+const ordercurrentOrder = ref({});
+
+const OrderTabulatorOptions = {
+  // pagination: 'local', // Paging removed
+  // paginationSize: 7, // Paging size removed
+  layout: 'fitColumns',
+  rowClick: (e, row) => {
+    OrderData.value.forEach(item => item.isSelected = false);
+    row.getData().isSelected = true;
+    ordercurrentOrder.value = { ...row.getData() }; // Update detailed view
+  },
+  rowFormatter: function(row) {
+    if (row.getData().isSelected) {
+      row.getElement().classList.add("selected-row");
+    } else {
+      row.getElement().classList.remove("selected-row");
+    }
+  }
+};
+
+
 
 // 이벤트 핸들러
 const tabulatorEvent = [
   {
     eventName: "rowClick",
-    eventAction: (e, row) => {
+    eventAction: async (e, row) => {
       const rowData = row.getData();
       console.log(rowData);
       // 추후 상세조회 기능 구현 가능
+      const info = await axios.get(`/api/orderDetailList/${rowData.order_code}`);
+      orderInfo.value = info.data
+      ordercurrentOrder.value = info.data[0]
+      console.log("dfsaf",ordercurrentOrder.value.cp_name)
     }
   }
 ];
 
-const tabulatorOptions = { selectableRows: 1 };
-const tabulatorOptionsDetail = {};
-
-// 제품 추가 모달 데이터
-const getlist = (modaldata) => {
-  ordlist.value = modaldata;
-};
-
-// 모달창 제어
-const openModal = () => { isModalOpen.value = true };
-const closeModal = () => { isModalOpen.value = false };
-
-// 저장
-const saveOrder = async () => {
-  try {
-    const orderData = {
-      companyName: searchTerm.value,
-      companyTel: companyTel.value,
-      address: address.value,
-      orderDate: orderDate.value,
-      deadDate: deadDate.value,
-      salesManager: salesManager.value,
-      salesTel: salesTel.value,
-      note: note.value,
-      orderDetails: ordlist.value
-    };
-
-    console.log('보낼 주문 데이터:', orderData);
-    const res = await axios.post('/api/saveOrder', orderData);
-    if (res.data.success) {
-      alert('저장 성공');
-    } else {
-      alert('저장 실패');
-    }
-  } catch (err) {
-    console.error(err);
-    alert('저장 중 오류 발생');
-  }
-};
-
-// 데이터 로딩
-onMounted(async () => {
-  if (!isLoggedIn.value) return;
-
-  salesManager.value = user.value.emp_name;
-  salesTel.value = user.value.emp_tel;
-
-  try {
-    const [resOrder, resCompany] = await Promise.all([
-      axios.get('/api/orderList'),
-      axios.get('/api/companyDropDown')
-    ]);
-    await groupcodelist.groupCodeList('0Z', standardlist);
-    await groupcodelist.groupCodeList('0H', sizelist);
-    await groupcodelist.groupCodeList('0I', colorlist);
-    
-    OrderData.value = resOrder.data.map((item, index) => ({
-      num: index + 1,
-      ordercode: item.order_code,
-      companyName: item.cp_name,
-      totalQty: item.qty,
-      orderdate: item.order_date,
-      deaddate: item.dead_date,
-      companyTel: item.cp_tel,
-      salesManager: '심재진',
-      salesTel: '010-3213',
-      address: item.address,
-      note: item.note,
-      status: item.state
-    }));
-
-    companyList.value = resCompany.data;
-
-  } catch (e) {
-    console.error('데이터 로드 실패', e);
-  }
+const orderDetailFields={
+  companyName: orderInfo.value.cp_name,
+  companyTel: "",
+  address: "",
+  orderDate: "",
+  deadDate: "",
+  salesManager: "",
+  salesTel: "",
+  note: ""
+}
+const detailFields = ref({ ...orderDetailFields });
+const orderDateStr = computed({
+  get() { return ordercurrentOrder.value.order_date ? moment(ordercurrentOrder.value.order_date).format('YYYY-MM-DD') : ''; },
+  set(val) { ordercurrentOrder.value.order_date = val; }
 });
+
+const deadDateStr = computed({
+  get() { return ordercurrentOrder.value.dead_date ? moment(ordercurrentOrder.value.dead_date).format('YYYY-MM-DD') : ''; },
+  set(val) { ordercurrentOrder.value.dead_date = val; }
+});
+
+
 </script>
 
 <style scoped>
 /* 기존 조회페이지 스타일 유지 */
 .search-color { margin: 10px; padding: 20px; border-radius: 1rem; background-color: #fff; }
+
 </style>

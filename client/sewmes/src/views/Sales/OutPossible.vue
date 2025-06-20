@@ -18,6 +18,7 @@
     <!-- 주문서 목록2 -->
     <div class="col-lg-6 mb-4">
       <tabulator-card
+       ref="outprodTable"
         card-title="외주 가능 제품"
         :table-data="modalSelectList"
         :table-columns="outpossible"
@@ -38,7 +39,7 @@
   </div>
   
   <!-- 제품 추가 모달 -->
-  <prodModal
+  <OutProdModal
     v-bind:isModalOpen="ModalState"
     @selectPlans="getlist"
     @close-modal="closeModal"
@@ -51,8 +52,15 @@ import { ref, onMounted } from "vue";
 import axios from "axios";
 import ArgonButton from "@/components/ArgonButton.vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
-import prodModal from "./prodModal.vue";
+import OutProdModal from "./OutProdModal.vue";
 import groupcodelist from "../../assets/js/utils/groupcodelist.js"
+
+// 공통코드 변환
+const addresscode = ref([]);
+const statecode = ref([]);
+const categorycode = ref([]);
+const colorcode = ref([]);
+const sizecode = ref([]);
 
 const companyData = ref([]); // 업체 정보
 const modalSelectList = ref([]); // 모달에서 선택한 제품들
@@ -63,23 +71,53 @@ const originalData = ref([]);
 
 // 외주업체 목록
 const companyColumns = [
-  { title: "순번", field: "num", width: 70 },
-  { title: "업체코드", field: "cpcode", width: 130 },
-  { title: "업체명", field: "cpname", width: 130 },
-  { title: "지역", field: "region", width: 90 },
-  { title: "상태", field: "useyn", width: 100 },
-  { title: "등록날짜", field: "firstreg", width: 100 },
+  { title: "순번", field: "num", width: 80 },
+  { title: "업체코드", field: "cpcode", width: 170 },
+  { title: "업체명", field: "cpname", width: 230 },
+  { title: "지역", field: "region", width: 90,
+  formatter:(cell)=>{
+    const code = cell.getValue();
+    const matched = addresscode.value.find(item => item.detail_code == code);
+    return matched ? matched.detail_name : code;
+  }
+   },
+  // { title: "상태", field: "useyn", width: 100,
+  // formatter:(cell)=>{
+  //   const code = cell.getValue();
+  //   const matched = statecode.value.find(item => item.detail_code == code);
+  //   return matched ? matched.detail_name : code;
+  // }
+  //  },
+  { title: "등록날짜", field: "firstreg", width: 150 },
 ];
 
 // 외주 가능 제품
 const outpossible = [
   {formatter:"rowSelection", titleFormatter:"rowSelection", hozAlign:"center", headerSort:false, width: 20,},
-  { title: "순번", field: "nums", width: 70 },
-  { title: "제품코드", field: "prodcode", width: 80 },
-  { title: "제품명", field: "prodname", width: 150 },
-  { title: "카테고리", field: "prodcategory", width: 80 },
-  { title: "색상", field: "prodcolor", width: 80 },
-  { title: "사이즈", field: "prodsize", width: 100 },
+  { title: "순번", field: "nums", width: 80 },
+  { title: "제품코드", field: "prodcode", width: 120 },
+  { title: "제품명", field: "prodname", width: 170 },
+  { title: "카테고리", field: "prodcategory", width: 110,
+  formatter:(cell)=>{
+    const code = cell.getValue();
+    const matched = categorycode.value.find(item => item.detail_code == code);
+    return matched ? matched.detail_name : code;
+  }
+   },
+  { title: "색상", field: "prodcolor", width: 100,
+  formatter:(cell)=>{
+    const code = cell.getValue();
+    const matched = colorcode.value.find(item => item.detail_code == code);
+    return matched ? matched.detail_name : code;
+  }
+   },
+  { title: "사이즈", field: "prodsize", width: 119,
+  formatter:(cell)=>{
+    const code = cell.getValue();
+    const matched = sizecode.value.find(item => item.detail_code == code);
+    return matched ? matched.detail_name : code;
+  }
+   },
 ];
 
 // 백엔드 API 가지고 와서 필드에 업체목록 데이터 뿌려주기
@@ -92,7 +130,7 @@ const outcompanyList = async() => {
     cpcode : item.cp_code,
     cpname : item.cp_name,
     region : item.region,
-    useyn : item.use_yn,
+    // useyn : item.use_yn,
     firstreg : item.first_reg
     }));
     console.log(result.data);
@@ -146,17 +184,64 @@ const outcompanyList = async() => {
     }
   }
 ];
-  // 클릭한 행의 상세정보
-  const tabulatorOptionsDetail = {};
 
   // 모달창
-  const openModal = () => {
-    ModalState.value = true;
-  };
+const openModal = () => {
+  if (!selectCpcode.value) {
+    alert("업체를 선택하세요.");
+    return;
+  }
+  ModalState.value = true;
+};
 
-  const closeModal = () => {
-    ModalState.value = false;
-  };
+const closeModal = () => {
+  ModalState.value = false;
+};
+// 모달 창에서 선택한 데이터 삭제
+const outprodTable = ref(null); // tabulator-card에 ref로 바인딩
+
+const deleteEvent = async () => {
+  const table = outprodTable.value?.table; // Tabulator 인스턴스 접근
+  if (!table) {
+    alert("테이블 로딩 오류");
+    return;
+  }
+
+  const selectedRows = table.getSelectedData();
+
+  if (selectedRows.length === 0) {
+    alert("삭제할 제품을 선택하세요.");
+    return;
+  }
+
+  try {
+    // 프론트 목록에서 제거
+    modalSelectList.value = modalSelectList.value.filter(item =>
+      !selectedRows.some(row => row.prodcode === item.prodcode)
+    );
+
+    // 백엔드 삭제
+    for (const row of selectedRows) {
+      const res = await axios.delete('/api/outProdDelete', {
+        data: {
+          cp_code: selectCpcode.value,
+          prod_code: row.prodcode,
+        },
+      });
+
+      if (res.data.success) {
+        console.log(`제품 ${row.prodcode} 삭제 성공`);
+      } else {
+        console.warn(`제품 ${row.prodcode} 삭제 실패`);
+      }
+    }
+
+    alert("삭제되었습니다.");
+  } catch (err) {
+    console.error("삭제 중 오류:", err);
+    alert("삭제 실패");
+  }
+};
 
   // 모달에서 선택한 제품 데이터
 const getlist = (modaldata) => {
@@ -171,7 +256,6 @@ const getlist = (modaldata) => {
     prodcolor: item.color,
     prodsize: item.size
   }));
-
   // 기존 + 신규 병합
   const combined = [...modalSelectList.value, ...converted];
 
@@ -216,6 +300,7 @@ const getlist = (modaldata) => {
     }
 
     alert('저장되었습니다.');
+    location.reload();
   } catch (err) {
     console.error('저장 중 오류 발생:', err);
     alert('저장에 실패했습니다.');
@@ -224,7 +309,13 @@ const getlist = (modaldata) => {
 
 onMounted(() => {
   outcompanyList();
+  groupcodelist.groupCodeList('0F', addresscode);
+  groupcodelist.groupCodeList('0B', statecode);
+  groupcodelist.groupCodeList('0J', categorycode);
+  groupcodelist.groupCodeList('0I', colorcode);
+  groupcodelist.groupCodeList('0H', sizecode);
 });
+
 </script>
 
 <style scoped>

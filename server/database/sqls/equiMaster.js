@@ -9,6 +9,7 @@ SELECT equi_code
      , install_date
      , last_check
      , check_date
+     , equi_status
 FROM   t_equipment
 WHERE  ((? IS NULL OR ? = '') OR equi_name LIKE CONCAT('%', ?, '%'))
   AND  ((? IS NULL OR ? = '') OR equi_type = ?)

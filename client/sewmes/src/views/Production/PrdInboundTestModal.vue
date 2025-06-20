@@ -2,6 +2,7 @@
 <script setup>
 import axios from 'axios';
 import { defineProps, defineEmits, ref, computed, onMounted, watch } from 'vue';
+import Swal from 'sweetalert2';
 
 const productQualityTest = ref([]);
 const defectCounts = ref({});
@@ -95,12 +96,13 @@ const save = async () => {
 //   ]
 // }
 
-    alert('검사 저장이 완료되었습니다.');
+    Swal.fire({ title: "검사 완료", text: "검사 저장이 완료되었습니다", icon: "success" });
+    
     emit('saved'); // 검사 완료 시 부모에 알림
     close();  // 모달 닫기
   } catch (err) {
     console.error('검사 저장 실패:', err);
-    alert('저장 중 오류가 발생했습니다.');
+    Swal.fire({ title: "저장 오류", text: "저장 중 오류가 발생했습니다", icon: "error" });
   }
 };
 </script>

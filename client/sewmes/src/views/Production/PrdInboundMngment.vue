@@ -6,6 +6,7 @@ import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
 import PrdInboundTestModal from './PrdInboundTestModal.vue';
 import ArgonButton from "@/components/ArgonButton.vue";
 import moment from 'moment';
+import Swal from 'sweetalert2';
 
 const productTableRef = ref(null);
 // 사원정보 가져오기
@@ -118,11 +119,11 @@ const resetFilter = () => {
 
 // 완제품 입고검수 페이지 출력
 const openModal = () => {
-  if (!selectedWorkPerfCode.value) return alert("완제품 입고 건을 먼저 선택하세요.");
+  if (!selectedWorkPerfCode.value) return Swal.fire({ title: "미선택", text: "완제품 입고 건을 먼저 선택하세요", icon: "error" });
   
   const testStatus = getTestStatus(selectedWorkPerfCode.value);
   if (testStatus !== "검사 전") {
-    return alert(`이미 검사가 진행된 건입니다. (상태: ${testStatus})`);
+    return Swal.fire({ title: "선택 불가", text: `이미 검사가 진행된 건입니다. (상태: ${testStatus})`, icon: "error" });
   }
   
   isTestModalOpen.value = true;

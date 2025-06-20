@@ -36,9 +36,9 @@ const selectOrderProdList =`
         /**조건절**/
   ORDER BY od.order_date DESC`;
 // 생산계획 저장 SQL문 집합
-const getMaxProdPlanCode = `
-  SELECT MAX(CAST(SUBSTRING(prod_plan_code, 3) AS UNSIGNED)) AS max_code 
-  FROM t_prod_plan`;
+const getNextProdPlanCode = `
+  CALL createcode_proc('t_prod_plan', 'prod_plan_code', 'PP', @code);
+  SELECT @code AS newCode`;
 const insertProdPlan = `
   INSERT INTO t_prod_plan (
     prod_plan_code, order_detail_code, prod_code,
@@ -50,13 +50,13 @@ const updateProdPlan = `
   WHERE prod_plan_code = ?`;
 const updateOrderDetailState = `
   UPDATE t_order_detail 
-  SET state = '0n2n' 
+  SET order_detail_state = '0n2n' 
   WHERE order_detail_code = ?`;
 
 module.exports ={
   selectProdPlanByConditions,
   selectOrderProdList,
-  getMaxProdPlanCode,
+  getNextProdPlanCode,
   insertProdPlan,
   updateProdPlan,
   updateOrderDetailState

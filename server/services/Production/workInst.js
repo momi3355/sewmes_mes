@@ -37,7 +37,7 @@ const getProductionPlans=async()=>{
     }
 };
 
-//작업지시조회 (여기 수정)
+//작업지시조회 
 const getWorkInstAll= async(searchParams = {}) => { // searchParams를 인자로 받도록 수정
     try{
         let sql = sqlList['allworkInstList']; // sqlList에서 기본 SQL 쿼리 가져옴
@@ -83,8 +83,8 @@ const getWorkInstAll= async(searchParams = {}) => { // searchParams를 인자로
         throw error;
     }
 }
-
-// 작업지시서 저장 (재고 차감 및 상태 업데이트 제외 버전)
+// 작업지시서 저장 (재고 부족 시에도 홀드 기록, use_yn 고정, 수량은 필요량으로)
+// 작업지시서 저장 (재고 부족 시에도 홀드 기록, use_yn 고정, 수량은 필요량으로)
 const saveWorkInstructions = async (workInstructions) => {
     let conn;
     try {
@@ -94,13 +94,13 @@ const saveWorkInstructions = async (workInstructions) => {
         const savedResults = [];
 
         for (const instruction of workInstructions) {
-            // 1. 모든 파라미터 추출 및 유효성 검사 (변경 없음)
+            // 1. 모든 파라미터 추출 및 유효성 검사
             const p_work_inst_code_in = instruction.work_inst_code && instruction.work_inst_code.trim() !== '' ? instruction.work_inst_code.trim() : null;
             const p_prod_plan_code = instruction.prod_plan_code && instruction.prod_plan_code.trim() !== '' ? instruction.prod_plan_code.trim() : null;
             const p_prod_code = instruction.prod_code && instruction.prod_code.trim() !== '' ? instruction.prod_code.trim() : null;
             const p_inst_qty = parseFloat(instruction.inst_qty) || 0;
 
-            const p_inst_state = instruction.inst_state && instruction.inst_state.trim() !== '' ? instruction.inst_state.trim() : '0s1s';
+            const p_inst_state = instruction.inst_state && instruction.inst_state.trim() !== '' ? instruction.inst_state.trim() : '0s1s'; // 기본값 '0s1s' (생산 전)
             const p_emp_num = instruction.emp_num && instruction.emp_num.trim() !== '' ? instruction.emp_num.trim() : null;
             const p_inst_date = instruction.inst_date ? new Date(instruction.inst_date) : null;
             const p_inst_reg_date = instruction.inst_reg_date ? new Date(instruction.inst_reg_date) : new Date();
@@ -123,7 +123,20 @@ const saveWorkInstructions = async (workInstructions) => {
                     currentWorkInstCode = p_work_inst_code_in;
 
                     // 4. BOM_CODE 조회 (업데이트 시에도 최신 BOM 코드를 적용)
-                    const bomRows = await conn.query(sqlList['selectBomByProdCode'], [p_prod_code]);
+                    // conn.query의 반환값 형태에 따라 'rows' 배열을 올바르게 추출
+                    let bomRowsResult = await conn.query(sqlList['selectBomByProdCode'], [p_prod_code]);
+                    let bomRows;
+                    if (Array.isArray(bomRowsResult) && Array.isArray(bomRowsResult[0])) {
+                        bomRows = bomRowsResult[0];
+                    } else if (Array.isArray(bomRowsResult)) {
+                        bomRows = bomRowsResult;
+                    } else if (typeof bomRowsResult === 'object' && bomRowsResult !== null && 'bom_code' in bomRowsResult) {
+                        bomRows = [bomRowsResult];
+                    } else {
+                        console.warn(`경고: 제품코드 [${p_prod_code}]에 대한 t_bom 쿼리 결과 형태가 예상과 다릅니다.`, bomRowsResult);
+                        bomRows = [];
+                    }
+
                     if (bomRows && bomRows.length > 0) {
                         current_bom_code = bomRows[0].bom_code;
                     } else {
@@ -132,19 +145,10 @@ const saveWorkInstructions = async (workInstructions) => {
 
                     const updateValues = [
                         p_prod_plan_code, p_prod_code, current_bom_code, p_inst_qty,
-                        p_inst_state, p_emp_num, p_inst_date, p_inst_date, p_inst_reg_date, p_inst_reg_date, currentWorkInstCode
+                        p_inst_state, p_emp_num, p_inst_date, p_inst_date, p_inst_date, p_inst_reg_date, currentWorkInstCode
                     ];
                     const updateResult = await conn.query(sqlList['updateWorkInstList'], updateValues);
                     console.log(`작업지시 ${currentWorkInstCode} 업데이트 성공. Affected rows: ${updateResult.affectedRows}`);
-
-                    // 작업공정 업데이트 (필요시 활성화) - 이 부분은 기존 로직 유지
-                    const updateWorkProcessValues = [
-                        p_inst_qty,
-                        currentWorkInstCode
-                    ];
-                    // Make sure 'updateWorkProcessByWorkInstCode' is defined in sqlList
-                    await conn.query(sqlList['updateWorkProcessByWorkInstCode'], updateWorkProcessValues);
-                    console.log(`작업지시 ${currentWorkInstCode} 관련 작업공정 데이터 업데이트 완료.`);
 
                 } else { // 코드값은 넘어왔으나 DB에 없는 경우: 신규 코드 생성 및 INSERT
                     console.warn(`[saveWorkInstructions] Existing work_inst_code '${p_work_inst_code_in}' not found in DB. Treating as new.`);
@@ -156,16 +160,28 @@ const saveWorkInstructions = async (workInstructions) => {
                 isNewInstruction = true;
             }
 
-            // 4. 신규 작업지시인 경우에만 t_work_inst 테이블에 INSERT 실행
+            // 4. 신규 작업지시인 경우에만 t_work_inst 테이블에 INSERT 실행 및 작업공정 생성
             if (isNewInstruction) {
-                const bomRows = await conn.query(sqlList['selectBomByProdCode'], [p_prod_code]);
+                // conn.query의 반환값 형태에 따라 'rows' 배열을 올바르게 추출
+                let bomRowsResult = await conn.query(sqlList['selectBomByProdCode'], [p_prod_code]);
+                let bomRows;
+                if (Array.isArray(bomRowsResult) && Array.isArray(bomRowsResult[0])) {
+                    bomRows = bomRowsResult[0];
+                } else if (Array.isArray(bomRowsResult)) {
+                    bomRows = bomRowsResult;
+                } else if (typeof bomRowsResult === 'object' && bomRowsResult !== null && 'bom_code' in bomRowsResult) {
+                    bomRows = [bomRowsResult];
+                } else {
+                    console.warn(`경고: 제품코드 [${p_prod_code}]에 대한 t_bom 쿼리 결과 형태가 예상과 다릅니다.`, bomRowsResult);
+                    bomRows = [];
+                }
+
                 if (bomRows && bomRows.length > 0) {
                     current_bom_code = bomRows[0].bom_code;
                 } else {
                     throw new Error(`제품코드 '${p_prod_code}'에 해당하는 BOM 정보를 찾을 수 없어 작업지시를 저장할 수 없습니다.`);
                 }
 
-                // Check parameter count for insertWorkInstList. It should be 11.
                 const insertValues = [
                     currentWorkInstCode, p_prod_plan_code, p_prod_code, current_bom_code,
                     p_inst_qty, p_inst_state, p_emp_num, p_inst_date, p_inst_date, p_inst_date, p_inst_reg_date
@@ -174,137 +190,207 @@ const saveWorkInstructions = async (workInstructions) => {
                 const insertResult = await conn.query(sqlList['insertWorkInstList'], insertValues);
                 console.log(`작업지시 ${currentWorkInstCode} 신규 삽입 성공. Insert ID: ${insertResult.insertId}`);
 
-                // 작업공정 insert 프로시저 호출
+                // 작업공정 insert 프로시저 호출 (SQL List에 정의되어 있다고 가정)
                 let procMsg = await conn.query(sqlList['workProcessInsertProced'], [currentWorkInstCode]).catch(err => {
                     console.error("workProcessInsertProced 호출 오류:", err);
-                    throw new Error("작업공정 생성 프로시저 호출 중 오류 발생.");
+                    throw new Error("작업공정 생성 프로시저 호출 중 오류 발생. 상세: " + err.message);
                 });
-                procMsg = procMsg[1] && procMsg[1][0] ? procMsg[1][0].msg : '메시지 없음';
+                // MySQL 드라이버에 따라 프로시저 결과가 다르게 반환될 수 있으므로, 정확한 인덱스 확인 필요
+                procMsg = procMsg[1] && procMsg[1][0] && procMsg[1][0].msg ? procMsg[1][0].msg : '메시지 없음';
                 console.log(`작업공정 생성 프로시저 메시지: ${procMsg}`);
             }
 
-            // --- 5. 자재 홀드 처리 ---
-            // ❗ 변경: 기존 홀드를 먼저 모두 삭제하고, 새로운 지시 수량에 맞춰 재할당하는 전략을 사용합니다.
-            // 이렇게 하면 이전 FAB LOT 할당 정보도 초기화되고 새로 할당됩니다.
-            const bomDetails = await conn.query(sqlList['selectBomDetailsByBomCode'], [current_bom_code]);
+            // 5. 자재 홀드 처리 (재귀 함수 방식)
 
-            if (bomDetails && bomDetails.length > 0) {
-                for (const detail of bomDetails) {
-                    const material_code = detail.item_code;
-                    const requiredQty = detail.need * p_inst_qty; // 이 자재에 필요한 총 수량
+            // 기존에 이 작업지시 코드에 할당된 모든 홀드 데이터를 삭제합니다.
+            // 이는 작업지시가 업데이트될 때 필요한 자재의 종류나 수량이 변경될 수 있기 때문입니다.
+            await conn.query(sqlList['deleteHoldsByWorkInstCode'], [currentWorkInstCode]);
+            console.log(`작업지시 ${currentWorkInstCode}에 대한 기존 홀드 데이터 삭제 완료.`);
 
-                    // ⭐ FAB 자재인 경우와 아닌 경우를 분리 ⭐
-                    if (material_code.startsWith('FAB')) {
-                        // FAB 자재 처리: 재고에서 LOT을 할당 (FIFO 방식)
-                        console.log(`[FAB 자재 홀드] 작업지시: ${currentWorkInstCode}, 자재: ${material_code}, 필요 수량: ${requiredQty}`);
+            // 재료 소요량을 저장할 맵 (최종 자재 코드 -> {필요 수량, 실제 유형})
+            const materialRequirements = new Map();
 
-                        let allocatedQty = 0;
-                        let remainingQtyToAllocate = requiredQty;
+            // 재귀적으로 BOM을 탐색하고 최종 자재 소요량을 계산하는 함수
+            // currentBomCode: 현재 탐색 중인 BOM의 코드
+            // currentMultiplier: 현재 단계까지 곱해진 소요량 배수
+            async function calculateMaterialNeeds(currentBomCode, currentMultiplier) {
+                // 현재 BOM 코드에 직접 연결된 하위 품목들을 조회
+                const directDetails = await conn.query(sqlList['selectDirectBomDetails'], [currentBomCode]);
 
+                for (const detail of directDetails) {
+                    const itemCode = detail.item_code;
+                    const itemType = detail.item_type; // t_bom_detail의 item_type 컬럼 값
+                    const need = parseFloat(detail.need); // 해당 품목의 소요량
 
-                        const availableLots = await conn.query(sqlList['selectInboundMaterialsForFab'], [material_code]);
+                    const nextMultiplier = currentMultiplier * need;
 
-                        if (!availableLots || availableLots.length === 0) {
-                            // 실제 재고가 없어도 홀드를 생성하지 못할 수 있으므로, 재고 부족 메시지는 유효합니다.
-                            throw new Error(`FAB 자재 '${material_code}'에 대한 유효한 재고가 부족합니다. (재고 없음)`);
+                    // 품목 유형이 '0w1w' (자재)이면 최종 소요량에 합산
+                    if (itemType === '0w1w') { // '0w1w'는 자재라고 하셨습니다.
+                        if (materialRequirements.has(itemCode)) {
+                            materialRequirements.get(itemCode).required_qty += nextMultiplier;
+                        } else {
+                            materialRequirements.set(itemCode, {
+                                required_qty: nextMultiplier,
+                                item_actual_type: detail.actual_item_type
+                            });
                         }
+                    }
+                    // 품목 유형이 '0w2w' (반제품)이면 t_bom에서 해당 반제품의 BOM 코드를 찾아 재귀 호출
+                    else if (itemType === '0w2w') { // '0w2w'는 반제품
+                        const bomForSubProductQuery = `
+                            SELECT bom_code
+                            FROM t_bom
+                            WHERE prod_code = ?;
+                        `;
+                        console.log(`[DEBUG] Querying t_bom for prod_code: ${itemCode}`);
 
-                        for (const lot of availableLots) {
-                            if (remainingQtyToAllocate <= 0) break; // 필요한 수량을 모두 할당했으면 종료
+                        let queryResult;
+                        try {
+                            queryResult = await conn.query(bomForSubProductQuery, [itemCode]);
+                        } catch (error) { // 'error' 변수 선언
+                            console.error(`ERROR: Query failed for prod_code ${itemCode}:`, error);
+                            console.warn(`경고: 반제품 [${itemCode}]에 대한 BOM 코드 조회 중 오류 발생. 하위 자재 홀드 처리 생략.`);
+                            continue; // 오류 발생 시 해당 품목 건너뛰고 다음 detail 처리
+                        }
+                        
+                        let actualRows;
+                        if (Array.isArray(queryResult) && Array.isArray(queryResult[0])) {
+                            actualRows = queryResult[0];
+                        } else if (Array.isArray(queryResult)) {
+                            actualRows = queryResult;
+                        } else if (typeof queryResult === 'object' && queryResult !== null && 'bom_code' in queryResult) {
+                            actualRows = [queryResult];
+                        } else {
+                            console.warn(`경고: 반제품 [${itemCode}]에 대한 t_bom 쿼리 결과 형태가 예상과 다릅니다.`, queryResult);
+                            actualRows = [];
+                        }
+                        
+                        console.log(`[DEBUG] t_bom query processed result for ${itemCode}:`, actualRows);
 
-                            const lotAvailableQty = lot.inbound_qty; // LOT에 현재 남아있는 사용 가능 수량
-                            const qtyToAllocateFromLot = Math.min(remainingQtyToAllocate, lotAvailableQty);
+                        if (actualRows && actualRows.length > 0) {
+                            const actualSubBomCode = actualRows[0].bom_code;
+                            console.log(`[DEBUG] Found BOM code for ${itemCode}: ${actualSubBomCode}`);
+                            await calculateMaterialNeeds(actualSubBomCode, nextMultiplier);
+                        } else {
+                            // 이 경고는 이제 t_bom에 해당 prod_code가 없는 경우에만 발생해야 합니다.
+                            console.warn(`경고: 반제품 [${itemCode}]에 대한 BOM 코드를 t_bom에서 찾을 수 없습니다. 하위 자재 홀드 처리 생략.`);
+                        }
+                    }
+                }
+            }
+            // BOM 탐색 프로세스 시작: 완제품의 BOM 코드와 작업 지시 수량을 초기 값으로 전달
+            await calculateMaterialNeeds(current_bom_code, p_inst_qty); // p_inst_qty가 여기로 들어갑니다.
 
-                            if (qtyToAllocateFromLot > 0) {
-                                // 새 홀드 ID 생성
-                                const holdIdResultRows = await conn.query(sqlList['callCreateCodeProcForHoldId'], []);
-                                const newHoldId = holdIdResultRows && holdIdResultRows[1] && holdIdResultRows[1].length > 0
-                                    ? holdIdResultRows[1][0].new_hold_id : null;
-                                if (!newHoldId) {
-                                    throw new Error('새로운 홀드 ID를 생성하지 못했습니다. (DB 프로시저 오류)');
-                                }
+            // 계산된 최종 자재 소요량을 사용하여 t_hold 테이블에 삽입
+            if (materialRequirements.size > 0) {
+                for (const [materialCode, data] of materialRequirements.entries()) {
+                    const requiredQty = data.required_qty;
+                    console.log(`[자재 홀드 처리] 작업지시: ${currentWorkInstCode}, 자재: ${materialCode}, 총 필요 수량: ${requiredQty}`);
 
-                                // t_hold 테이블에 삽입 (LOT 코드와 연결)
-                                // 실제 재고(t_material_inbound)는 건드리지 않고, t_hold에만 기록합니다.
-                                await conn.query(sqlList['insertSingleHold'], [
-                                    newHoldId,
-                                    material_code,
-                                    qtyToAllocateFromLot,
-                                    currentWorkInstCode,
-                                    '0b2b', // use_yn: '0b2b' (홀드 상태)
-                                    lot.lot_code, // FAB 자재는 LOT 코드와 연결
-                                    0 // release_qty 초기값 0
-                                ]);
-                                console.log(`새 FAB 홀드 ${newHoldId} (자재: ${material_code}, LOT: ${lot.lot_code}) 삽입: ${qtyToAllocateFromLot}`);
+                    let remainingQtyToHold = requiredQty; // 't_hold'에 기록해야 할 남은 총 수량
 
-                                allocatedQty += qtyToAllocateFromLot;
-                                remainingQtyToAllocate -= qtyToAllocateFromLot;
+                    // 1단계: 가용 재고 LOT에 실제 할당 시도 (lot_code와 함께 기록)
+                    const availableMaterialLots = await conn.query(sqlList['selectInboundMaterialsWithLot'], [materialCode]);
 
-                                // ❗ 중요: t_material_inbound 테이블의 재고 수량 및 상태 업데이트 로직은 여기서 제거됩니다.
-                                // 재고 차감 및 상태 변경은 나중에 '출고' 또는 '생산 투입' 시점에 별도로 처리해야 합니다.
+                    for (const lotEntry of availableMaterialLots) {
+                        if (remainingQtyToHold <= 0) break; // 필요한 수량을 모두 't_hold'에 기록했으면 종료
+
+                        const lotAvailableQty = lotEntry.available_qty;
+                        const qtyToAllocateFromLot = Math.min(remainingQtyToHold, lotAvailableQty);
+
+                        if (qtyToAllocateFromLot > 0) {
+                            // 새 홀드 ID 생성 (SQL 프로시저 사용)
+                            const holdIdResultRows = await conn.query(sqlList['callCreateCodeProcForHoldId'], []);
+                            // 프로시저 결과도 conn.query의 반환값 형태에 따라 처리
+                            let newHoldIdResult;
+                            if (Array.isArray(holdIdResultRows) && Array.isArray(holdIdResultRows[1])) {
+                                newHoldIdResult = holdIdResultRows[1];
+                            } else if (Array.isArray(holdIdResultRows)) {
+                                newHoldIdResult = holdIdResultRows; // 또는 holdIdResultRows[0]
+                            } else {
+                                newHoldIdResult = [holdIdResultRows];
                             }
+
+                            const newHoldId = newHoldIdResult && newHoldIdResult.length > 0 && newHoldIdResult[0].new_hold_id
+                                ? newHoldIdResult[0].new_hold_id : null;
+                            
+                            if (!newHoldId) throw new Error('새로운 홀드 ID를 생성하지 못했습니다. (DB 프로시저 오류)');
+
+                            await conn.query(sqlList['insertSingleHold'], [
+                                newHoldId,
+                                materialCode,
+                                qtyToAllocateFromLot, // 이 LOT에서 할당된 수량
+                                currentWorkInstCode,
+                                lotEntry.lot_code // 해당 LOT 코드
+                            ]);
+                            console.log(`새 자재 홀드 ${newHoldId} (자재: ${materialCode}, LOT: ${lotEntry.lot_code}) 삽입: ${qtyToAllocateFromLot} (재고 할당)`);
+
+                            remainingQtyToHold -= qtyToAllocateFromLot; // 't_hold'에 기록해야 할 남은 수량 갱신
+
+                            // t_material_inbound 의 total_hold_qty 업데이트 (실제 할당된 수량만 증가)
+                            await conn.query(sqlList['updateMaterialInboundHoldQty'], [
+                                qtyToAllocateFromLot,
+                                lotEntry.inbound_code
+                            ]);
+                            console.log(`t_material_inbound ${lotEntry.inbound_code} 의 total_hold_qty 업데이트: ${qtyToAllocateFromLot}`);
                         }
+                    }
 
-                        if (remainingQtyToAllocate > 0) {
-                            // 필요한 수량을 모두 할당하지 못했을 경우 (홀드 부족 메시지)
-                            // 실제 재고가 부족한 상황이므로 여전히 오류로 처리해야 합니다.
-                            throw new Error(`FAB 자재 '${material_code}'의 재고가 ${remainingQtyToAllocate} 부족하여 홀드할 수 없습니다. (작업지시: ${currentWorkInstCode})`);
-                        }
-
-                    } else {
-                        // 일반 자재 (부자재) 처리: LOT 할당 없이 수량만 홀드
-                        const calculatedHoldQty = requiredQty; // 일반 자재의 필요 수량
-
-                        // 새 홀드 ID 생성
+                    // 2단계: 't_hold'에 기록해야 할 수량이 남아있고 (즉, 재고 부족), 아직 0이 아니라면, LOT 할당 없는 홀드 레코드 생성
+                    if (remainingQtyToHold > 0) {
                         const holdIdResultRows = await conn.query(sqlList['callCreateCodeProcForHoldId'], []);
-                        const newHoldId = holdIdResultRows && holdIdResultRows[1] && holdIdResultRows[1].length > 0
-                            ? holdIdResultRows[1][0].new_hold_id : null;
-
-                        if (!newHoldId) {
-                            throw new Error('새로운 홀드 ID를 생성하지 못했습니다. (DB 프로시저 오류)');
+                         // 프로시저 결과도 conn.query의 반환값 형태에 따라 처리
+                        let newHoldIdResult;
+                        if (Array.isArray(holdIdResultRows) && Array.isArray(holdIdResultRows[1])) {
+                            newHoldIdResult = holdIdResultRows[1];
+                        } else if (Array.isArray(holdIdResultRows)) {
+                            newHoldIdResult = holdIdResultRows; // 또는 holdIdResultRows[0]
+                        } else {
+                            newHoldIdResult = [holdIdResultRows];
                         }
 
-                        // 일반 자재는 lot_code에 NULL 삽입
-                        // insertSingleHold 쿼리 인자 순서: hold_id, material_code, hold_qty, work_inst_code, use_yn, lot_code, release_qty
+                        const newHoldId = newHoldIdResult && newHoldIdResult.length > 0 && newHoldIdResult[0].new_hold_id
+                            ? newHoldIdResult[0].new_hold_id : null;
+
+                        if (!newHoldId) throw new Error('새로운 홀드 ID를 생성하지 못했습니다. (DB 프로시저 오류)');
+
                         await conn.query(sqlList['insertSingleHold'], [
                             newHoldId,
-                            material_code,
-                            calculatedHoldQty,
+                            materialCode,
+                            remainingQtyToHold, // ❗ 남은 필요한 수량(부족분)을 이 홀드 레코드에 기록
                             currentWorkInstCode,
-                            '0b2b', // use_yn: '0b2b' (홀드 상태)
-                            null, // 일반 자재는 lot_code가 필요 없음
-                            0 // release_qty 초기값 0
+                            null // LOT 할당 실패 (특정 LOT에 할당되지 않았으므로 NULL)
                         ]);
-                        console.log(`새 일반 자재 홀드 ${newHoldId} (자재: ${material_code}) 삽입: ${calculatedHoldQty}`);
+                        console.warn(`자재 '${materialCode}' 재고 부족. ${remainingQtyToHold} 만큼 할당 실패. 홀드 ${newHoldId} (수량: ${remainingQtyToHold}, LOT: NULL) 생성.`);
                     }
                 }
             } else {
-                console.warn(`BOM 코드 '${current_bom_code}'에 대한 상세 내역(자재 목록)을 찾을 수 없습니다. 자재 홀드 처리 생략.`);
+                console.warn(`BOM 코드 '${current_bom_code}'에 대한 최종 자재 내역을 찾을 수 없습니다. 자재 홀드 처리 생략.`);
             }
 
-            // 6. 응답을 위한 결과 저장 (변경 없음)
+            // 6. 응답을 위한 결과 저장
             savedResults.push({
                 ...instruction,
                 work_inst_code: currentWorkInstCode,
-                emp_num: p_emp_num,
+                emp_num: p_emp_num, // 프론트엔드에서 넘어온 담당자 정보 반영
                 inst_reg_date: p_inst_reg_date
             });
         }
 
-        // 모든 작업 성공 시 커밋 (변경 없음)
+        // 모든 작업 성공 시 커밋
         await conn.commit();
         console.log('모든 작업지시 및 관련 자재 홀드 성공적으로 커밋됨.');
         return { success: true, message: '모든 작업지시가 성공적으로 저장되었습니다.', data: savedResults };
 
     } catch (error) {
-        // 오류 발생 시 롤백 (변경 없음)
+        // 오류 발생 시 롤백
         if (conn) {
             await conn.rollback();
         }
         console.error('작업지시 저장 중 오류 발생 및 롤백됨. 오류 상세:', error);
         throw new Error('작업지시 저장 중 오류가 발생했습니다: ' + error.message);
     } finally {
-        // 연결 해제 (변경 없음)
+        // 연결 해제
         if (conn) {
             conn.release();
         }

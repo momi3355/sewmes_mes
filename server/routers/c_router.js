@@ -116,6 +116,26 @@ router.post("/bomDetail", async (req, res) => {
   }
 });
 
+router.put("/bomDetail", async (req, res) => {
+    try {
+    const result = await bomService.upsertBomDetail(req.body);
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "추가 중 오류 발생" });
+  }
+});
+
+router.get("/bomDetail", async (req, res) => {
+  try {
+    const result = await bomService.getBomDetailList(req.query);
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "추가 중 오류 발생" });
+  }
+});
+
 router.get("/prdReceive", async (req, res) => {
   try {
     const result = await prdReceiveService.getProductReceiveList(req.query);
@@ -140,6 +160,16 @@ router.get("/prdReceive/lot", async (req, res) => {
 router.post("/prdReceive", async (req, res) => {
   try {
     const result = await prdReceiveService.addReleaseDataWithDetails(req.body);
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "추가 중 오류 발생" });
+  }
+});
+
+router.get("/prdRelease", async (req, res) => {
+    try {
+    const result = await prdReceiveService.getReleaseList(req.query);
     res.send(result);
   } catch (err) {
     console.error(err);

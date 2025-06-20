@@ -14,12 +14,13 @@ let equiSchDateList = ref([]);
 let equiHistoryList = reactive([]);
 let equiuseYn = ref([]);
 let imageInput = ref();
+let equiStatus = ref([]);
 
 
 //설비기준정보 컬럼
 const equiListColumns = [
-  { title: "설비코드", field: "equi_code"},
-  { title: "설비명", field: "equi_name"},
+  { title: "설비코드", field: "equi_code", width: 120},
+  { title: "설비명", field: "equi_name", width: 160},
   {
     title: "사용여부",
     field: "use_yn",
@@ -27,8 +28,41 @@ const equiListColumns = [
       const code = cell.getValue();
       const matched = equiuseYn.value.find(item => item.detail_code == code);
       return matched ? matched.detail_name : code;
-    }
+    },
+    width: 120
   },
+ {
+  title: "설비상태",
+  field: "equi_status",
+  formatter: (cell) => {
+    const code = cell.getValue();
+    const matched = equiStatus.value.find(item => item.detail_code === code);
+    const name = matched ? matched.detail_name : code;
+
+    // 상태에 따라 클래스 매핑
+    const classMap = {
+      '0u1u': 'bg-gradient-success text-white',  // 가동가능
+      '0u2u': 'bg-gradient-warning text-dark',   // 가동중
+      '0u3u': 'bg-gradient-secondary text-white',// 점검
+      '0u4u': 'bg-gradient-danger text-white'    // 고장
+    };
+
+    const className = classMap[code] || 'bg-light text-dark';
+
+    return `<div class="px-2 py-1 rounded text-center ${className}">
+      ${name}
+    </div>`;
+  },
+  width: 120
+},
+  {
+  title: "점검예정일",
+  field: "check_date",
+  formatter: (cell) => {
+    const value = cell.getValue();
+    return value ? moment(value).format("YYYY-MM-DD") : "";
+  }
+},
   { title: "비고", field: "equi_note"},
 ];
 
@@ -62,7 +96,14 @@ const getEquiList = async () => {
   }
 
   let list = await axios.get('/api/equipment').catch(err => console.log(err));
-  equiList.value = list.data;
+  const equiFilter = list.data.filter(item => {
+    let matchUseYn = true;
+    if (params.useYn.length === 1) {
+      matchUseYn = params.useYn.includes(item.use_yn);
+    }
+    return matchUseYn;
+  })
+  equiList.value = equiFilter;
 }
 
 const EquiSearchHandler = async () => {
@@ -121,6 +162,15 @@ const saveEquiMaster = async () => {
   } else {
     computedCheckDate = installDate.clone().add(30, 'days');
   }
+
+// 점검 예정일 계산
+if (!equiInfo.value.check_date) {
+  if (lastCheck && checkInterval > 0) {
+    equiInfo.value.check_date = lastCheck.clone().add(checkInterval, 'days').format('YYYY-MM-DD');
+  } else {
+    equiInfo.value.check_date = installDate.clone().add(30, 'days').format('YYYY-MM-DD');
+  }
+}
 
   formData.append('equi_name', equiInfo.value.equi_name || '');
   formData.append('use_yn', equiInfo.value.use_yn || '');
@@ -200,6 +250,11 @@ const saveEquiMaster = async () => {
   };
 }
 
+const tabulatorOptions = {
+    selectableRows: 1, //행선택가능
+    selectableRowsPersistence: false, //페이지변경시 선택상태 유지 안함
+};
+
 const tabulatorEvents = [
   {
     eventName: "rowClick",
@@ -234,6 +289,7 @@ onMounted(() => {
   groupcodelist.groupCodeList('1C', equiTypeCodeList);
   groupcodelist.groupCodeList('0V', equiSchDateList);
   groupcodelist.groupCodeList('0B', equiuseYn);
+  groupcodelist.groupCodeList('0U', equiStatus);
   getEquiList();
 })
 
@@ -250,10 +306,11 @@ onMounted(() => {
         </div>
         <div class="col-md-2">
           <label class="form-label">설비 유형</label>
-           <select class="form-select" v-model="equiSchData.equiType">
+          <select class="form-select" v-model="equiSchData.equiType">
             <option value="">-</option>
-            <option v-for="target in equiTypeCodeList" :key="target.detail_code" :value="target.detail_code">{{ target.detail_name }}</option>
-           </select>
+            <option v-for="target in equiTypeCodeList" :key="target.detail_code" :value="target.detail_code">
+              {{ target.detail_name }}</option>
+          </select>
         </div>
         <div class="col-md-4">
           <label class="form-label">조회 기간</label>
@@ -298,13 +355,13 @@ onMounted(() => {
     <div class="content-area d-flex gap-3">
       <!-- 좌측 목록 -->
       <div class="col-md-7 d-flex flex-column overflow-auto">
-        <tabulator-card
-          class="flex-grow-1"
-          card-title="설비 목록"
-          :table-data="equiList"
-          :table-columns="equiListColumns"
-          :on="tabulatorEvents"
-        />
+        <tabulator-card class="flex-grow-1" 
+        card-title="설비 목록" 
+        :table-data="equiList" 
+        :table-columns="equiListColumns"
+        :on="tabulatorEvents" 
+        :tabulatorOptions="tabulatorOptions"
+        height="576px" />
       </div>
 
       <!-- 우측 상세 + 이력 -->
@@ -312,7 +369,7 @@ onMounted(() => {
         <!-- 상세 카드 -->
         <div class="card mb-2 detail-card">
           <div class="card-header header-fixed mb-3 mt-3">
-            <span>설비 상세</span>
+            <h5 class="mt-0 text-start">설비 상세</h5>
             <button class="btn btn-sm btn-success" @click="saveEquiMaster">저장</button>
           </div>
           <div class="card-body detail-body">
@@ -391,13 +448,12 @@ onMounted(() => {
         </div>
 
         <!-- 이력 카드 -->
-        <div class="card flex-grow-1 overflow-auto">
-          <tabulator-card
-            card-title="설비 비가동 이력"
-            :table-data="equiMaintHistoryList"
-            :table-columns="equiMaintHistoryColumns"
-            height="auto"
-          />
+        <div class="card mb-2 detail-card">
+
+          <div class="card flex-grow-1 overflow-auto">
+            <tabulator-card card-title="설비 비가동 이력" :table-data="equiMaintHistoryList"
+              :table-columns="equiMaintHistoryColumns" height="137px" />
+          </div>
         </div>
       </div>
     </div>
@@ -406,7 +462,7 @@ onMounted(() => {
 
 <style scoped>
 .full-height {
-  height: 100vh;
+  height: 840px;
   display: flex;
   flex-direction: column;
 }
@@ -447,6 +503,7 @@ onMounted(() => {
 
 .detail-card {
   flex-shrink: 0;
+  width: 656px;
 }
 
 .detail-body {

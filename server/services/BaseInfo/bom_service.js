@@ -31,6 +31,31 @@ const getBomItemList = async ({item_code, item_name, item_type, use_yn}) => {
   return mariadb.directQuery(finalSql, params);
 };
 
+const getBomDetailList = async ({item_code}) => {
+  return mariadb.query("selectBomDetailList", [
+    item_code,
+    item_code
+  ]);
+};
+
+const upsertBomDetail = async (params) => {
+  if (!params.bomCode && !params.bomInfo) return;
+
+  try {
+    const bomInfo = JSON.stringify(params.bomInfo);
+    // console.log([
+    //   params.bomCode,
+    //   bomInfo
+    // ]);
+    return mariadb.query("upsertBomDetails", [
+      params.bomCode,
+      bomInfo
+    ]);
+  } catch(error) {
+    console.log(error);
+  }
+};
+
 const addBomDataWithDetails = async (params) => {
   if (!params.prod_code && !params.user_code && !params.bom_info) return;
 
@@ -53,5 +78,7 @@ const addBomDataWithDetails = async (params) => {
 
 module.exports = {
   getBomItemList,
+  getBomDetailList,
+  upsertBomDetail,
   addBomDataWithDetails,
 }

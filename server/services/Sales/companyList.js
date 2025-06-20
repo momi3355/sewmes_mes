@@ -14,8 +14,8 @@ const findAll = async() =>{
   // -> 비동기작업이므로 await/async를 활용해서 동기식으로 동작하도록 진행
   let list = await mariadb.query("companyDropDown")
   .catch(err => console.log(err));
-console.log("쿼리 결과:", list);
-return list;
+  console.log("쿼리 결과:", list);
+  return list;
  };
 
 

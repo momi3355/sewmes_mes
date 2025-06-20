@@ -5,10 +5,13 @@ const fs = require('fs');
 const router = express.Router();
 
 //품질 서비스
-const qualityService = require('../services/BaseInfo/quality_service');
+const qualityService = require('../services/BaseInfo/quality_service.js');
 
 //설비 서비스
-const equipmentService = require('../services/BaseInfo/equimaster_service');
+const equipmentService = require('../services/BaseInfo/equimaster_service.js');
+
+//차트 서비스
+const chartService = require('../services/BaseInfo/mainChart_service.js');
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -169,5 +172,30 @@ router.get('/equipment/history/:code', async(req, res) => {
   let equiHistoryList = equipmentService.equiHistoryList(equiCode).catch(err => console.log(err));
   res.send(equiHistoryList);
 })
+
+//설비 점검/수리(하고싶다)
+
+//차트(한달동안 생산계획작업지시공정생산량불량량)
+router.get('/mainChart/production', async (req, res) => {
+  let productionList = await chartService.processChartList()
+                                        .catch(err => console.log(err));
+  res.send(productionList);
+});
+
+//차트(작업지시별 공정 완료...율?)
+router.get('/mainChart/complete', async (req, res) => {
+  let processCompleteList = await chartService.workInstToProcessCompleteList()
+                                        .catch(err => console.log(err));
+
+  res.send(processCompleteList);
+});
+
+//차트(날짜별 생산량 흐름?)
+router.get('/mainChart/dateOutput', async (req, res) => {
+  let dateOutputList = await chartService.dateOfProdList()
+                                        .catch(err => console.log(err));
+
+  res.send(dateOutputList);
+});
 
 module.exports = router;

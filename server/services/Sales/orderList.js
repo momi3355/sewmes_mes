@@ -2,10 +2,17 @@ const mariadb = require("../../database/mapper.js");
 const { orderListCheck2 } = require('../../database/sqls/orderList');
 const sqlList = require("../../database/sqlList.js");
 
-// 주문 목록 출력 서비스
+// 주문서 관리(조회) 목록 출력 서비스
 const findAll = async () => {
   let list = await mariadb.query("orderListCheck2")
     .catch(err => console.log(err));
+  return list;
+};
+// 주문서 관리(조회)상세 조회 서비스
+const findOrderInfo = async (order_code) => {
+  let list = await mariadb.query("orderListCheck3", order_code)
+    .catch(err => console.log(err));
+    console.log("서비스리스트",list)
   return list;
 };
 
@@ -51,7 +58,8 @@ const orderAdd = async (orderData) => {
     await conn.beginTransaction();
 
     // 주문코드 생성
-    const orderCode = await getNextOrderCode();
+    let creCode = await mariadb.query("createCodeProc", [ 't_order', 'order_code', 'O' ]);
+    const orderCode = creCode[1][0].newCode;
     console.log("생성된 orderCode:", orderCode);
 
     // 총수량 계산
@@ -116,4 +124,5 @@ module.exports = {
   findAll,
   orderAdd,
   prodAll,
+  findOrderInfo,
 };

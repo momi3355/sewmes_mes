@@ -38,12 +38,22 @@ const getReleaseMaterial = `
   WHERE l.outsou_order_code = ? 
   ORDER BY CAST(SUBSTRING(l.list_code, 4) AS UNSIGNED) DESC`;
 
-  // 외주발주 출고처리
+// 외주발주 출고처리
 const callOutsouRelease = `CALL proc_outsou_release(?)`;
 
+// 외주입고 등록 처리
+const getNextOutsouInboundCode = `
+  CALL createcode_proc('t_outsou_receive', 'outsou_inbound_code', 'OR', @newCode);
+  SELECT @newCode AS newCode`;
+const insertOutsouReceive = `
+  INSERT INTO t_outsou_receive (
+    outsou_inbound_code, outsou_order_code, inbound_qty, reg_date, prod_code, cp_code
+  ) VALUES (?, ?, ?, ?, ?, ?)`;
 
 module.exports ={
   selectOutsouReleaseMaterialByConditions,
   getReleaseMaterial,
-  callOutsouRelease
+  callOutsouRelease,
+  getNextOutsouInboundCode,
+  insertOutsouReceive
 };

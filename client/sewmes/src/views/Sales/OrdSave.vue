@@ -53,14 +53,14 @@
         v-model="deadDate">
         </div>
   
-        <div class="col-md-3 fw-bold">영업 담당자 연락처:</div>
-        <div class="col-md-9">
-          <input type="text" class="form-control" v-model="salesTel" />
-        </div>
-  
         <div class="col-md-3 fw-bold">영업 담당자:</div>
         <div class="col-md-9">
           <input type="text" class="form-control" v-model="salesManager" />
+        </div>
+        
+        <div class="col-md-3 fw-bold">영업 담당자 연락처:</div>
+        <div class="col-md-9">
+          <input type="text" class="form-control" v-model="salesTel" />
         </div>
   
         <div class="col-md-3 fw-bold">비고:</div>
@@ -71,7 +71,7 @@
     </div>
                 <div class="card-footer d-flex justify-content-end pt-0">
                   <button class="btn btn-outline-secondary btn-sm me-2" @click="openModal">제품추가 🧾</button>
-                <argon-button color="secondary" variant="gradient" class="me-2" id="arbtn">삭제</argon-button>
+                <argon-button color="secondary" variant="gradient" class="me-2" id="arbtn" @click="deleteSelectedRows">삭제</argon-button>
                 <argon-button color="success" variant="gradient" id="arbtn" @click="saveOrder">저장</argon-button>
               </div>
               <tabulator-card
@@ -176,7 +176,17 @@ const filteredCompanyList = computed(() => {
   console.log("로그인 유저 정보:", user.value);
   // 선택한 제품 리스트 출력
   const OrderColumns = [
-    {formatter:"rowSelection", titleFormatter:"rowSelection", hozAlign:"center", headerSort:false, width: 20,},
+  {
+  title: "", field: "selected", width: 50, hozAlign: "center", headerSort: false,
+  formatter: function(cell) {
+    const value = cell.getValue();
+    return `<input type="checkbox" ${value ? 'checked' : ''} />`;
+  },
+  cellClick: function(e, cell) {
+    const current = cell.getValue();
+    cell.setValue(!current); // true/false 토글
+  }
+},
     { title: "제품명", field: "prodname", width: 350},
     { title: "색상", field: "color", width: 80,
         formatter: function(cell) {
@@ -286,6 +296,16 @@ console.log('🏢 DB에서 받아온 업체 데이터:', companyList.value);
   const closeModal = () => {
       isModalOpen.value = false;
   };
+  const deleteSelectedRows = () => {
+  const selectedCount = ordlist.value.filter(item => item.selected).length;
+
+  if (selectedCount === 0) {
+    alert("삭제할 제품을 선택해주세요.");
+    return;
+  }
+
+  ordlist.value = ordlist.value.filter(item => !item.selected);
+};
 
   // 총 주문금액 계산
   const calculateTotalOrderPrice = () => {
@@ -326,6 +346,7 @@ const saveOrder = async () => {
 
     if (res.data.success) {
       alert('주문서가 성공적으로 저장되었습니다.');
+      location.reload();
     } else {
       alert('저장에 실패했습니다.');
     }
