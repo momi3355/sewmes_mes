@@ -11,14 +11,14 @@
         :table-columns="companyColumns"
         :tabulator-options="{selectableRows : 1}"
         :on="selectCompany"
-        style="height: 700px;"
+                    height="615px"
       />
     </div>
 
     <!-- 주문서 목록2 -->
     <div class="col-lg-6 mb-4">
       <tabulator-card
-       ref="outprodTable"
+        ref="selectCheckBox"
         card-title="외주 가능 제품"
         :table-data="modalSelectList"
         :table-columns="outpossible"
@@ -28,7 +28,7 @@
         <!-- actions 슬롯에 버튼을 삽입 -->
         <template #actions>
           <button class="btn btn-outline-secondary btn-sm me-2" id="openModal" @click="openModal">제품추가 🧾</button>
-          <ArgonButton class="removebtn" color="danger" variant="gradient" @click="deleteEvent">삭제</ArgonButton>
+          <!-- <ArgonButton class="removebtn" color="danger" variant="gradient" @click="deleteEvent">삭제</ArgonButton> -->
           <argon-button color="success" variant="gradient" @click="saveEvent">저장</argon-button>
         </template>
       </tabulator-card>
@@ -47,6 +47,7 @@
 </template>
 
 <script setup>
+import Swal from 'sweetalert2';
 import { ref, onMounted } from "vue";
 // import { useStore } from 'vuex';
 import axios from "axios";
@@ -68,12 +69,15 @@ const ModalState = ref(false); // 모달 on/off 초기값 설정
 const selectCpcode = ref(null); // 선택한 업체코드
 const selectOutProd = ref([])
 const originalData = ref([]);
+const outprodTable = ref(null);
+const selectCheckBox = ref([]);
+const outCpCode = ref({});
 
 // 외주업체 목록
 const companyColumns = [
   { title: "순번", field: "num", width: 80 },
   { title: "업체코드", field: "cpcode", width: 170 },
-  { title: "업체명", field: "cpname", width: 230 },
+  { title: "업체명", field: "cpname"},
   { title: "지역", field: "region", width: 90,
   formatter:(cell)=>{
     const code = cell.getValue();
@@ -96,7 +100,7 @@ const outpossible = [
   {formatter:"rowSelection", titleFormatter:"rowSelection", hozAlign:"center", headerSort:false, width: 20,},
   { title: "순번", field: "nums", width: 80 },
   { title: "제품코드", field: "prodcode", width: 120 },
-  { title: "제품명", field: "prodname", width: 170 },
+  { title: "제품명", field: "prodname"},
   { title: "카테고리", field: "prodcategory", width: 110,
   formatter:(cell)=>{
     const code = cell.getValue();
@@ -177,7 +181,7 @@ const outcompanyList = async() => {
 
       unique.forEach((item, idx) => {
         item.nums = idx + 1;
-      });
+      });console.log(unique)
 
       modalSelectList.value = unique;
       originalData.value = [...selectOutProd.value];
@@ -197,49 +201,50 @@ const openModal = () => {
 const closeModal = () => {
   ModalState.value = false;
 };
-// 모달 창에서 선택한 데이터 삭제
-const outprodTable = ref(null); // tabulator-card에 ref로 바인딩
 
+// 삭제버튼
 const deleteEvent = async () => {
-  const table = outprodTable.value?.table; // Tabulator 인스턴스 접근
-  if (!table) {
-    alert("테이블 로딩 오류");
+  if (!selectCpcode.value) {
+    alert("업체를 먼저 선택해주세요.");
     return;
   }
 
-  const selectedRows = table.getSelectedData();
+  const tableInstance = selectCheckBox.value?.getTabulator?.();
+  const selectedRows = tableInstance?.getSelectedData();
 
-  if (selectedRows.length === 0) {
+  if (!selectedRows || selectedRows.length === 0) {
+    console.log("선택한 모달제품",item);
     alert("삭제할 제품을 선택하세요.");
     return;
   }
 
   try {
-    // 프론트 목록에서 제거
-    modalSelectList.value = modalSelectList.value.filter(item =>
-      !selectedRows.some(row => row.prodcode === item.prodcode)
-    );
 
-    // 백엔드 삭제
-    for (const row of selectedRows) {
-      const res = await axios.delete('/api/outProdDelete', {
-        data: {
-          cp_code: selectCpcode.value,
-          prod_code: row.prodcode,
-        },
-      });
+      for (const item of selectedRows) {
+        const isOriginal = originalData.value.some(orig => orig.prodcode === item.prodcode);
 
-      if (res.data.success) {
-        console.log(`제품 ${row.prodcode} 삭제 성공`);
-      } else {
-        console.warn(`제품 ${row.prodcode} 삭제 실패`);
-      }
+        if (isOriginal) {
+          // 기존 DB에 등록된 데이터면 서버에 삭제 요청
+          const res = await axios.delete('/api/outProdDelete', {
+            data: {
+              cp_code: selectCpcode.value,
+              prod_code: item.prodcode
+            }
+          });
+
+          if (!res.data.success) {
+            console.error(`삭제 실패: ${item.prodcode}`);
+          }
+        }
+        // 화면 목록에서는 무조건 제거
+        modalSelectList.value = modalSelectList.value.filter(
+          prod => prod.prodcode !== item.prodcode
+        );
+      
     }
-
-    alert("삭제되었습니다.");
   } catch (err) {
     console.error("삭제 중 오류:", err);
-    alert("삭제 실패");
+    alert("삭제에 실패했습니다.");
   }
 };
 
@@ -253,8 +258,8 @@ const getlist = (modaldata) => {
     prodcode: item.prodcode || item.prod_code,
     prodname: item.prodname || item.prod_name,
     prodcategory: item.category,
-    prodcolor: item.color,
-    prodsize: item.size
+    prodcolor: item.prodcolor,
+    prodsize: item.prodsize
   }));
   // 기존 + 신규 병합
   const combined = [...modalSelectList.value, ...converted];
@@ -269,6 +274,7 @@ const getlist = (modaldata) => {
   unique.forEach((item, idx) => {
     item.nums = idx + 1;
   });
+  console.log("dsfa",modalSelectList);
 
   modalSelectList.value.splice(0, modalSelectList.value.length, ...unique);
 };
@@ -307,13 +313,23 @@ const getlist = (modaldata) => {
   }
 };
 
-onMounted(() => {
-  outcompanyList();
-  groupcodelist.groupCodeList('0F', addresscode);
-  groupcodelist.groupCodeList('0B', statecode);
-  groupcodelist.groupCodeList('0J', categorycode);
-  groupcodelist.groupCodeList('0I', colorcode);
-  groupcodelist.groupCodeList('0H', sizecode);
+onMounted(async () => {
+  Promise.all([
+
+    groupcodelist.groupCodeList('0F', addresscode),
+    groupcodelist.groupCodeList('0B', statecode),
+    groupcodelist.groupCodeList('0J', categorycode),
+    groupcodelist.groupCodeList('0I', colorcode),
+    groupcodelist.groupCodeList('0H', sizecode),
+  ]).then(() => {
+    outcompanyList()
+  }).catch(err => {
+    Swal.fire({
+      title: "조회 실패.",
+      text: "네트워크 연결을 실패했습니다.",
+      icon: "error"
+    });
+  })
 });
 
 </script>

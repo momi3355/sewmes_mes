@@ -148,13 +148,13 @@ const filteredCompanyList = computed(() => {
 
 // 주문서 목록 테이블
 const OrderColumns = [
-  { title: "순번", formatter: "rownum", width: 70 },
-  { title: "주문코드", field: "order_code", width: 100 },
-  { title: "업체명", field: "cp_name", width: 130 },
-  { title: "총수량", field: "total_qty", width: 90 },
-  { title: "주문일자", field: "order_date", width: 100 },
-  { title: "납기일자", field: "dead_date", width: 100 },
-  { title: "상태", field: "order_state", width: 100, 
+  { title: "순번", formatter: "rownum", width: 80 },
+  { title: "주문코드", field: "order_code", width: 108 },
+  { title: "업체명", field: "cp_name"},
+  { title: "총수량", field: "total_qty", width: 94 },
+  { title: "주문일자", field: "order_date", width: 110 },
+  { title: "납기일자", field: "dead_date", width: 110 },
+  { title: "상태", field: "order_state", width: 90, 
     formatter:(cell)=>{
     const code = cell.getValue();
     const matched = statecode.value.find(item => item.detail_code == code);
@@ -173,14 +173,14 @@ const OrderColumnsDetail = [
     return matched ? matched.detail_name : code;
   }
   },
-  { title: "사이즈", field: "size", width: 80, 
+  { title: "사이즈", field: "size", width: 95, 
     formatter:(cell)=>{
     const code = cell.getValue();
     const matched = sizecode.value.find(item => item.detail_code == code);
     return matched ? matched.detail_name : code;
   }
   },
-  { title: "규격", field: "standard", width: 100, 
+  { title: "규격", field: "standard", width: 105, 
     formatter:(cell)=>{
     const code = cell.getValue();
     const matched = standardcode.value.find(item => item.detail_code == code);
@@ -188,7 +188,7 @@ const OrderColumnsDetail = [
   }
   },
   { title: "수량", field: "total_qty", width: 80 },
-  { title: "단가", field: "unit_price", width: 100 },
+  { title: "단가", field: "unit_price", width: 80 },
   { title: "합계", field: "sel_price", width: 100 },
   { title: "상태", field: "order_detail_state", width: 100 ,
     formatter:(cell)=>{
