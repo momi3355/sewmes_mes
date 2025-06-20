@@ -5,15 +5,21 @@ import axios from "axios";
 
 const planVsInstSeries = ref([]);
 const planVsInstOptions = ref({
-  chart: { type: "bar" },
+  chart: { type: "bar" ,
+    toolbar: {
+      show: false
+    }},
   plotOptions: { bar: { columnWidth: "40%" } },
   xaxis: { categories: [] },
-  title: { text: "생산계획 vs 작업지시" },
+  title: { text: "생산계획 / 작업지시" },
 });
 
 const instProgressSeries = ref([]);
 const instProgressOptions = ref({
-  chart: { type: "bar" },
+  chart: { type: "bar",
+    toolbar: {
+      show: false
+    } },
   plotOptions: { bar: { horizontal: true, barHeight: "50%" } },
   xaxis: { categories: [], max: 100, title: { text: "완료율 (%)" } },
   title: { text: "작업지시별 공정 완료율" },
@@ -21,7 +27,10 @@ const instProgressOptions = ref({
 
 const dailyProdSeries = ref([]);
 const dailyProdOptions = ref({
-  chart: { type: "area", zoom: { enabled: false } },
+  chart: { type: "area", zoom: { enabled: false } ,
+    toolbar: {
+      show: false
+    }},
   stroke: { curve: "smooth" },
   xaxis: { categories: [] },
   title: { text: "일별 생산량 흐름" },
