@@ -151,7 +151,7 @@ const handleCheckComplete = async (checkData) => {
 
 function refreshPage() {
   location.reload()
-  loadData?.()
+  loadData()
 };
 </script>
 
