@@ -1,7 +1,7 @@
 <script setup>
 import axios from 'axios';
 import { useStore } from "vuex";
-import { ref, nextTick  } from 'vue';
+import { ref, nextTick, onMounted  } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
 import OrderProdListModal from "./OrderProdListModal.vue";
 import moment from 'moment';
@@ -18,7 +18,7 @@ const userCode = store.state.user.emp_num;
 // 검색 객체
 const searchProdName = ref('');
 const searchProdCode = ref('');
-const searchComplete = ref('');
+const searchComplete = ref('1a2a');
 const searchStartDateStart = ref('');
 const searchStartDateEnd = ref('');
 const searchEndDateStart = ref('');
@@ -264,6 +264,9 @@ const formatToDate = (input) => {
 
   return `${yearNum}-${fixedMonth}-${fixedDay}`;
 };
+onMounted(() => {
+  searchProdPlan();
+})
 </script>
 
 <template>

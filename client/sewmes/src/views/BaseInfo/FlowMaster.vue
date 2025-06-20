@@ -1,6 +1,6 @@
 <script setup>
 import axios from 'axios';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
 
 
@@ -292,6 +292,9 @@ const tabulatorOptions = {
     }
   }
 };
+onMounted(() => {
+  searchProduct();
+})
 </script>
 
 <template>

@@ -1,6 +1,6 @@
 <script setup>
 import axios from 'axios';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
 
 // 검색 객체
@@ -91,6 +91,9 @@ const formatDate = (str) => {
 const formatInt = (val) => {
   return parseInt(val, 10);
 };
+onMounted(() => {
+  searchInboundDefect();
+})
 </script>
 
 <template>

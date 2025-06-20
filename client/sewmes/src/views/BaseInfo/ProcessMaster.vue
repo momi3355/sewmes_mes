@@ -150,9 +150,7 @@ const deleteProcess = async () => {
   }
 };
 
-onBeforeMount(() => {
 
-})
 const tabulatorEvent = [
   {
     eventName: "rowClick",
@@ -194,6 +192,9 @@ const convertCode = (code) => {
     default: return code;
   }
 };
+onMounted(() => {
+  searchProcess();
+})
 </script>
 
 <template>
