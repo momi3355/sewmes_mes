@@ -24,8 +24,13 @@ const outProdCompanyinsert = async(prod_code, cp_code) => {
                                      .catch(err => console.log(err));
   return insertResult;
 };
-// 업체별 외주가능업체 삭제
-
+// 업체별 외주가능제품 삭제
+const deleteProcess = async (cpCode, prodCode) => {
+  return await mariadb.query(
+    `DELETE FROM t_outsou_order_list WHERE cp_code = ? AND prod_code = ?`,
+    [cpCode, prodCode]
+  );
+};
  // 외주업체만 조회
   const findAll3 = async() =>{
   // 변수 mariadb에 등록된 query 함수를 통해 서비스에서 필요한 SQL문을 실행하도록 요청
@@ -60,5 +65,6 @@ module.exports = {
   outProdCompanyinsert,
   findAll3,
   yesOutProdList,
-  bongJaeProd
+  bongJaeProd,
+  deleteProcess
 };

@@ -188,13 +188,13 @@ const filteredCompanyList = computed(() => {
   }
 },
     { title: "제품명", field: "prodname", width: 350},
-    { title: "색상", field: "color", width: 80,
+    { title: "색상", field: "prodcolor", width: 80,
         formatter: function(cell) {
         const code = cell.getValue();
         return colorMap.value[code] || code;
       }
     },
-    { title: "사이즈", field: "size", width: 150,
+    { title: "사이즈", field: "prodsize", width: 150,
               formatter: function(cell) {
         const code = cell.getValue();
         return sizeMap.value[code] || code;
@@ -262,8 +262,8 @@ const filteredCompanyList = computed(() => {
       console.log('item 데이터', item);
       return {
         prodname: item.prod_name,
-        color: item.color,
-        size: item.size,
+        prodcolor: item.color,
+        prodsize: item.size,
         standard: item.standard,
         qty: 0,
         totalqty: 0,

@@ -77,6 +77,34 @@ router.post('/outProdCpInsert', async (req, res) => {
   }
 });
 // 외주업체 외주가능제품 삭제
+router.delete('/outProdDelete', async (req, res) => {
+  const { cp_code, prod_code } = req.body;
+
+  try {
+    const result = await outProdCompanyService.deleteProcess(cp_code, prod_code);
+
+    if (result.affectedRows > 0) {
+      res.json({ success: true, message: "삭제 완료" });
+    } else {
+      res.json({ success: false, message: "삭제할 데이터가 없습니다." });
+    }
+  } catch (err) {
+    console.error('삭제 오류:', err);
+    res.status(500).json({ success: false, message: "삭제 중 오류" });
+  }
+});
+
+// router.delete('/processDelete/:code', async(req, res) => {
+//     try {
+//         const processCode = req.params.code;
+//         await outProdCompanyService.deleteProcess(processCode);
+//         res.send({ success : true, message : "삭제 완료" });
+//     } catch (err) {
+//         console.log(err);
+//         res.status(500).send({ success : false, message : "삭제 중 오료" })
+//     }
+// })
+
 
 // 봉제제품 만 출력 (모달) bongJaeProd
 router.get('/bongJaeProdModal', async (req, res) => {
