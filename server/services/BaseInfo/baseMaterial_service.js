@@ -35,7 +35,36 @@ const getMaterialListByCode = async (code) => {
 };
 
 const addMaterial = async (params) => {
-  return mariadb.query("insertBaseMaterial", params);
+  let newCode = undefined;
+  const matPrefix = [
+    {
+      type: "0l1l",
+      prefix: "FAB",
+    },
+    {
+      type: "0l2l",
+      prefix: "SUB",
+    },
+    {
+      type: "0l3l",
+      prefix: "CON",
+    },
+  ];
+
+  for (const code of matPrefix) {
+    if (code.type == params.material_type) {
+      let matCode = await mariadb.query("createCodeProc", [ 't_material', 'material_code', code.prefix ]);
+      newCode = matCode[1][0].newCode;
+      break;
+    }
+  }
+
+  if (newCode) {
+    params.material_code = newCode;
+    return mariadb.query("insertBaseMaterial", params);
+  } else {
+    throw Error("존재하지 않는 자재유형");
+  }
 };
 
 const setMaterial = async (code, params) => {

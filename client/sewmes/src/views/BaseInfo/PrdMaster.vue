@@ -230,12 +230,21 @@ const getBaseProduct = async () => {
 };
 
 onMounted(async() => {
-  await groupcodelist.groupCodeList("0k", prdtype);
-  await groupcodelist.groupCodeList("0j", catetype);
-  await groupcodelist.groupCodeList("0h", sizetype);
-  await groupcodelist.groupCodeList("0i", colortype);
-  await groupcodelist.groupCodeList("0b", usetype);
-  getBaseProduct();
+  Promise.all([
+    groupcodelist.groupCodeList("0k", prdtype),
+    groupcodelist.groupCodeList("0j", catetype),
+    groupcodelist.groupCodeList("0h", sizetype),
+    groupcodelist.groupCodeList("0i", colortype),
+    groupcodelist.groupCodeList("0b", usetype),
+  ]).then(() => {
+    getBaseProduct();
+  }).catch(() => {
+    Swal.fire({
+      title: "접속실패",
+      text: "네트워크 접속에 실패했습니다.",
+      icon: "error"
+    });
+  });
 });
 </script>
 
@@ -244,20 +253,13 @@ onMounted(async() => {
     <div class="row search-color">
       <!-- 상단 검색 영역 -->
       <div class="row mb-3">
-        <div class="col-md-2 d-inline-block-custom">
-          <label class="form-label">제품코드</label>
-          <input
-            type="text"
-            class="form-control"
-            v-model="searchData.prod_code"
-          />
-        </div>
         <div class="col-md-2">
           <label class="form-label">제품명</label>
           <input
             type="text"
             class="form-control"
             v-model="searchData.prod_name"
+            onfocus="this.select()"
           />
         </div>
         <div class="col-md-2">
@@ -326,6 +328,7 @@ onMounted(async() => {
         <tabulator-card
           ref="table"
           card-title="제품 리스트"
+          height="510px"
           :table-data="productData"
           :table-columns="productColumns"
           :tabulator-options="tabulatorOptions"
@@ -335,22 +338,16 @@ onMounted(async() => {
       <div class="col-md-5 d-flex flex-column">
         <div class="card mb-2 flex-grow-1" style="min-height: 350px">
           <div class="card-header d-flex justify-content-between align-items-center">
-            <span>제품항목 상세</span>
+            <h5 class="mt-0 text-start">제품항목 상세</h5>
             <button class="btn btn-sm btn-success" @click="productClickhandler">저장</button>
           </div>
           <div class="card-body p-2">
             <table class="table table-bordered table-sm align-middle mb-2">
               <tbody style="border-width: 1px">
                 <tr>
-                  <th style="width: 30%">제품코드</th>
+                  <th style="width: 30%">제품명</th>
                   <td>
-                    <input type="text" class="form-control form-control-sm" v-model="detailFields.prod_code"/>
-                  </td>
-                </tr>
-                <tr>
-                  <th>제품명</th>
-                  <td>
-                    <input type="text" class="form-control form-control-sm" v-model="detailFields.prod_name"/>
+                    <input type="text" class="form-control form-control-sm" v-model="detailFields.prod_name" onfocus="this.select()"/>
                   </td>
                 </tr>
                 <tr>
