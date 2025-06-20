@@ -318,8 +318,8 @@ const insertPrdPref = async (details) => {
 
                     const insertCuttingSemiProdInParams = [
                         newSemiInboundCode,
-                        newProdQtyAccumulated, // 공정1의 합격량 (재단반제품 생산량)
-                        '0y1y',                // 실적분류 (예시) - 이 값은 적절한 코드로 대체 필요
+                        newProdQtyAccumulated, 
+                        '0y1y',                
                         newPerfCode,           // 현재 작업 실적 코드
                         cuttingSemiProdCode    //  재단반제품 코드 사용 
                     ];

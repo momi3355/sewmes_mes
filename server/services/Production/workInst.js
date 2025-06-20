@@ -142,7 +142,10 @@ const saveWorkInstructions = async (workInstructions) => {
                     } else {
                         throw new Error(`제품코드 '${p_prod_code}'에 해당하는 BOM 정보를 찾을 수 없어 작업지시를 저장할 수 없습니다.`);
                     }
-
+                                // 기존에 이 작업지시 코드에 할당된 모든 홀드 데이터를 삭제합니다.
+            // 이는 작업지시가 업데이트될 때 필요한 자재의 종류나 수량이 변경될 수 있기 때문입니다.
+            await conn.query(sqlList['deleteHoldsByWorkInstCode'], [currentWorkInstCode]);
+            console.log(`작업지시 ${currentWorkInstCode}에 대한 기존 홀드 데이터 삭제 완료.`);
                     const updateValues = [
                         p_prod_plan_code, p_prod_code, current_bom_code, p_inst_qty,
                         p_inst_state, p_emp_num, p_inst_date, p_inst_date, p_inst_date, p_inst_reg_date, currentWorkInstCode
@@ -202,10 +205,7 @@ const saveWorkInstructions = async (workInstructions) => {
 
             // 5. 자재 홀드 처리 (재귀 함수 방식)
 
-            // 기존에 이 작업지시 코드에 할당된 모든 홀드 데이터를 삭제합니다.
-            // 이는 작업지시가 업데이트될 때 필요한 자재의 종류나 수량이 변경될 수 있기 때문입니다.
-            await conn.query(sqlList['deleteHoldsByWorkInstCode'], [currentWorkInstCode]);
-            console.log(`작업지시 ${currentWorkInstCode}에 대한 기존 홀드 데이터 삭제 완료.`);
+
 
             // 재료 소요량을 저장할 맵 (최종 자재 코드 -> {필요 수량, 실제 유형})
             const materialRequirements = new Map();
