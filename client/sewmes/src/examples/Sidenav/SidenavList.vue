@@ -53,8 +53,8 @@ const getRoute = () => {
         <sidenav-item
           navText="기준정보 관리"
           :subItems="[
-            { name: '사원 관리', to: '/empMaster' },
-            { name: '사원 정보 변경', to: '/empChange' },
+            // { name: '사원 관리', to: '/empMaster' },
+            // { name: '사원 정보 변경', to: '/empChange' },
             { name: '자재 품목 관리', to: '/matMaster' },
             { name: '제품 품목 관리', to: '/prdMaster' },
             { name: '품질기준 관리', to: '/qualityMaster' },
@@ -77,8 +77,8 @@ const getRoute = () => {
           :subItems="[
             { name: '주문서 관리', to: '/ordMngment' },
             { name: '주문서 등록', to: '/ordSave' },
-            { name: '업체 관리', to: '/cpMngment' },
-            { name: '업체 거래내역 조회', to: '/tranHistory' },
+            // { name: '업체 관리', to: '/cpMngment' },
+            // { name: '업체 거래내역 조회', to: '/tranHistory' },
             { name: '업체별 외주제품', to: '/outPossible' },
           ]"
         >

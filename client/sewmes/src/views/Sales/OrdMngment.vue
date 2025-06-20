@@ -1,29 +1,5 @@
 <template>
   <div class="container-fluid p-3">
-    <!-- 상단 검색 영역 -->
-    <!-- <div class="row mb-3 search-color">
-      <div class="col-md-2">
-        <label class="form-label">검색항목 1</label>
-        <input type="text" class="form-control" v-model="searchField1">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">검색항목 2</label>
-        <input type="text" class="form-control" v-model="searchField2">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">검색항목 3</label>
-        <input type="text" class="form-control" v-model="searchField3">
-      </div>
-      <div class="col-md-2">
-        <label class="form-label">검색항목 4</label>
-        <input type="text" class="form-control" v-model="searchField4">
-      </div>
-      <div class="col-md-2 d-flex align-items-end">
-        <button class="btn btn-secondary me-2">초기화</button>
-        <button class="btn btn-primary">조회</button>
-      </div>
-    </div> -->
-
     <!-- 📦 주문 목록 + 상세 -->
     <div class="container-fluid py-4" id="odlist">
       <div class="row gx-4">
@@ -45,8 +21,8 @@
           <div class="card">
             <div class="card-body">
               <form>
-                <div class="row g-3">
-                  <div class="col-md-6 d-flex align-items-center">
+              <div class="row g-3">
+                <div class="col-md-6 d-flex align-items-center">
   <label class="form-label me-2 mb-0" style="min-width: 100px;">업체명:</label>
   <div class="position-relative flex-grow-1" @focusin="listOpen = true" @focusout="onFocusOut">
     <input type="text" class="form-control" v-model="ordercurrentOrder.cp_name">
@@ -94,25 +70,19 @@
   <label class="form-label me-2 mb-0" style="min-width: 100px;">비고:</label>
   <textarea class="form-control flex-grow-1" rows="2" v-model="ordercurrentOrder.note"></textarea>
 </div>
-                </div>
-              </form>
-            </div>
-            <!-- 버튼 영역 -->
-            <div class="card-footer d-flex justify-content-end pt-0">
-              <button class="btn btn-outline-secondary btn-sm me-2" @click="openModal">제품추가 🧾</button>
-              <argon-button color="secondary" variant="gradient" class="me-2">삭제</argon-button>
-              <argon-button color="success" variant="gradient" @click="saveOrder">저장</argon-button>
-            </div>
-            <tabulator-card
-              card-title=""
-              :table-data="orderInfo"
-              :table-columns="OrderColumnsDetail"
-              style="height: 300px;"
-            />
-            
-            
-            <!-- 제품 테이블 -->
-          </div>
+</div>
+</form>
+</div>
+
+<tabulator-card
+  card-title=""
+  :table-data="orderInfo"
+  :table-columns="OrderColumnsDetail"
+  style="height: 420px;"
+/>
+
+<!-- 제품 테이블 -->
+</div>
         </div>
       </div>
     </div>
@@ -135,11 +105,6 @@ import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import prodModal from "./prodModal.vue";
 import groupcodelist from "../../assets/js/utils/groupcodelist.js"
 import moment from "moment";
-
-// 공통코드 변환
-const standardlist = ref([]);
-const sizelist = ref([]);
-const colorlist = ref([]);
 
 // 로그인 정보 및 데이터 초기화
 const store = useStore();
@@ -317,4 +282,5 @@ const deadDateStr = computed({
 <style scoped>
 /* 기존 조회페이지 스타일 유지 */
 .search-color { margin: 10px; padding: 20px; border-radius: 1rem; background-color: #fff; }
+
 </style>
