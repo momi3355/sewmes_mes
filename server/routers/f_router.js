@@ -184,7 +184,7 @@ router.get('/mainChart/production', async (req, res) => {
 
 //차트(작업지시별 공정 완료...율?)
 router.get('/mainChart/complete', async (req, res) => {
-  let processCompleteList = await chartService.processChartList()
+  let processCompleteList = await chartService.workInstToProcessCompleteList()
                                         .catch(err => console.log(err));
 
   res.send(processCompleteList);
