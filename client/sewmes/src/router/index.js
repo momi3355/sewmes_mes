@@ -88,15 +88,6 @@ const routes = [
     }
   },
   {
-    path: '/bomView',
-    name: 'BomView',
-    component: () => import('@/views/BaseInfo/BomView.vue'),
-    meta: {
-      title: 'BOM 조회',
-      group: '기준정보 관리'
-    }
-  },
-  {
     path: '/bomSave',
     name: 'BomSave',
     component: () => import('@/views/BaseInfo/BomSave.vue'),
@@ -265,15 +256,6 @@ const routes = [
     }
   },
   {
-    path: '/prdErrMngment',
-    name: 'PrdErrMngment',
-    component: () => import('@/views/Production/PrdErrMngment.vue'),
-    meta: {
-      title: '생산 불량 이력 관리',
-      group: '생산'
-    }
-  },
-  {
     path: '/outsouMngment',
     name: 'OutsouMngment',
     component: () => import('@/views/Production/OutsouMngment.vue'),
@@ -347,15 +329,15 @@ const routes = [
   },
 
   // --- 설비 (Equipment) ---
-  {
-    path: '/equiMaint',
-    name: 'EquiMaint',
-    component: () => import('@/views/Equipment/EquiMaint.vue'),
-    meta: {
-      title: '설비 점검/수리',
-      group: '설비'
-    }
-  },
+  // {
+  //   path: '/equiMaint',
+  //   name: 'EquiMaint',
+  //   component: () => import('@/views/Equipment/EquiMaint.vue'),
+  //   meta: {
+  //     title: '설비 점검/수리',
+  //     group: '설비'
+  //   }
+  // },
 ];
 
 const router = createRouter({

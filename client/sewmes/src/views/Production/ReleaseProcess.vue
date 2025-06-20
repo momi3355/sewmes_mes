@@ -198,20 +198,13 @@ onMounted(async () => {
     <div class="row search-color">
       <!-- 상단 검색 영역 -->
       <div class="row mb-3">
-        <div class="col-md-2 d-inline-block-custom">
-          <label class="form-label">제품코드</label>
-          <input
-            type="text"
-            class="form-control"
-            v-model="searchData.prod_code"
-          />
-        </div>
         <div class="col-md-2">
           <label class="form-label">제품명</label>
           <input
             type="text"
             class="form-control"
             v-model="searchData.prod_name"
+            onfocus="this.select()"
           />
         </div>
         <div class="col-md-2">

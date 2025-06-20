@@ -256,6 +256,7 @@ const bomClickhandler = async () => {
       });
     }
   }
+  detailFields.value.bom_code = ""; //bom_code 초기화
 }
 
 const bomResethandler = () => {
@@ -305,18 +306,32 @@ const findProd = async () => {
   detailFields.value.prod_name = product.data.prod_name;
 };
 
-onMounted(async () => {
-  //공통코드 조회
-  await groupcodelist.groupCodeList("0W", bomtype);
-  await groupcodelist.groupCodeList("0L", mattype);
-  await groupcodelist.groupCodeList("0K", prdtype);
-  await groupcodelist.groupCodeList("0J", catetype);
+const getBomItemList = async () => {
   mattype.value.pop();
   prdtype.value.pop();
   itemtype.value = mattype.value.concat(prdtype.value);
 
   const bomItem = await axios.get("/api/bomItem");
   itemData.value = bomItem.data;
+}
+
+onMounted(async () => {
+  //공통코드 조회
+  Promise.all([
+    groupcodelist.groupCodeList("0W", bomtype),
+    groupcodelist.groupCodeList("0L", mattype),
+    groupcodelist.groupCodeList("0K", prdtype),
+    groupcodelist.groupCodeList("0J", catetype),
+  ]).then(() => {
+    getBomItemList();
+  }).catch(() => {
+    Swal.fire({
+      title: "접속실패",
+      text: "네트워크 접속에 실패했습니다.",
+      icon: "error"
+    });
+  });
+  
 });
 </script>
 
@@ -334,20 +349,13 @@ onMounted(async () => {
             </option>
           </select>
         </div>
-        <div class="col-md-2 d-inline-block-custom">
-          <label class="form-label">품목코드</label>
-          <input
-            type="text"
-            class="form-control"
-            v-model="searchData.item_code"
-          />
-        </div>
         <div class="col-md-2">
           <label class="form-label">품명</label>
           <input
             type="text"
             class="form-control"
             v-model="searchData.item_name"
+            onfocus="this.select()"
           />
         </div>
         <div class="col-md-2">
@@ -388,7 +396,7 @@ onMounted(async () => {
       <div class="col-md-6 d-flex flex-column">
         <div class="card mb-2 flex-grow-1" style="min-height: 180px">
           <div class="card-header pb-0 d-flex justify-content-between align-items-center">
-            <span>BOM 정보</span>
+            <h5 class="mt-0 text-start">BOM 정보</h5>
             <div class="btn-container">
               <button class="btn btn-sm btn-success" @click="bomClickhandler">저장</button>
               <button class="btn btn-sm btn-secondary" @click="bomResethandler">초기화</button>
