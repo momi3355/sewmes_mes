@@ -43,12 +43,12 @@ const callOutsouRelease = `CALL proc_outsou_release(?)`;
 
 // 외주입고 등록 처리
 const getNextOutsouInboundCode = `
-  SELECT IFNULL(MAX(CAST(SUBSTRING(outsou_inbound_code, 3) AS UNSIGNED)), 0) + 1 AS next_num 
-  FROM t_outsou_receive`;
+  CALL createcode_proc('t_outsou_receive', 'outsou_inbound_code', 'OR', @newCode);
+  SELECT @newCode AS newCode`;
 const insertOutsouReceive = `
   INSERT INTO t_outsou_receive (
     outsou_inbound_code, outsou_order_code, inbound_qty, reg_date, prod_code, cp_code
-  ) VALUES (?, ?, ?, NOW(), ?, ?)`;
+  ) VALUES (?, ?, ?, ?, ?, ?)`;
 
 module.exports ={
   selectOutsouReleaseMaterialByConditions,

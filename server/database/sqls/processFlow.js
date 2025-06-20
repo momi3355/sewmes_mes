@@ -29,9 +29,9 @@ const getProcessFlow = `
 const deleteProcessFlowsByProdCode = `
     DELETE FROM t_process_flow
     WHERE prod_code = ?`;
-const selectMaxFlowCode = `
-    SELECT MAX(CAST(SUBSTRING(flow_code, 3) AS UNSIGNED)) AS maxFlowNum
-    FROM t_process_flow`;
+const getNextFlowCode = `
+    CALL createcode_proc('t_process_flow', 'flow_code', 'PF', @newCode);
+    SELECT @newCode AS code`;
 const insertProcessFlow = `
     INSERT INTO t_process_flow (flow_code, process_code, process_seq, prod_code)
     VALUES (?, ?, ?, ?)`;
@@ -40,10 +40,10 @@ const updateProcessFlow = `
     SET process_code = ?, process_seq = ?
     WHERE flow_code = ?`;
 
-// 공정흐름 PK값 숫자만 가져오기
-const selectMaxAttachCode = `
-    SELECT MAX(CAST(SUBSTRING(attach_code, 4) AS UNSIGNED)) AS maxCode
-    FROM t_process_flow_attach`;
+// 공정흐름 부가 PK값 숫자만 가져오기
+const getNextAttachCode  = `
+    CALL createcode_proc('t_process_flow_attach', 'attach_code', 'PFA', @code);
+    SELECT @code AS attachCode`;
 // 공정흐름 이미지 저장
 const insertAttachFile = `
     INSERT INTO t_process_flow_attach (attach_code, flow_code, file_name, origin_file_name)
@@ -59,11 +59,11 @@ module.exports = {
     selectProductByConditions,
     getProcessFlow,
     deleteProcessFlowsByProdCode,
-    selectMaxFlowCode,
+    getNextFlowCode,
     insertProcessFlow,
     updateProcessFlow,
     // 공정 흐름 이미지
-    selectMaxAttachCode,
+    getNextAttachCode,
     insertAttachFile,
     getAttachFile
 }
