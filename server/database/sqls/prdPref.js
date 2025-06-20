@@ -69,7 +69,7 @@ VALUES(
         ?
         ,NOW()
         ,?
-        ,'0y1y'
+        ,?
         ,?
         ,?
 )
@@ -215,7 +215,7 @@ const getMaterialHoldForRelease=`
 SELECT
     hold_id,        
     hold_qty,     
-    used_qty,      
+    release_qty,      
     use_yn         
 FROM
     t_hold         
@@ -243,6 +243,20 @@ WHERE
     order_detail_code = ?
 `
 
+//생산작업이력조회를 위한 쿼리
+const selectworkProcessPref=`
+SELECT work_perf_code,
+        work_inst_code,
+        work_process_code,
+        input_qty,
+        prod_qty,
+        defect_qty,
+        work_inst_reg_date,
+        emp_num,
+        equi_code
+FROM t_inst_perf
+`;
+
 module.exports={
         inOunSoInboundForProcess,
         getSemiProdCodesFromBomView,
@@ -261,5 +275,6 @@ module.exports={
         updateOrderListStatus,
         getMaterialHoldForRelease,
         updateProdPlanComplete,
-        updateOrderDetailStatus
+        updateOrderDetailStatus,
+        selectworkProcessPref
 }

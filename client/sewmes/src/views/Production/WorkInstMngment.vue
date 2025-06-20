@@ -114,7 +114,7 @@ const handleSelectedPlans = (plans) => {
     const newWorkInsts = plans.map((plan, index) => ({
 
         NO: workInstData.value.length + index + 1,
-        work_inst_code: ' ', //지시코드 자동생성 저장전에는 빈값
+        work_inst_code: null, //지시코드 자동생성 저장전에는 빈값
         prod_plan_code: plan.prod_plan_code,
         prod_code: plan.prod_code,
         prod_name:plan.prod_name,
