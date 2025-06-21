@@ -156,38 +156,57 @@ const materialClickhandler = async () => {
   }
 
   const find = materialData.value.find(e => {
-    return e.material_code === detailFields.value.material_code
+    return e.material_name === detailFields.value.material_name
   });
 
   if (find != null) {
     console.log(detailFields.value);
-    const result = await axios.put("/api/baseMaterial", {
-      //body
-      data: detailFields.value,
-    }, {
-      //params
-      params: {
-        code: find.material_code,
+    try {
+      const result = await axios.put("/api/baseMaterial", {
+        //body
+        data: detailFields.value,
+      }, {
+        //params
+        params: {
+          code: find.material_code,
+        }
+      });
+      // console.log(result);
+      if (result?.data) {
+        Swal.fire({
+          title: "성공",
+          text: "자재 정보가 수정되었습니다.",
+          icon: "success"
+        });
       }
-    });
-    // console.log(result);
-    if (result?.data) {
+    } catch(error) {
+      console.log(error);
       Swal.fire({
-        title: "성공",
-        text: "자재 정보가 수정되었습니다.",
-        icon: "success"
+        title: "수정 실패",
+        text: "제품을 수정하는 도중에 문제가 발생했습니다.",
+        icon: "error"
       });
     }
   } else {
-    const result = await axios.post("/api/baseMaterial", {
-      data: detailFields.value,
-    });
-    // console.log(result);
-    if (result?.data) {
+    try {
+      detailFields.value.material_code = ""; //새로운 코드 부여
+      const result = await axios.post("/api/baseMaterial", {
+        data: detailFields.value,
+      });
+      // console.log(result);
+      if (result?.data) {
+        Swal.fire({
+          title: "성공",
+          text: "자재 정보가 추가되었습니다.",
+          icon: "success"
+        });
+      }
+    } catch(error) {
+      console.error(error.response.data?.message);
       Swal.fire({
-        title: "성공",
-        text: "자재 정보가 추가되었습니다.",
-        icon: "success"
+        title: "등록 실패",
+        text: "제품을 등록하는 도중에 문제가 발생했습니다.",
+        icon: "error"
       });
     }
   }
@@ -210,10 +229,19 @@ const getBaseMaterial = async() => {
 }
 
 onMounted(async () => {
-  await groupcodelist.groupCodeList("0l", mattype);
-  await groupcodelist.groupCodeList("0b", usetype);
-  await groupcodelist.groupCodeList("0i", colortype);
-  getBaseMaterial();
+  Promise.all([
+      groupcodelist.groupCodeList("0l", mattype),
+      groupcodelist.groupCodeList("0b", usetype),
+      groupcodelist.groupCodeList("0i", colortype)
+  ]).then(() => {
+    getBaseMaterial();
+  }).catch(() => {
+    Swal.fire({
+      title: "접속실패",
+      text: "네트워크 접속에 실패했습니다.",
+      icon: "error"
+    });
+  });
 });
 </script>
 
@@ -222,13 +250,9 @@ onMounted(async () => {
     <div class="row search-color">
       <!-- 상단 검색 영역 -->
       <div class="row mb-3">
-        <div class="col-md-2 d-inline-block-custom">
-          <label class="form-label">자재코드</label>
-          <input type="text" class="form-control" v-model="searchData.material_code">
-        </div>
         <div class="col-md-2">
           <label class="form-label">자재명</label>
-          <input type="text" class="form-control" v-model="searchData.material_name">
+          <input type="text" class="form-control" v-model="searchData.material_name" onfocus="this.select()">
         </div>
         <div class="col-md-2">
           <label class="form-label">자재유형</label>
@@ -284,19 +308,15 @@ onMounted(async () => {
       <div class="col-md-5 d-flex flex-column">
         <div class="card mb-2 flex-grow-1" style="min-height: 350px;">
           <div class="card-header d-flex justify-content-between align-items-center">
-            <span>자재항목 상세</span>
+            <h5 class="mt-0 text-start">자재항목 상세</h5>
             <button class="btn btn-sm btn-success" @click="materialClickhandler">저장</button>
           </div>
           <div class="card-body p-2">
             <table class="table table-bordered table-sm align-middle mb-2">
               <tbody style="border-width: 1px">
                 <tr>
-                  <th style="width: 30%;">자재코드</th>
-                  <td><input type="text" class="form-control form-control-sm" v-model="detailFields.material_code"></td>
-                </tr>
-                <tr>
-                  <th>자재명</th>
-                  <td><input type="text" class="form-control form-control-sm" v-model="detailFields.material_name"></td>
+                  <th style="width: 30%;">자재명</th>
+                  <td><input type="text" class="form-control form-control-sm" v-model="detailFields.material_name" onfocus="this.select()"></td>
                 </tr>
                 <tr>
                   <th>자재유형</th>

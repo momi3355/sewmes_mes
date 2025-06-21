@@ -81,9 +81,18 @@ const getReleaseList = async() => {
 }
 
 onMounted(async () => {
-  await groupcodelist.groupCodeList("0j", catetype);
-  await groupcodelist.groupCodeList("0z", stantype);
-  getReleaseList();
+  Promise.all([
+    groupcodelist.groupCodeList("0j", catetype),
+    groupcodelist.groupCodeList("0z", stantype),
+  ]).then(() => {
+    getReleaseList();
+  }).catch(() => {
+    Swal.fire({
+      title: "접속실패",
+      text: "네트워크 접속에 실패했습니다.",
+      icon: "error"
+    });
+  });
 });
 </script>
 
@@ -94,11 +103,11 @@ onMounted(async () => {
       <div class="row mb-3">
         <div class="col-md-2 d-inline-block-custom">
           <label class="form-label">제품명</label>
-          <input type="text" class="form-control" v-model="searchData.prod_name">
+          <input type="text" class="form-control" v-model="searchData.prod_name" onfocus="this.select()">
         </div>
         <div class="col-md-2">
           <label class="form-label">납품처</label>
-          <input type="text" class="form-control" v-model="searchData.cp_name">
+          <input type="text" class="form-control" v-model="searchData.cp_name" onfocus="this.select()">
         </div>
         <div class="col-md-2">
           <label class="form-label">카테고리</label>

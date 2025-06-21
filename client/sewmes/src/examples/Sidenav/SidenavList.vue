@@ -60,7 +60,6 @@ const getRoute = () => {
             { name: '품질기준 관리', to: '/qualityMaster' },
             { name: '공정 관리', to: '/processMaster' },
             { name: '공정흐름도 관리', to: '/flowMaster' },
-            { name: 'BOM조회', to: '/bomView' },
             { name: 'BOM등록', to: '/bomSave' },
             { name: '설비 관리', to: '/equiMaster' },
           ]" 
@@ -115,7 +114,6 @@ const getRoute = () => {
             { name: '생산 작업 실행', to: '/prdWorking' },
             { name: 'LOT 이력 조회', to: '/lotHistory' },
             { name: '생산 실적 조회', to: '/prdPrefView' },
-            { name: '생산 불량 이력 관리', to: '/prdErrMngment' },
             { name: '외주 발주서 관리', to: '/outsouMngment' },
             { name: '외주 출고 처리', to: '/outsouRelease' },
             { name: '외주 입고 관리', to: '/outsouInbound' },
@@ -132,7 +130,7 @@ const getRoute = () => {
         </sidenav-item>
       </li>
 
-      <li class="nav-item">
+      <!-- <li class="nav-item">
         <sidenav-item
           navText="설비"
           :subItems="[
@@ -143,7 +141,7 @@ const getRoute = () => {
             <i class="ni ni-atom text-warning text-sm opacity-10"></i>
           </template>
         </sidenav-item>
-      </li>
+      </li> -->
     </ul>
   </div>
 </template>

@@ -216,6 +216,7 @@ const formatInt = (val) => {
 };
 onMounted(() => {
   searchOutsouOrder();
+  searchOutsouOrder();
 });
 </script>
 

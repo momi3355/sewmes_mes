@@ -9,6 +9,7 @@ const processService =require('../services/BaseInfo/process_service.js');
 const outsouService =require('../services/Production/outsou_service.js');
 const prodPlanService =require('../services/Production/prodPlan_service.js');
 const prdInboundService =require('../services/Production/prdInbound_service.js');
+const lotService =require('../services/Production/lot_service.js');
 
 // 공정관리 페이지 라우터 =========================================
 router.get('/processList', async (req, res)=>{
@@ -459,4 +460,21 @@ router.get('/inboundTestHistory', async (req, res) => {
     res.status(500).send('Server Error');
   }
 });
+// Lot 이력 검색
+router.get('/lotHistoryList', async (req, res)=>{
+  try {
+    const {
+      releaseCode, lotCode, prodName
+    } = req.query;
+    const result = await lotService.findLotListByConditions({
+      releaseCode, lotCode, prodName
+    });
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "검색 중 오류 발생" });
+  }
+});
+
+
 module.exports = router;

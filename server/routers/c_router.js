@@ -35,7 +35,7 @@ router.post("/baseMaterial", async (req, res) => {
     res.send(result);
   } catch (err) {
     console.error(err);
-    res.status(500).send({ message: "추가 중 오류 발생" });
+    res.status(500).send({ message: "추가 중 오류 발생("+err+")" });
   }
 });
 
@@ -48,7 +48,7 @@ router.put("/baseMaterial", async (req, res) => {
     res.send(result);
   } catch (err) {
     console.error(err);
-    res.status(500).send({ message: "수정 중 오류 발생" });
+    res.status(500).send({ message: "수정 중 오류 발생("+err+")" });
   }
 });
 

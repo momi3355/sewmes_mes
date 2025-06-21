@@ -163,14 +163,14 @@ const saveEquiMaster = async () => {
     computedCheckDate = installDate.clone().add(30, 'days');
   }
 
-// 점검 예정일 계산
-if (!equiInfo.value.check_date) {
-  if (lastCheck && checkInterval > 0) {
-    equiInfo.value.check_date = lastCheck.clone().add(checkInterval, 'days').format('YYYY-MM-DD');
-  } else {
-    equiInfo.value.check_date = installDate.clone().add(30, 'days').format('YYYY-MM-DD');
-  }
-}
+// // 점검 예정일 계산
+// if (!equiInfo.value.check_date) {
+//   if (lastCheck && checkInterval > 0) {
+//     equiInfo.value.check_date = lastCheck.clone().add(checkInterval, 'days').format('YYYY-MM-DD');
+//   } else {
+//     equiInfo.value.check_date = installDate.clone().add(30, 'days').format('YYYY-MM-DD');
+//   }
+// }
 
   formData.append('equi_name', equiInfo.value.equi_name || '');
   formData.append('use_yn', equiInfo.value.use_yn || '');
@@ -293,6 +293,11 @@ onMounted(() => {
   getEquiList();
 })
 
+const intervalReset = (e) => {
+  if(e.target.value < 0){
+      e.target.value = 0;
+  }
+}
 </script>
 
 <template>
@@ -302,7 +307,7 @@ onMounted(() => {
       <div class="row">
         <div class="col-md-2">
           <label class="form-label">설비명</label>
-          <input type="text" class="form-control" v-model="equiSchData.equiName" />
+          <input type="text" class="form-control" v-model="equiSchData.equiName"  onfocus="this.select()" />
         </div>
         <div class="col-md-2">
           <label class="form-label">설비 유형</label>
@@ -378,7 +383,7 @@ onMounted(() => {
                 <tr>
                   <th style="width: 15%;">설비명</th>
                   <td style="width: 35%;">
-                    <input type="text" class="form-control form-control-sm" v-model="equiInfo.equi_name">
+                    <input type="text" class="form-control form-control-sm" v-model="equiInfo.equi_name"  onfocus="this.select()">
                   </td>
                   <th style="width: 15%;">사용여부</th>
                   <td style="width: 35%;">
@@ -391,9 +396,9 @@ onMounted(() => {
                 </tr>
                 <tr>
                   <th>모델명</th>
-                  <td><input type="text" class="form-control form-control-sm" v-model="equiInfo.model_name"></td>
+                  <td><input type="text" class="form-control form-control-sm" v-model="equiInfo.model_name"  onfocus="this.select()"></td>
                   <th>제조사</th>
-                  <td><input type="text" class="form-control form-control-sm" v-model="equiInfo.maker"></td>
+                  <td><input type="text" class="form-control form-control-sm" v-model="equiInfo.maker"  onfocus="this.select()"></td>
                 </tr>
                 <tr>
                   <th>제조일</th>
@@ -420,15 +425,15 @@ onMounted(() => {
                   <th>점검 간격</th>
                   <td>
                     <div class="d-flex align-items-center">
-                      <input type="number" class="form-control form-control-sm me-1" style="width: 80%;"
-                        v-model="equiInfo.check_interval">
+                      <input type="number" min="1" class="form-control form-control-sm me-1" style="width: 80%;"  onfocus="this.select()"
+                        v-model="equiInfo.check_interval" @blur="intervalReset">
                       <span>일</span>
                     </div>
                   </td>
                 </tr>
                 <tr>
                   <th>비고</th>
-                  <td colspan="3"><textarea class="form-control" v-model="equiInfo.equi_note"></textarea></td>
+                  <td colspan="3"><textarea class="form-control" v-model="equiInfo.equi_note"  onfocus="this.select()"></textarea></td>
                 </tr>
                 <tr>
                   <th>이미지</th>

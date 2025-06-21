@@ -187,12 +187,12 @@ onMounted(() => {
       <div class="row">
         <div class="col-md-2">
           <label class="form-label">검사명</label>
-          <input type="text" class="form-control" v-model="qualSchData.testName" />
+          <input type="text" class="form-control" v-model="qualSchData.testName" onfocus="this.select()" />
         </div>
         <div class="col-md-2">
           <label class="form-label">대상품목</label>
           <select class="form-select form-select-sm" v-model="qualSchData.testTarget">
-            <option value="">선택하세요</option>
+            <option value="" disabled>선택하세요</option>
             <option v-for="target in testTargetCodeList" :key="target.detail_code" :value="target.detail_code">
               {{ target.detail_name }}
             </option>
@@ -200,7 +200,7 @@ onMounted(() => {
         </div>
         <div class="col-md-2">
           <label class="form-label">참조</label>
-          <input type="text" class="form-control" v-model="qualSchData.testRef" />
+          <input type="text" class="form-control" v-model="qualSchData.testRef" onfocus="this.select()" />
         </div>
         <div class="col-md-2">
           <label class="form-label">사용여부</label>
@@ -247,7 +247,7 @@ onMounted(() => {
                   <th style="width: 15%;">검사명</th>
                   <td style="width: 35%;">
                     <input type="text" :key="qualityInfo.quality_code" class="form-control form-control-sm"
-                      v-model="qualityInfo.test_name">
+                      v-model="qualityInfo.test_name" onfocus="this.select()">
                   </td>
                   <th style="width: 15%;">사용여부</th>
                   <td style="width: 35%;">
@@ -275,25 +275,25 @@ onMounted(() => {
                 <tr>
                   <th>검사방법</th>
                   <td colspan="3">
-                    <input type="text" class="form-control form-control-sm" v-model="qualityInfo.test_method">
+                    <input type="text" class="form-control form-control-sm" v-model="qualityInfo.test_method" onfocus="this.select()">
                   </td>
                 </tr>
                 <tr>
                   <th>참조</th>
                   <td colspan="3">
-                    <input type="text" class="form-control form-control-sm" v-model="qualityInfo.test_ref">
+                    <input type="text" class="form-control form-control-sm" v-model="qualityInfo.test_ref" onfocus="this.select()">
                   </td>
                 </tr>
                 <tr>
                   <th>검사기준</th>
                   <td colspan="3">
-                    <input type="text" class="form-control form-control-sm" v-model="qualityInfo.test_standard">
+                    <input type="text" class="form-control form-control-sm" v-model="qualityInfo.test_standard" onfocus="this.select()">
                   </td>
                 </tr>
                 <tr>
                   <th>비고</th>
                   <td colspan="3">
-                    <textarea class="form-control" v-model="qualityInfo.test_note"></textarea>
+                    <textarea class="form-control" v-model="qualityInfo.test_note" onfocus="this.select()"></textarea>
                   </td>
                 </tr>
                 <tr>

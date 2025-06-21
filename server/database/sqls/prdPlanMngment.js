@@ -53,6 +53,7 @@ const updateOrderDetailState = `
   SET order_detail_state = '0n2n' 
   WHERE order_detail_code = ?`;
 
+
 module.exports ={
   selectProdPlanByConditions,
   selectOrderProdList,
