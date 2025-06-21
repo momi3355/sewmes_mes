@@ -7,12 +7,12 @@ VIEW CREATE 원문
 SELECT
     pp.reg_date,                     -- 생산계획 등록일
     pp.prod_qty AS plan_qty,        -- 계획 생산수량
-    pp.start_date AS plan_start,    
+    pp.start_date AS plan_start,    -- 계획 시작일
     pp.complete AS plan_complete,   -- 생산계획 완료 여부
     wi.inst_reg_date,                   -- 작업지시 날짜
     wi.inst_state,                  -- 작업지시 상태
-    wp.work_process_code,           -- 공정 코드
-    wp.process_code,
+    wp.work_process_code,           -- 작업 공정 코드
+    wp.process_code,                -- 공정 코드
     wp.defect_qty,                  -- 불량 수량
     wp.prod_qty AS process_qty,     -- 공정 생산수량
     wp.complete AS process_complete -- 공정 완료 여부

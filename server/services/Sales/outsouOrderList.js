@@ -24,6 +24,7 @@ const outProdCompanyinsert = async(prod_code, cp_code) => {
                                      .catch(err => console.log(err));
   return insertResult;
 };
+
 // 업체별 외주가능업체 삭제
 const yesOutProdListDelete = async(outsou_list_code) =>{
   // 변수 mariadb에 등록된 query 함수를 통해 서비스에서 필요한 SQL문을 실행하도록 요청
@@ -33,6 +34,7 @@ const yesOutProdListDelete = async(outsou_list_code) =>{
 console.log("쿼리 결과:", list);
 return list;
 };
+
  // 외주업체만 조회
   const findAll3 = async() =>{
   // 변수 mariadb에 등록된 query 함수를 통해 서비스에서 필요한 SQL문을 실행하도록 요청

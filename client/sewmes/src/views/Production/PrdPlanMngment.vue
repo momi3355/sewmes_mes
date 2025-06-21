@@ -4,6 +4,7 @@ import { useStore } from "vuex";
 import { ref, nextTick  } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
 import OrderProdListModal from "./OrderProdListModal.vue";
+import moment from 'moment';
 import Swal from 'sweetalert2';
 
 // tabulatorCardRef 컴포넌트의 ref 선언
@@ -51,7 +52,7 @@ const searchProdPlan = async () => {
       prodName: item.prod_name,
       startDate: formatDate(item.start_date),
       endDate: formatDate(item.end_date),
-      orderQty: formatInt(item.total_qty),
+      orderQty: formatInt(item.total_qty) ,
       prodQty: formatInt(item.prod_qty),
       complete: convertCode(item.complete),
       empName: item.emp_name
@@ -178,10 +179,13 @@ const tabulatorEvent = [
 // 형태 변환
 const formatDate = (str) => {
   if (!str) return '';
-  return new Date(str).toISOString().slice(0, 10);
+  const date = moment(str);
+  return date.isValid() ? date.format('YYYY-MM-DD') : '';
 };
 const formatInt = (val) => {
-  return parseInt(val, 10);
+  if (val === null || val === undefined || val === '') return '';
+  const parsed = parseInt(val, 10);
+  return isNaN(parsed) ? '' : parsed;
 };
 // 모달 스크립트 영역 ===============================================================
 //주문목록 모달에서 데이터받아, 작업지시서 화면의 그리드에 표시될 데이터 추가하는 함수

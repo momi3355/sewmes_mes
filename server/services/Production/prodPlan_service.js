@@ -79,9 +79,9 @@ const saveProdPlans = async (plans) => {
 
       if (!prodPlanCode) {
         // 신규 코드 생성
-        const [maxResult] = await conn.query(sqlList.getMaxProdPlanCode);
-        const nextCode = maxResult.max_code ? maxResult.max_code + 1 : 1;
-        const newCode = `PP${String(nextCode).padStart(5, '0')}`;
+        const result = await conn.query(sqlList.getNextProdPlanCode);
+        const newCode = result[1]?.[0]?.newCode;
+        if (!newCode) throw new Error("생산계획 코드 생성 실패");
 
         await conn.query(sqlList.insertProdPlan, [
           newCode, orderDetailCode, prodCode, prodQty, startDate, endDate, empNum

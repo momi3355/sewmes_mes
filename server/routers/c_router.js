@@ -167,4 +167,14 @@ router.post("/prdReceive", async (req, res) => {
   }
 });
 
+router.get("/prdRelease", async (req, res) => {
+    try {
+    const result = await prdReceiveService.getReleaseList(req.query);
+    res.send(result);
+  } catch (err) {
+    console.error(err);
+    res.status(500).send({ message: "추가 중 오류 발생" });
+  }
+});
+
 module.exports = router;

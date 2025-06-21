@@ -28,13 +28,18 @@ const findProcessByConditions = async (code, name, equi) => {
   return await mariadb.directQuery(finalSql, params);
 };
 const insertProcess = async (processData) => {
-  // 1. 현재 최대 코드 조회
-  const result = await mariadb.query("selectMaxCode").catch(err => console.log(err));
-  const maxCode = result[0]?.maxCode || 0;
-  const nextCode = `PM${maxCode + 1}`;
-  // 2. INSERT 실행 
+  // 프로시저 호출 → 코드 생성
+  const result = await mariadb.query("getNextProcessCode");
+
+  console.log(result); // [ [ OkPacket ], [ [ { processCode: 'PM000001' } ] ] ] 형태임
+  const processCode = result?.[1]?.[0]?.processCode;
+
+  if (!processCode) throw new Error("공정 코드 생성 실패");
+
+  if (!processCode) throw new Error("공정 코드 생성 실패");
+  // INSERT 실행 
   await mariadb.query("processInsert", [
-    nextCode,
+    processCode,
     processData.processName,
     processData.detail,
     processData.equiType,
@@ -42,7 +47,7 @@ const insertProcess = async (processData) => {
     processData.processType,
     processData.useYn
   ]);
-  return nextCode; // 클라이언트에 새 코드 반환
+  return processCode; // 클라이언트에 새 코드 반환
 };
 const updateProcess = async (processData) => {
   // process_code 기준으로 수정
@@ -99,10 +104,6 @@ const saveProcessFlows = async (prodCode, flows) => {
 
     const existingCodes = new Set(existingRows.map(r => r.flow_code));
 
-    // 2. flow_code 최대값 조회
-    const [maxResult] = await conn.query(sqlList.selectMaxFlowCode);
-    let maxNum = maxResult.maxFlowNum || 0;
-
     for (const row of flows) {
       if (row.flowCode && existingCodes.has(row.flowCode)) {
         // 기존 flow_code → update
@@ -113,10 +114,10 @@ const saveProcessFlows = async (prodCode, flows) => {
         ]);
       } else {
         // 신규 → insert
-        maxNum++;
-        const newFlowCode = `FC${maxNum}`;
+        const result = await conn.query(sqlList.getNextFlowCode);
+        const code = result[1][0].code; // SELECT 결과는 2번째 배열에 있음
         await conn.query(sqlList.insertProcessFlow, [
-          newFlowCode,
+          code,
           row.processCode,
           row.processSeq,
           prodCode
@@ -158,11 +159,11 @@ const deleteFlowWithAttach = async (flowCode) => {
 };
 // 이미지 저장
 const saveAttachFile = async ({ flowCode, fileName, originFileName }) => {
-  const result = await mariadb.query("selectMaxAttachCode");
-  const maxCode = result[0]?.maxCode || 0;
-  const nextCode = `PFA${maxCode + 1}`;
-  await mariadb.query("insertAttachFile", [nextCode, flowCode, fileName, originFileName]);
-  return nextCode;
+  const result = await mariadb.query("getNextAttachCode");
+  const attachCode = result[1]?.[0]?.attachCode;
+  if (!attachCode) throw new Error("attach_code 생성 실패");
+  await mariadb.query("insertAttachFile", [attachCode, flowCode, fileName, originFileName]);
+  return attachCode;
 };
 // 공정 흐름에 저장된 이미지 가져오기
 const getAttachFileByFlowCode = async (flowCode) => {
