@@ -80,10 +80,40 @@ FROM   t_equi_history
 WHERE  equi_code = ?
 `;
 
+//설비 수리/점검 결과 등록
+const insertEquiMaintInfo = `
+INSERT t_equi_maint
+SET ?
+`;
+
+//설비 수리 단건 조회(수리)
+const selectEquiMaintSuri = `
+SELECT  equi_code
+        , maint_reason
+        , maint_detail
+        , start_date
+        , end_date
+        , maint_duration
+        , maint_result
+        , maint_note
+        , emp_name
+FROM    v_downEqui
+WHERE   equi_code = ?
+`;
+
+//설비 이력 등록
+const insertEquiHistoryInfo = `
+INSERT t_equi_history
+SET ?
+`;
+
 module.exports = {
  selectEquiList, 
  selectEquiInfo,
  insertEquiInfo,
  updateEquiInfo,
- selectEquiHistory 
+ selectEquiHistory,
+ insertEquiHistoryInfo, 
+ insertEquiMaintInfo,
+ selectEquiMaintSuri
 }
