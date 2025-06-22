@@ -148,27 +148,16 @@ router.post('/orderAdd', async (req, res) => {
     res.status(500).send({ success: false, message: "등록 실패" });
   }
 });
-// 주문서 모달창 에서 등록한 제품 삭제
-router.delete('/processDelete/:code', async(req, res) => {
-    try {
-        const processCode = req.params.code;
-        await processService.deleteProcess(processCode);
-        res.send({ success : true, message : "삭제 완료" });
-    } catch (err) {
-        console.log(err);
-        res.status(500).send({ success : false, message : "삭제 중 오료" })
-    }
-}) // 임시
 
 // 외주업체 외주가능제품 삭제
 router.delete('/yesOutProdListDelete/:code', async(req, res) => {
   try {
       const outsou_list_code = req.params.code;
-      await outProdCompanyService.deleteProcess(outsou_list_code);
+      await outProdCompanyService.yesOutProdListDelete(outsou_list_code);
       res.send({ success : true, message : "삭제 완료" });
   } catch (err) {
       console.log(err);
-      res.status(500).send({ success : false, message : "삭제 중 오료" })
+      res.status(500).send({ success : false, message : "삭제 중 오류" })
   }
 })
 

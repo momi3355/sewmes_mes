@@ -75,6 +75,7 @@
                 <argon-button color="success" variant="gradient" id="arbtn" @click="saveOrder">저장</argon-button>
               </div>
               <tabulator-card
+              ref="productTableCardRef"
               card-title=""
               :table-data="ordlist"
               :table-columns="OrderColumns"
@@ -91,6 +92,7 @@
   </template>
   
   <script setup>
+  import { TabulatorFull as Tabulator } from 'tabulator-tables';
   import { ref, computed, onMounted } from "vue"; // Import ref and onMounted
   import { useStore } from 'vuex';
   import axios from "axios";
@@ -98,6 +100,7 @@
   import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
   import prodModal from "./prodModal.vue";
   import groupcodelist from "../../assets/js/utils/groupcodelist.js"
+  import Swal from "sweetalert2";
   
   const isModalOpen = ref(false); //초기상태
   const ordlist = ref([]);
@@ -113,7 +116,7 @@
   const note = ref("");
   // 드롭다운에서 업체명 선택시 업체코드 따로 저장
   const selectedCompanyCode = ref("");
-
+  const productTableCardRef = ref(null);
     // 로그인 정보 가져오기
   const store = useStore();
   const user = computed(() => store.state.user);
@@ -132,6 +135,9 @@
     listOpen.value = false;
   }, 100);
 };
+  // Tabulator 테이블 참조
+  const tabulatorRef = ref(null);
+
   // 선택시에 동작할것들
   const selectCompany = (company) => {
   searchTerm.value = company.cp_name;  // 인풋에는 업체명 표시
@@ -180,7 +186,7 @@ const OrderColumns = [
     title: "", 
     formatter: "rowSelection", 
     titleFormatter: "rowSelection", 
-    headerSort: false, 
+    headerSort: false,
     hozAlign: "center", 
     width: 50
   },
@@ -281,6 +287,7 @@ console.log('🏢 DB에서 받아온 업체 데이터:', companyList.value);
 
   // 모달에서 선택한 제품 데이터
   const getlist = (modaldata) =>{
+    ordlist.value.splice(0, ordlist.value.length, ...modaldata);
     console.log('자식한테 받아온 데이터', JSON.stringify(modaldata, null, 2));
     console.log('자식한테 받아온 데이터', modaldata);
     ordlist.value = modaldata;
@@ -293,15 +300,27 @@ console.log('🏢 DB에서 받아온 업체 데이터:', companyList.value);
   const closeModal = () => {
       isModalOpen.value = false;
   };
-  const deleteSelectedRows = () => {
-  const selectedCount = ordlist.value.filter(item => item.selected).length;
+// Tabulator 인스턴스를 가져오는 헬퍼 함수
+const getTabulatorInstance = (refInstance) => {
+  if (!refInstance.value || !refInstance.value.$el) return null;
+  const element = refInstance.value.$el.querySelector('.tabulator');
+  if (!element) return null;
+  return Tabulator.findTable(element)[0] || null;
+};
 
-  if (selectedCount === 0) {
-    alert("삭제할 제품을 선택해주세요.");
-    return;
+// 선택한 제품 삭제
+const deleteSelectedRows = async () => {
+  const productTableInstance = getTabulatorInstance(productTableCardRef);
+  if (!productTableInstance) return;
+  const selectedData = productTableInstance.getSelectedRows();
+  if (selectedData?.length > 0) {
+    selectedData.forEach(e => {
+      if (e.getData()) {
+        const row = ordlist.value.filter(el => el.prodname !== e.getData().prodname);
+        if (row) ordlist.value = row;
+      }
+    });
   }
-
-  ordlist.value = ordlist.value.filter(item => !item.selected);
 };
 
   // 총 주문금액 계산
@@ -315,6 +334,74 @@ console.log('🏢 DB에서 받아온 업체 데이터:', companyList.value);
   // 주문 등록
 const saveOrder = async () => {
   try {
+    // 유효성 검사부터 수행
+    if (!searchTerm.value || !selectedCompanyCode.value) {
+      await Swal.fire({
+        title: "필수 입력 항목",
+        text: '업체명을 선택해주세요.',
+        icon: 'error',
+      });
+      return;
+    }
+
+    if (!orderDate.value) {
+      await Swal.fire({
+        title: "필수 입력 항목",
+        text: '주문일자를 입력해주세요.',
+        icon: 'error',
+      });
+      return;
+    }
+
+    if (!deadDate.value) {
+      await Swal.fire({
+        title: "필수 입력 항목",
+        text: '납기일자를 입력해주세요.',
+        icon: 'error',
+      });
+      return;
+    }
+
+    if (!ordlist.value.length) {
+      await Swal.fire({
+        title: "필수 입력 항목",
+        text: '제품을 한 개 이상 선택해주세요.',
+        icon: 'error',
+      });
+      return;
+      
+    }
+    for (let i = 0; i < ordlist.value.length; i++) {
+  const item = ordlist.value[i];
+  const rowNumber = i + 1;
+
+  if (!item.standard) {
+    await Swal.fire({
+      title: "필수 입력 항목",
+      text: `규격을 입력해 주세요.`,
+      icon: 'error'
+    });
+    return;
+  }
+
+  if (!item.qty || isNaN(item.qty) || parseInt(item.qty) <= 0) {
+    await Swal.fire({
+      title: "필수 입력 항목",
+      text: `box 수량을 입력해 주세요.`,
+      icon: 'error'
+    });
+    return;
+  }
+
+  if (!item.unitprice || isNaN(item.unitprice) || parseInt(item.unitprice) <= 0) {
+    await Swal.fire({
+      title: "필수 입력 항목",
+      text: `제품단가를 입력해 주세요.`,
+      icon: 'error'
+    });
+    return;
+  }
+}
     // 💡 먼저 selprice 계산부터 한다
     ordlist.value = ordlist.value.map(item => {
       // const qty = parseInt(item.total_qty || 0);
