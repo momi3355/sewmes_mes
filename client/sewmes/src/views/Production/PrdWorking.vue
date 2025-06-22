@@ -11,6 +11,16 @@ const workOrderData = ref([]);
 const processFlowData = ref([]);
 const equipmentData = ref([]);
 
+// 공통 코드 -> 사용자 친화적 문구 맵핑 객체
+const instStateMap = {
+    '0s1s': '생산 전',
+    '0s2s': '생산 중',
+    '0s3s': '생산 완료',
+};
+const instStateOptions = Object.entries(instStateMap).map(([code, name]) => ({ code, name }));
+
+
+
 const currentWorkOrder = ref({
     work_inst_code: '',
     prod_name: '',
@@ -80,12 +90,17 @@ const workOrderColumns = [
     { title: "지시일자", field: "inst_date", hozAlign: "center", width: 200 },
     { title: "작업시작일", field: "work_start_date", hozAlign: "center", width: 200 },
     { title: "작업종료일", field: "work_end_date", hozAlign: "center", width: 200 },
-    { title: "진행상태", field: "inst_state", width: 180 },
+    { title: "진행상태", field: "inst_state", width: 180 
+        , formatter: function(cell) {
+                const value = cell.getValue();
+                return instStateMap[value] || value;
+            }
+    },
 ];
 
 const workOrderTabulatorOptions = {
     pagination: false,
-    selectable: 1,
+    selectableRows: 1,
     rowFormatter: function(row) {
         if (row.getData().isSelected) {
             row.getElement().classList.add("selected-row");
@@ -114,7 +129,7 @@ const processFlowColumns = [
 ];
 
 const processFlowTabulatorOptions = {
-    selectable: 1,
+    selectableRows: 1,
     rowFormatter: function(row) {
         if (row.getData().isSelected) {
             row.getElement().classList.add("selected-row");
@@ -154,7 +169,7 @@ const equipmentColumns = [
 
 const equipmentTabulatorOptions = {
     layout: 'fitColumns',
-    selectable: 1,
+    selectableRows: 1,
     rowFormatter: function(row) {
         if (row.getData().isSelected) {
             row.getElement().classList.add("selected-row");
@@ -277,10 +292,10 @@ const fetchEquipmentByProcess = async (processCode) => {
 
 // --- 선택 로직 (ref 직접 업데이트) ---
 const selectWorkOrder = async (workOrder) => {
-    workOrderData.value.forEach(item => {
-        item.isSelected = (item.work_inst_code === workOrder.work_inst_code);
-    });
-
+       workOrderData.value = workOrderData.value.map(item => ({
+        ...item,
+        isSelected: (item.work_inst_code === workOrder.work_inst_code) // 선택된 행만 true, 나머지는 false
+    }));
     if (workOrder && workOrder.work_inst_code) {
         await fetchWorkOrderDetails(workOrder.work_inst_code);
         await fetchProcessFlow(workOrder.work_inst_code);
@@ -296,16 +311,18 @@ const selectWorkOrder = async (workOrder) => {
     selectedProcess.value = { process_code: '', process_name: '', detail: '', isSelected: false };
     selectedEquipment.value = { equi_code: '', equi_name: '', status: '', isSelected: false };
     equipmentData.value = [];
-    processFlowData.value.forEach(p => p.isSelected = false);
+    // processFlowData.value.forEach(p => p.isSelected = false);
 };
 
 
 const selectProcess = async (process) => {
-    processFlowData.value.forEach(item => {
-        item.isSelected = (item.process_code === process.process_code);
-    });
+    // ⭐️ 이 부분을 수정합니다: forEach 대신 map을 사용하여 새 배열을 만들고 할당합니다.
+    processFlowData.value = processFlowData.value.map(item => ({
+        ...item, // 기존 item의 모든 속성을 복사
+        isSelected: (item.process_code === process.process_code) // 선택된 행만 true로 설정
+    }));
 
-    // 선택된 공정의 데이터를 selectedProcess에 완전히 복사하여 process_start_date와 end_date를 포함하도록 합니다.
+    // 나머지 로직은 그대로 둡니다.
     selectedProcess.value = { ...process, isSelected: true };
 
     selectedEquipment.value = { equi_code: '', equi_name: '', status: '', isSelected: false };
@@ -317,9 +334,11 @@ const selectProcess = async (process) => {
 };
 
 const selectEquipment = (equipment) => {
-    equipmentData.value.forEach(item => {
-        item.isSelected = (item.equi_code === equipment.equi_code);
-    });
+    // ⭐️ 이 부분을 수정합니다: forEach 대신 map을 사용하여 새 배열을 만들고 할당합니다.
+    equipmentData.value = equipmentData.value.map(item => ({
+        ...item, // 기존 item의 모든 속성을 복사
+        isSelected: (item.equi_code === equipment.equi_code) // 선택된 행만 true로 설정
+    }));
     selectedEquipment.value = { ...equipment, isSelected: true };
 };
 
@@ -395,64 +414,32 @@ const openModal = () => {
 
 
 const endWorkHandler = async () => {
-    isProcessingWork.value = true;
-    try {
-        // ⭐ 여기에 로그인/권한 관련 에러 메시지를 Swal.fire로 변경 ⭐
-        if (!currentWorkOrder.value.work_inst_code || !selectedProcess.value.process_code || !selectedEquipment.value.equi_code || !currentUser.value.emp_num) {
-            Swal.fire({
-                title: "작업 종료 실패", // 기존 "권한 실패" 대신 좀 더 포괄적인 제목
-                text: "작업 종료를 위해 작업지시, 공정, 설비를 모두 선택하고 로그인 상태를 확인해주세요.",
-                icon: "error"
-            });
-            isProcessingWork.value = false;
-            return;
-        }
+    // isProcessingWork.value = true; // 이제 이 플래그는 모달 내에서 관리하거나 더 이상 필요 없을 수 있음.
 
-        const payload = {
-            work_inst_code: currentWorkOrder.value.work_inst_code,
-            work_process_code: selectedProcess.value.work_process_code,
-            process_code: selectedProcess.value.process_code,
-            equi_code: selectedEquipment.value.equi_code,
-            user_code: currentUser.value.emp_num,
-        };
-
-        const response = await axios.post('/api/endWork', payload);
-
-        if (response.data.success) {
-            const currentTime = new Date().toISOString().slice(0, 19).replace('T', ' ');
-
-            selectedProcess.value.process_end_date = currentTime;
-
-            // ⭐ 작업 성공 메시지도 Swal.fire로 변경 ⭐
-            Swal.fire({
-                title: "작업 종료 완료",
-                text: "공정 작업이 성공적으로 종료되었습니다.",
-                icon: "success",
-                confirmButtonText: "확인"
-            });
-
-            openModal(); // 실적 등록 모달 열기
-
-        } else {
-          
-            Swal.fire({
-                title: "작업 종료 실패",
-                text: '작업 종료에 실패했습니다: ' + (response.data.message || '알 수 없는 오류'),
-                icon: "error",
-                confirmButtonText: "확인"
-            });
-        }
-    } catch (error) {
-        console.error('작업 종료 중 오류 발생:', error);
+    // ⭐ 작업 종료를 위해 필요한 정보가 있는지 기본적인 체크 ⭐
+    if (!currentWorkOrder.value.work_inst_code || !selectedProcess.value.process_code || !selectedEquipment.value.equi_code || !currentUser.value.emp_num) {
         Swal.fire({
-            title: "오류 발생",
-            text: "작업 종료 중 오류가 발생했습니다.",
-            icon: "error",
-            confirmButtonText: "확인"
+            title: "작업 종료 불가",
+            text: "작업 종료를 위해 작업지시, 공정, 설비를 모두 선택하고 로그인 상태를 확인해주세요.",
+            icon: "warning"
         });
-    } finally {
-        isProcessingWork.value = false;
+        // isProcessingWork.value = false;
+        return;
     }
+
+    // ⭐ 기존의 axios.post('/api/endWork', payload); 제거 ⭐
+    // ⭐ Swal.fire를 통해 사용자에게 정보만 제공하고 모달을 띄움 ⭐
+    Swal.fire({
+        title: "실적 등록 필요",
+        text: "공정 작업 종료를 위해 실적을 등록해주세요.",
+        icon: "info",
+        confirmButtonText: "확인"
+    }).then(() => {
+        openModal(); // 실적 등록 모달 열기
+    });
+    // finally {
+    // isProcessingWork.value = false;
+    // }
 };
 
 
@@ -642,7 +629,9 @@ onMounted(() => {
                                   currentWorkOrder.inst_qty,
                                   selectedProcess.inst_qty ,
                                   selectedProcess.work_process_code,
-                                  selectedProcess.equi_code 
+                                  selectedProcess.equi_code,
+                                  selectedProcess.process_code,
+            
                                   ]"
                                 />
                             </div>

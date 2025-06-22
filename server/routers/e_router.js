@@ -7,6 +7,7 @@ const router = express.Router();
 // 👈 2단계에서 만든 요리사 파일 (서비스 파일)을 가져와요. (경로가 맞는지 꼭 확인)
 const workInstService = require('../services/Production/workInst.js'); //
 const ProductionService= require('../services/Production/PrdWorkingService.js');
+const prdPerfService= require('../services/Production/prdPerfSerice.js');
 // ... (여기에 다른 메뉴들이 이미 적혀 있을 수 있어요.) ...
 
 // 생산계획 목록 
@@ -198,6 +199,8 @@ router.post('/startWork', async (req, res) => {
 
 router.post('/endWork', async (req, res) => {
     // 프론트엔드에서 work_inst_code, process_code만 보낼 것으로 가정
+    console.log('[Backend Router] Received /endWork request body:', req.body);
+
     const { work_inst_code, process_code } = req.body;
 
     try {
@@ -236,6 +239,41 @@ router.post('/prdPref', async (req, res) => {
     } catch (error) {
         console.error('Error in /prdPref route:', error); // 에러 로그 추가
         res.status(500).json({ success: false, message: '작업실적 등록 실패', error: error.message }); // 에러 응답 추가
+    }
+});
+router.get('/getprdPrefAll', async (req, res) => {
+    const result = await prdPerfService.getInitialWorkperf();
+    if (result.success) {
+        res.status(200).json(result.data);
+    } else {
+        res.status(500).json({ message: result.message, error: result.error });
+    }
+});
+
+//생산불량상세 조회 - row클릭시
+router.get('/getPrdPerf/:work_perf_code', async (req, res, next) => {
+    try {
+        const { work_perf_code } = req.params; // URL 파라미터 추출
+        console.log("Received request for work_perf_code:", work_perf_code); // 확인 로그 추가
+
+        // 추출한 work_inst_code를 서비스 함수로 전달
+        
+
+        const detailInfoResult = await prdPerfService.getWorkPerfDetail(work_perf_code);
+
+        // ⭐⭐ 여기가 중요합니다. detailInfoResult의 success 여부에 따라 응답 상태 코드를 다르게 합니다.
+        if (detailInfoResult.success) {
+            res.status(200).json(detailInfoResult); // 성공 시 200 OK
+        } else {
+            // 실패 메시지를 반환할 때 404 (Not Found)나 500 (Internal Server Error)을 사용해야 합니다.
+            // 현재 200 OK를 보내고 있다면 이 부분 때문일 수 있습니다.
+            console.error("Router: Service returned failure:", detailInfoResult); // 서비스 실패 응답 로그
+            res.status(404).json(detailInfoResult); // 데이터 없음 또는 실패 시 404/500
+            // 또는 res.status(500).json(detailInfoResult); // 서버 내부 오류 시 500
+        }
+    } catch (error) {
+        console.error("Router: Uncaught error in /getPrdPerf:", error);
+        next(error); // 에러 미들웨어로 전달
     }
 });
 

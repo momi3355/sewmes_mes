@@ -114,7 +114,9 @@ const handleSelectedPlans = (plans) => {
     const newWorkInsts = plans.map((plan, index) => ({
 
         NO: workInstData.value.length + index + 1,
+        //testing//
         work_inst_code: null, //지시코드 자동생성 저장전에는 빈값
+        
         prod_plan_code: plan.prod_plan_code,
         prod_code: plan.prod_code,
         prod_name:plan.prod_name,
@@ -151,7 +153,7 @@ const addRow = () => {
     //새로운 빈 행 데이터 객체 생성
     const newRow = {
         NO: newNo,
-        work_inst_code: '',
+        work_inst_code: null,
         prod_plan_code: '',
         prod_code: '',
         prod_name: '',
@@ -206,6 +208,36 @@ const saveWorkInstructions = async (workInstructionsToSave) => { // 인자 이�
         alert("작업지시 저장 중 예상치 못한 오류가 발생했습니다.");
     }
 };
+
+const saveSelectedRows = async () => {
+    const tabulatorInstance = tabulatorCardRef.value?.getTabulator();
+
+    if (!tabulatorCardRef.value || !tabulatorInstance) {
+        alert("테이블이 아직 준비되지 않았습니다. 잠시 후 다시 시도해주세요.");
+        return;
+    }
+
+    const selectedRows = tabulatorInstance.getSelectedRows();
+    if (selectedRows.length === 0) {
+        alert("저장할 작업지시를 선택해주세요.");
+        return;
+    }
+
+    try {
+        // 선택된 행의 데이터만 추출
+        const selectedData = selectedRows.map(row => row.getData());
+
+        console.log("선택된 행 저장 데이터:", selectedData);
+
+        // 기존 저장 함수 호출 (부분 저장)
+        await saveWorkInstructions(selectedData);
+
+    } catch (error) {
+        console.error("선택된 행 저장 중 오류 발생:", error);
+        alert("선택된 작업지시 저장 중 오류가 발생했습니다.");
+    }
+};
+
 
 // 작업지시서삭제함수 , 지시상태가  생산전인 경우만 삭제가능
 const deleteSelectedRows = async () => {
@@ -369,7 +401,8 @@ const searchAllField = async () => {
                         :tabulatorOptions="tabulatorOptions"
                         :body-padding="'5px'"
                         > <template #actions>
-                            <button class="btn btn-success me-2" @click="saveWorkInstructions(workInstData)">저장</button>
+                            <!-- <button class="btn btn-success me-2" @click="saveWorkInstructions(workInstData)">전체저장</button> -->
+                            <button class="btn btn-success me-2" @click="saveSelectedRows">저장</button>
                             <button class="btn btn-secondary me-2" @click="addRow">행추가</button>
                             <button class="btn btn-warning me-2" @click="deleteSelectedRows">삭제</button>
                         </template>
