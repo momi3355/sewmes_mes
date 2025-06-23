@@ -87,9 +87,10 @@ router.put('/quality/:code', upload.single('image'), async(req, res) => {
 });
 
 //품질 갱신
-router.put('/quality/renew/:code', async(req, res) => {
+router.put('/quality/renew/:code', upload.none(), async(req, res) => {
   let qualityInfo = req.body;
-
+  let quality_code = req.params.code;
+  qualityInfo.quality_code = quality_code
   let result = await qualityService.qualityRenewal(qualityInfo)
                                    .catch(err => console.log(err));
   res.send(result);
@@ -174,6 +175,8 @@ router.get('/equipment/history/:code', async(req, res) => {
 })
 
 //설비 점검/수리(하고싶다)
+
+//-----------------------------------------------------차트
 
 //차트(한달동안 생산계획작업지시공정생산량불량량)
 router.get('/mainChart/production', async (req, res) => {
