@@ -108,10 +108,17 @@ const saveProdPlans = async (plans) => {
     conn.release();
   }
 };
+// 제품 정보 가져오기 모달
+const searchProductByKeyword = async (keyword) => {
+  const result = await mariadb.query("selectProductByKeyword", [keyword]);
+  return result;
+};
+
 
 
 module.exports ={
   findProdPlanByConditions,
   findOrderProdList,
-  saveProdPlans
+  saveProdPlans,
+  searchProductByKeyword
 };

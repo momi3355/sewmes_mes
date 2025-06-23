@@ -53,6 +53,14 @@ const updateOrderDetailState = `
   SET order_detail_state = '0n2n' 
   WHERE order_detail_code = ?`;
 
+const selectProductByKeyword  = `
+  SELECT
+    prod_code AS prodCode,
+    prod_name AS prodName
+  FROM t_product
+  WHERE prod_name LIKE CONCAT('%', ?, '%')
+  LIMIT 10`;
+
 
 module.exports ={
   selectProdPlanByConditions,
@@ -60,5 +68,6 @@ module.exports ={
   getNextProdPlanCode,
   insertProdPlan,
   updateProdPlan,
-  updateOrderDetailState
+  updateOrderDetailState,
+  selectProductByKeyword
 };
