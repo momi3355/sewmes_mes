@@ -287,7 +287,7 @@ const getWorkProcessPrefDetail = `
         defect_qty,
         prod_qty,
         defect_type,
-        pref_note AS notes,
+        notes,
         emp_num,
         emp_name,
         equi_code,
@@ -303,6 +303,12 @@ const getWorkProcessPrefDetail = `
         work_perf_code = ?
 `;
 
+//설비상태변경
+const updateEquiState=`
+UPDATE t_equipment
+SET equi_status=?
+WHERE equi_code=?
+`
 
 
 module.exports={
@@ -325,5 +331,6 @@ module.exports={
         updateProdPlanComplete,
         updateOrderDetailStatus,
         selectworkProcessPref,
-        getWorkProcessPrefDetail
+        getWorkProcessPrefDetail,
+        updateEquiState
 }

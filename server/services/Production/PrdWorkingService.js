@@ -110,6 +110,11 @@ const startWorkProcess = async (workInstCode, processCode, equiCode, startDate) 
             workInstCode
         ]);
 
+        const updateEquiState= await connection.query(sqlList['updateEquiState'],[
+            '0u2u'
+            ,equiCode
+        ])
+
         if (updateInstStateResult.affectedRows === 0) {
             console.warn(`[PrdWorkingService] 작업지시(${workInstCode}) 상태를 '생산중'으로 업데이트하는 데 영향을 받은 행이 없습니다. (이미 '0s2s'일 수 있음)`);
             // throw new Error(`작업지시(${workInstCode})의 상태 업데이트에 실패했습니다.`); // 치명적인 오류가 아니라면 주석 처리 가능
