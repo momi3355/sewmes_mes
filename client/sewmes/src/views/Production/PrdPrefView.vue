@@ -189,7 +189,7 @@ const tabulatorEvents=[
 
         if (response.status === 200 && response.data) {
           // 4. API 응답 성공 시, perfdetailinfo에 상세 데이터 할당
-          perfdetailinfo.value = response.data;
+          perfdetailinfo.value = response.data.data;
           console.log("상세 데이터 로드 성공:", perfdetailinfo.value);
 
           // 5. API 응답 데이터로 입력 필드 재확인 또는 업데이트 (선택 사항)

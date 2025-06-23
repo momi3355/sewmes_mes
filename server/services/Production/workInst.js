@@ -83,7 +83,7 @@ const getWorkInstAll= async(searchParams = {}) => { // searchParams를 인자로
         throw error;
     }
 }
-// 작업지시서 저장 (재고 부족 시에도 홀드 기록, use_yn 고정, 수량은 필요량으로)
+
 // 작업지시서 저장 (재고 부족 시에도 홀드 기록, use_yn 고정, 수량은 필요량으로)
 const saveWorkInstructions = async (workInstructions) => {
     let conn;

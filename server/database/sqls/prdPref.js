@@ -280,40 +280,35 @@ LEFT JOIN
 //실적 상세 
 const getWorkProcessPrefDetail = `
     SELECT
-        tip.work_perf_code,
-        tip.work_inst_code,
-        tip.work_process_code,
-        tip.input_qty,
-        tip.defect_qty,
-        tip.prod_qty,
-        tip.defect_type,
-        tip.pref_note AS notes,
-        tip.emp_num,
-        tem.emp_name,
-        tip.equi_code,
-        twp.work_start_date,
-        twp.work_end_date,
-        twp.process_code,
-        twp.process_seq,
-        tprod.prod_name,
-        tp.process_name
+        work_perf_code,
+        work_inst_code,
+        work_process_code,
+        input_qty,
+        defect_qty,
+        prod_qty,
+        defect_type,
+        notes,
+        emp_num,
+        emp_name,
+        equi_code,
+        work_start_date,
+        work_end_date,
+        process_code,
+        process_seq,
+        prod_name,
+        process_name
     FROM
-        t_inst_perf tip
-    LEFT JOIN
-        t_work_process twp ON tip.work_inst_code = twp.work_inst_code
-                           AND tip.work_process_code = twp.work_process_code
-    LEFT JOIN
-        t_work_inst twi ON tip.work_inst_code = twi.work_inst_code
-    LEFT JOIN
-        t_employees tem ON tip.emp_num = tem.emp_num
-    LEFT JOIN
-        t_product tprod ON twi.prod_code = tprod.prod_code
-    LEFT JOIN
-        t_process_master tp ON twp.process_code = tp.process_code
+        v_processdefecthistory
     WHERE
-        tip.work_perf_code = ?
+        work_perf_code = ?
 `;
 
+//설비상태변경
+const updateEquiState=`
+UPDATE t_equipment
+SET equi_status=?
+WHERE equi_code=?
+`
 
 
 module.exports={
@@ -336,5 +331,6 @@ module.exports={
         updateProdPlanComplete,
         updateOrderDetailStatus,
         selectworkProcessPref,
-        getWorkProcessPrefDetail
+        getWorkProcessPrefDetail,
+        updateEquiState
 }
