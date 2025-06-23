@@ -224,7 +224,9 @@ const bomClickhandler = async () => {
     user_code: user.emp_num,
     bom_info: bomDetailInfo,
   };
-
+  console.log(detailFields.value);
+  console.log(bomInfo);
+  
   if (detailFields.value.bom_code) {
     //put
     // console.log({
@@ -264,7 +266,6 @@ const bomClickhandler = async () => {
       });
     }
   }
-  detailFields.value.bom_code = ""; //bom_code 초기화
 }
 
 const bomResethandler = () => {
@@ -301,11 +302,15 @@ const handleAfterModalSaved = async (prdData) => {
       item_code: selectRow.prod_code,
   });
   bomData.value = tabulator.getData();
-  // console.log(bomData.value);
+  //console.log(bomData.value);
 
-  if (bomData.value[0]?.bom_code)
+  if (bomData.value[0]?.bom_code) {
     detailFields.value.bom_code = bomData.value[0].bom_code;
-  //bom 없으면 pass
+    //상세 BOM 없는 경우 NULL 데이터가 있음.
+    if (!bomData.value[0]?.bom_detail_code)
+      bomData.value.pop(); //빈 데이터 제거
+  } else detailFields.value.bom_code = ""; //bom_code 초기화
+  //console.log(detailFields.value);
 };
 
 const findProd = async () => {

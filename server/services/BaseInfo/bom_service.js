@@ -33,7 +33,6 @@ const getBomItemList = async ({item_code, item_name, item_type, use_yn}) => {
 
 const getBomDetailList = async ({item_code}) => {
   return mariadb.query("selectBomDetailList", [
-    item_code,
     item_code
   ]);
 };
