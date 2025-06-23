@@ -75,13 +75,12 @@ const getWorkPerfDetail = async (work_perf_code) => { // 매개변수: work_inst
     let connection;
     try {
         connection = await getConnection();
-        const sql = sqlList.getWorkProcessPrefDetail;
         console.log("Service: SQL Alias fetched:", "getWorkProcessPrefDetail");
         console.log("Service: Full SQL string:", sql); // SQL 쿼리 내용 확인 (가장 중요)
         console.log("Service: Parameters passed to mapper.query:", [work_perf_code]); 
 
         // work_inst_code를 파라미터로 전달하여 단일 행 조회
-        const result = await query(connection, sql, [work_perf_code]); // ✨ 여기가 변경되었습니다.
+        const result = await connection.query(sqlList['getWorkProcessPrefDetail'], [work_perf_code]); // ✨ 여기가 변경되었습니다.
 
         // 결과가 배열로 오고, 첫 번째 요소가 실제 상세 데이터라고 가정
         if (result.rows && result.rows.length > 0) {
