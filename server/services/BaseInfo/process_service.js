@@ -171,6 +171,13 @@ const getAttachFileByFlowCode = async (flowCode) => {
   return result[0]; // 없으면 undefined
 };
 
+// 공정 정보 가져오기 모달
+const searchProcessByKeyword = async (keyword) => {
+  const result = await mariadb.query("selectProcessByKeyword", [keyword]);
+  return result;
+};
+
+
 module.exports ={
   // 해당 객체에 등록해야지 외부로 노출
   // 공정관리
@@ -184,5 +191,6 @@ module.exports ={
   saveProcessFlows,
   deleteFlowWithAttach,
   saveAttachFile,
-  getAttachFileByFlowCode
+  getAttachFileByFlowCode,
+  searchProcessByKeyword
 };

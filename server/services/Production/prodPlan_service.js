@@ -114,11 +114,15 @@ const searchProductByKeyword = async (keyword) => {
   return result;
 };
 
+const deleteProdPlan = async (prodPlanCode) => {
+  await mariadb.query("deleteProdPlanByProdPlanCode", [prodPlanCode]);
+}
 
 
 module.exports ={
   findProdPlanByConditions,
   findOrderProdList,
   saveProdPlans,
-  searchProductByKeyword
+  searchProductByKeyword,
+  deleteProdPlan
 };

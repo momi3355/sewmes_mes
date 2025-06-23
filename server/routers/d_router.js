@@ -157,6 +157,20 @@ router.get('/flowImage/:flowCode', async (req, res) => {
     res.sendStatus(500);
   }
 });
+// 공정 정보 가져오기
+router.get('/processSearch', async (req, res) => {
+  try {
+    const { keyword } = req.query;
+    if (!keyword || keyword.trim() === '') {
+      return res.status(400).send({ message: '검색어를 입력해주세요.' });
+    }
+    const result = await processService.searchProcessByKeyword(keyword);
+    res.send(result);
+  } catch (err) {
+    console.error("제품 검색 오류:", err);
+    res.status(500).send({ message: '서버 오류 발생' });
+  }
+});
 // ==============================================================
 
 // 생산계획관리 페이지 라우터 =========================================
@@ -201,7 +215,17 @@ router.get('/productSearch', async (req, res) => {
     res.status(500).send({ message: '서버 오류 발생' });
   }
 });
-
+// prodPlanCode 기준 삭제
+router.delete('/prodPlanDelete/:code', async(req, res) => {
+    try {
+        const prodPlanCode = req.params.code;
+        await prodPlanService.deleteProcess(prodPlanCode);
+        res.send({ success : true, message : "삭제 완료" });
+    } catch (err) {
+        console.log(err);
+        res.status(500).send({ success : false, message : "삭제 중 오료" })
+    }
+})
 
 // ==============================================================
 

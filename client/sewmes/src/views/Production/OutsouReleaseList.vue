@@ -2,6 +2,7 @@
 import axios from 'axios';
 import { ref, onMounted } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
+import { formatToDate } from '@/utils/dateUtils';
 
 // 검색 객체
 const searchItemName = ref('');
@@ -109,52 +110,74 @@ onMounted(() => {
 
 <template>
   <div class="container-fluid p-3">
-    <div class="row search-color">
-      <div class="row mb-2">
+    <div class="search-area bg-white rounded p-3 mb-3 shadow-sm">
+      <div class="row">
         <!-- 등록일 -->
-        <div class="col-md-3">
-          <label class="form-label">등록일</label>
+        <div class="col-md-2">
+          <label class="form-label search-label">등록일</label>
           <div class="d-flex align-items-center gap-2">
-            <input type="text" class="form-control" v-model="searchRegDateStart">
+            <input
+              type="text"
+              class="form-control"
+              v-model="searchRegDateStart"
+              @blur="searchRegDateStart = formatToDate(searchRegDateStart)"
+              @keyup.enter="searchRegDateStart = formatToDate(searchRegDateStart)"
+            >
             <span>~</span>
-            <input type="text" class="form-control" v-model="searchRegDateEnd">
+            <input
+              type="text"
+              class="form-control"
+              v-model="searchRegDateEnd"
+              @blur="searchRegDateEnd = formatToDate(searchRegDateEnd)"
+              @keyup.enter="searchRegDateEnd = formatToDate(searchRegDateEnd)"
+            >
           </div>
         </div>
 
         <!-- 납기일 -->
-        <div class="col-md-3">
-          <label class="form-label">납기일</label>
+        <div class="col-md-2">
+          <label class="form-label search-label">납기일</label>
           <div class="d-flex align-items-center gap-2">
-            <input type="text" class="form-control" v-model="searchDeadDateStart">
+            <input
+              type="text"
+              class="form-control"
+              v-model="searchDeadDateStart"
+              @blur="searchDeadDateStart = formatToDate(searchDeadDateStart)"
+              @keyup.enter="searchDeadDateStart = formatToDate(searchDeadDateStart)"
+            >
             <span>~</span>
-            <input type="text" class="form-control" v-model="searchDeadDateEnd">
+            <input
+              type="text"
+              class="form-control"
+              v-model="searchDeadDateEnd"
+              @blur="searchDeadDateEnd = formatToDate(searchDeadDateEnd)"
+              @keyup.enter="searchDeadDateEnd = formatToDate(searchDeadDateEnd)"
+            >
           </div>
         </div>
-        <div class="col-md-3">
-          <label class="form-label">자재명 포함 단어</label>
+        <div class="col-md-2">
+          <label class="form-label search-label">자재명 포함 단어</label>
           <input type="text" class="form-control" v-model="searchItemName">
         </div>
-      </div>
-      <div class="row mb-2">
-        <div class="col-md-3">
-          <label class="form-label">외주 코드</label>
+        <div class="col-md-1">
+          <label class="form-label search-label">외주 코드</label>
           <input type="text" class="form-control" v-model="searchCpCode">
         </div>
-        <div class="col-md-3">
-          <label class="form-label">외주업체명 포함 단어</label>
+        <div class="col-md-2">
+          <label class="form-label search-label">외주업체명 포함 단어</label>
           <input type="text" class="form-control" v-model="searchCpName">
         </div>
-        <div class="col-md-2">
-          <label class="form-label">출고 상태</label>
+        <div class="col-md-1">
+          <label class="form-label search-label">출고 상태</label>
           <select class="form-select" v-model="searchReleaseState">
             <option value="">선택안함</option>
             <option value="0o1o">출고 전</option>
             <option value="0o2o">출고 완료</option>
           </select>
         </div>
-        <div class="col-md-3 d-flex align-items-end">
-          <button class="btn btn-primary me-2" @click="searchReleaseMaterial">조회</button>
-          <button class="btn btn-secondary" @click="resetFilter">초기화</button>
+        <div class="col-md-2 d-flex align-items-end gap-2">
+          <button class="btn btn-outline-secondary w-50" @click="searchReleaseMaterial">조회</button>
+          <button class="btn btn-primary w-50" @click="resetFilter">초기화</button>
         </div>
       </div>
     </div>
@@ -181,5 +204,13 @@ onMounted(() => {
   padding: 20px;
   border-radius: 15px;
   background-color: #FFF;
+}
+.search-label {
+  font-size: medium;
+}
+.full-height {
+  height: 840px;
+  display: flex;
+  flex-direction: column;
 }
 </style>

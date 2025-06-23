@@ -1,8 +1,8 @@
 <script setup>
 import axios from 'axios';
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
-import Swal from 'sweetalert2';
+
 
 // 검색 객체
 const searchReleaseCode = ref('');
@@ -56,42 +56,35 @@ const lotHistoryListColumns = [
 
 // 초기화 버튼 클릭 시 검색조건 입력란 비움움
 const resetFilter = () => {
-  searchItemName.value = '';
-  searchOutsouCode.value = '';
+  searchReleaseCode.value = '';
+  searchLotCode.value = '';
+  searchProdName.value = '';
 };
 
-// 형태 변환
-const formatDate = (str) => {
-  if (!str) return '';
-  const date = moment(str);
-  return date.isValid() ? date.format('YYYY-MM-DD') : '';
-};
-const formatInt = (val) => {
-  if (val === null || val === undefined || val === '') return '';
-  const parsed = parseInt(val, 10);
-  return isNaN(parsed) ? '' : parsed;
-};
+onMounted(() => {
+  searchLotHistoryList();
+})
 </script>
 
 <template>
   <div class="container-fluid p-3">
-    <div class="row search-color">
-      <div class="row mb-2">
-        <div class="col-md-3">
-          <label class="form-label">출고 코드</label>
+    <div class="search-area bg-white rounded p-3 mb-3 shadow-sm">
+      <div class="row">
+        <div class="col-md-2">
+          <label class="form-label search-label">출고 코드</label>
           <input type="text" class="form-control" v-model="searchReleaseCode">
         </div>
-        <div class="col-md-3">
-          <label class="form-label">LOT코드</label>
+        <div class="col-md-2">
+          <label class="form-label search-label">LOT코드</label>
           <input type="text" class="form-control" v-model="searchLotCode">
         </div>
-        <div class="col-md-3">
-          <label class="form-label">자재명</label>
+        <div class="col-md-2">
+          <label class="form-label search-label">자재명</label>
           <input type="text" class="form-control" v-model="searchProdName">
         </div>
-        <div class="col-md-3 d-flex align-items-end">
-          <button class="btn btn-secondary me-2" @click="resetFilter">초기화</button>
-          <button class="btn btn-primary" @click="searchLotHistoryList">조회</button>
+        <div class="col-md-2 d-flex align-items-end gap-2">
+          <button class="btn btn-outline-secondary w-50" @click="resetFilter">초기화</button>
+          <button class="btn btn-primary w-50" @click="searchLotHistoryList">조회</button>
         </div>
       </div>
     </div>
@@ -117,5 +110,13 @@ const formatInt = (val) => {
   padding: 20px;
   border-radius: 15px;
   background-color: #FFF;
+}
+.search-label {
+  font-size: medium;
+}
+.full-height {
+  height: 840px;
+  display: flex;
+  flex-direction: column;
 }
 </style>
