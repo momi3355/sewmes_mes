@@ -101,6 +101,26 @@ const getNextOrderCode =
 const getNextOrderDetailCode = 
 `SELECT order_detail_code FROM t_order_detail ORDER BY order_detail_code DESC LIMIT 1`;
 
+// 주문서 조회 필터 검색
+const filterSearch =
+`SELECT
+    od.order_code,
+    c.cp_name,
+    od.total_qty,
+    od.order_date,
+    od.dead_date,
+    od.order_state
+FROM
+    t_order_detail od
+JOIN
+    t_company c ON od.cp_code = c.cp_code
+WHERE
+    (:cpName IS NULL OR c.cp_name LIKE CONCAT('%', :cpName, '%'))
+  AND (:orderDate IS NULL OR od.order_date = :orderDate)
+  AND (:deadDate IS NULL OR od.dead_date = :deadDate)
+ORDER BY
+    od.order_date DESC`;
+
 // 년-월-일 날짜포맷
 // DATE_FORMAT((Now), '%Y-%m-%d')
 
@@ -112,5 +132,6 @@ module.exports = {
   orderDetailAdd,
   getNextOrderCode,
   getNextOrderDetailCode,
-  orderListCheck3
+  orderListCheck3,
+  filterSearch
 }
