@@ -221,8 +221,7 @@ FROM
     t_hold         
 WHERE
     work_inst_code = ?     
-    AND material_code = ?  
-    AND lot_code = ?     
+    AND material_code = ?     
     AND use_yn IN ('0b1b', '0b2b');
 `;
 

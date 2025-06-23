@@ -30,8 +30,9 @@ const getEquipmentByProcess = async (processCode) => {
 const getWorkInstDetails = async (workInstCode) => {
     try {
         console.log('Calling SQL for getWorkInstDetails with workInstCode:', workInstCode);
-        const rows = await query('getWorkInstDetails', [workInstCode]);
-
+        const rows = await query('getWorkInstDetailInfo', [workInstCode]);
+        const mateneeds = await query('displayMaterials', [workInstCode])
+        
         if (rows.length === 0) {
             return null; // 데이터가 없는 경우
         }
@@ -40,36 +41,27 @@ const getWorkInstDetails = async (workInstCode) => {
         const firstRow = rows[0];
         const details = {
             work_inst_code: firstRow.work_inst_code,
+            prod_code:firstRow.prod_code,
             prod_name: firstRow.prod_name,
             inst_qty: firstRow.inst_qty,
             inst_date: firstRow.inst_date,
             inst_state: firstRow.inst_state,
-            prod_code: firstRow.prod_code,
-            prod_type: firstRow.prod_type,
-            category: firstRow.category,
-
-            color: firstRow.color,
-            
-            size: firstRow.size,
- 
             work_start_date: firstRow.overall_work_start_date || '',
             work_end_date: firstRow.overall_work_end_date || '',
             materials: [] // 자재 정보를 담을 배열 초기화
         };
 
         const materials = [];
-        rows.forEach(row => {
+        mateneeds.forEach(mateneedInfo => {
             // item_code가 있는 경우 (즉, 유효한 자재 정보가 있는 행)에만 추가
-            if (row.item_code) {
+            if (mateneedInfo.material_code) {
                 materials.push({
-                    item_code: row.item_code,
-                    required_quantity: row.required_quantity,
-                    material_name: row.material_name,
-                    material_unit: row.material_unit,
-                    material_standard: row.material_standard,
-                    material_type: row.material_type, // SQL 쿼리에 vw.material_type 추가했다면                   
-                    lot_number: row.lot_number,             // SQL 쿼리에서 가져온 lot_number
-                    total_current_hold_qty: row.total_current_hold_qty // SQL 쿼리에서 가져온 total_current_hold_qty
+                    item_code: mateneedInfo.material_code,
+                    required_quantity: mateneedInfo.need,
+                    material_name: mateneedInfo.material_name,
+                    material_unit: mateneedInfo.material_unit,
+                    material_standard: mateneedInfo.material_standard,                 
+                    lot_number: mateneedInfo.lot_code,             // SQL 쿼리에서 가져온 lot_number
                 });
             }
         });
@@ -382,24 +374,23 @@ const insertPrdPref = async (details) => {
 
                             // 2. 해당 자재의 홀드 정보 조회
                             // 여기서 'getMaterialHoldForRelease'는 제공된 'getWorkInstMaterials' 쿼리와 유사합니다.
-                            const holdInfoResult = await connection.query(sqlList['getMaterialHoldForRelease'], [
-                                details.work_inst_code,
-                                material.item_code, // 자재 코드
-                                material.lot_number // LOT 번호
+                            const holdInfoResult = await connection.query(sqlList['needMaterialPrdCode'], [
+                                details.prod_code, material.item_code
+                                
                             ]);
-
+                            console.log(holdInfoResult);
                             // 3. 홀드 정보 유효성 검증 및 수량 확인
-                            if (holdInfoResult[0] && holdInfoResult[0].length > 0) {
-                                const hold = holdInfoResult[0][0];
+                            if ( holdInfoResult.length > 0) {
+                                const hold = holdInfoResult[0];
                                 const holdIdToUse = hold.hold_id;
                                 const currentUsedQty = hold.used_qty || 0;
                                 const availableHoldQty = hold.hold_qty - currentUsedQty; // 가용 홀드 수량
 
-                                // 4. 가용 홀드 수량 부족 시 에러 발생 (롤백 유도)
-                                if (availableHoldQty < requiredForThisPerformance) {
-                                    console.warn(`[PrdPrefService] 경고: 자재(${material.item_code}, Lot:${material.lot_number})의 홀드량 부족. 필요: ${requiredForThisPerformance}, 가용: ${availableHoldQty}`);
-                                    throw new Error(`자재(${material.item_code}) 홀드량이 부족하여 출고 및 작업 진행 불가. (가용: ${availableHoldQty}, 필요: ${requiredForThisPerformance})`);
-                                }
+                                // // 4. 가용 홀드 수량 부족 시 에러 발생 (롤백 유도)
+                                // if (availableHoldQty < requiredForThisPerformance) {
+                                //     console.warn(`[PrdPrefService] 경고: 자재(${material.item_code}, Lot:${material.lot_number})의 홀드량 부족. 필요: ${requiredForThisPerformance}, 가용: ${availableHoldQty}`);
+                                //     throw new Error(`자재(${material.item_code}) 홀드량이 부족하여 출고 및 작업 진행 불가. (가용: ${availableHoldQty}, 필요: ${requiredForThisPerformance})`);
+                                // }
 
                                 // 5. 자재 출고 내역 't_material_release' 테이블에 삽입
                                 const insertMaterialOutParams = [
