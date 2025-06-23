@@ -162,82 +162,63 @@ function refreshPage() {
 </script>
 
 <template>
+  <!-- 1. 가장 바깥쪽을 하나의 container-fluid로 감싸고, 내부 패딩을 조절합니다. -->
   <div class="py-4 container-fluid">
     <div class="row">
       <div class="col-12">
-        <!-- 상단 검색 영역 -->
-        <div class="row searchbox mb-3">
-          <div class="col-md-2">
-            <label class="form-label">자재명</label>
-            <!-- v-model을 선언된 변수와 연결 -->
-            <input type="text" class="form-control" v-model="searchField1">
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">자재코드</label>
-            <input type="text" class="form-control" v-model="searchField2">
-          </div>
-          <div class="col-md-2">
-            <label class="form-label">공급처</label>
-            <input type="text" class="form-control" v-model="searchField3">
-          </div>
-          <div class="col-md-2">
-            <label for="date" class="form-label">수입일자</label>
+        <!-- 2. 검색 영역 -->
+        <div class="search-area bg-white rounded p-3 mb-4 shadow-sm">
+          <div class="row align-items-end">
+
+            <!-- 자재명 -->
+            <div class="col-md-3">
+              <label class="form-label search-label">자재명</label>
+              <input type="text" class="form-control" v-model="searchProdName">
+            </div>
+            <div class="col-md-2">
+            <label for="date" class="form-label search-label">수입일자</label>
             <div class="date-input-wrapper">
-              <!-- v-model을 searchDate와 연결 -->
-              <input type="date"
-                id="date"
-                class="form-control"
-                v-model="searchDate"
-                max="2039-12-31"
-                min="2000-01-01">
+              <input type="date" id="date" class="form-control" max="2039-12-31" min="2000-01-01">
             </div>
           </div>
-          <div class="col-md-2 d-flex align-items-end">
-            <button class="btn btn-secondary me-2">초기화</button>
-            <button class="btn btn-primary">조회</button>
+            <!-- 버튼 -->
+            <div class="col-md-2 d-flex justify-content-end gap-2">
+              <button class="btn btn-secondary" @click="resetFilter">초기화</button>
+              <button class="btn btn-primary" @click="searchLotHistoryList">조회</button>
+            </div>
           </div>
         </div>
 
-        <div class="row mt-4">
-          <div class="col-lg-12">
-            <tabulator-card
-            ref="checkTableCard"
-              card-title="수입검사 대기 목록"
-              :table-data="matcheckData"
-              :table-columns="materialColumns"
-              :tabulator-options = "{
-                selectableRows : 1
-              }"
-              height="700px"
-            >
-              <template #actions>
-                <ArgonButton color="success" variant="gradient" @click="startCheck">
-                  수입검사
-                </ArgonButton>
-              </template>
-            </tabulator-card>
-          </div>
-        </div>
+        <!-- 3. 테이블 영역 -->
+        <tabulator-card 
+          ref="checkTableCard" 
+          card-title="수입검사 대기 목록" 
+          :table-data="matcheckData"
+          :table-columns="materialColumns" 
+          :tabulator-options="{ selectableRows : 1 }" 
+          height="800px"
+        >
+          <template #actions>
+            <ArgonButton class="check" color="success" variant="gradient" @click="startCheck">
+              수입검사
+            </ArgonButton>
+          </template>
+        </tabulator-card>
+
       </div>
     </div>
   </div>
-  <MatCheckModal
-    :isOpen="isTestModalOpen"
-    :checkData="selectedMaterial"
+
+  <!-- 모달은 템플릿의 최상위 레벨에 두는 것이 일반적입니다. -->
+  <MatCheckModal 
+    :isOpen="isTestModalOpen" 
+    :checkData="selectedMaterial" 
     :userInfo="userInfo"
-    @close="isTestModalOpen = false"
-    @refresh="refreshPage"
+    @close="isTestModalOpen = false" 
+    @refresh="refreshPage" 
   />
 </template>
 <style scoped>
- .col-lg-12{
-  margin-top: 85px;
-}
- .searchbox{
-  background-color: #FFFFFF;
-  border-radius: 1rem;
-  margin: 0px;
- }
  .btn{
   padding: 10px;
   margin: 0px;
@@ -250,7 +231,7 @@ function refreshPage() {
   position: relative;
 }
 
-.date-input-wrapper::after {
+/* .date-input-wrapper::after {
   content: '📅';
   font-size: 1.2rem;
   color: #adb5bd;
@@ -259,7 +240,7 @@ function refreshPage() {
   top: 50%;
   transform: translateY(-50%);
   pointer-events: none; 
-}
+} */
 
 .date-input-wrapper input[type="date"]::-webkit-calendar-picker-indicator {
   position: absolute;
@@ -281,15 +262,22 @@ function refreshPage() {
 .form-control {
   margin-left: 5px;
 }
-.btn.btn-secondary.me-2 {
-  margin: 13px;
+.btn.btn-secondary {
   width: 80px;
 }  
 .btn.btn-primary {
-  margin: 13px;
-  width: 60px;
+  width: 80px;
 }
-.col-md-2 {
-  padding-bottom: 15px;
+.search-label {
+  font-size: medium;
+  margin: 5px;
+}
+.full-height {
+  height: 840px;
+  display: flex;
+  flex-direction: column;
+}
+.check {
+  width: 170px;
 }
 </style>
