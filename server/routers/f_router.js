@@ -176,6 +176,16 @@ router.get('/equipment/history/:code', async(req, res) => {
 
 //설비 점검/수리(하고싶다)
 
+//설비 이력 등록
+router.post('/equipment/history', async(req, res) => {
+  let equiHistoryInfo = req.body;
+
+  let result = equipmentService.equiHistoryInsert(equiHistoryInfo).catch(err=>console.log(err));
+  res.send(result);
+})
+
+//설비 고장조회
+
 //-----------------------------------------------------차트
 
 //차트(한달동안 생산계획작업지시공정생산량불량량)

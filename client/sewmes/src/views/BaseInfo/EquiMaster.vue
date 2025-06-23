@@ -113,7 +113,7 @@ const getEquiList = async () => {
     matchUseYn = params.useYn.includes(item.use_yn);
   }
 
-  if (params.equiStatus && params.equiStatus.length > 0) {
+  if (params.equiStatus && params.equiStatus.length > 1) {
     matchEquiStatus = params.equiStatus.includes(item.equi_status);
   }
 
@@ -361,13 +361,13 @@ const openMaintModal = (type) => {
      <div class="row">
   <!-- 설비명 -->
   <div class="col-md-1">
-    <label class="form-label">설비명</label>
+    <label class="form-label search-label">설비명</label>
     <input type="text" class="form-control" v-model="equiSchData.equiName" onfocus="this.select()" />
   </div>
 
   <!-- 설비 유형 -->
   <div class="col-md-1">
-    <label class="form-label">설비 유형</label>
+    <label class="form-label search-label">설비 유형</label>
     <select class="form-select" v-model="equiSchData.equiType">
       <option value="">-</option>
       <option v-for="target in equiTypeCodeList" :key="target.detail_code" :value="target.detail_code">
@@ -377,7 +377,7 @@ const openMaintModal = (type) => {
 
   <!-- 조회 기간 -->
   <div class="col-md-3">
-    <label class="form-label">조회 기간</label>
+    <label class="form-label search-label">조회 기간</label>
     <div class="row g-1">
       <div class="col-md-5">
         <input type="date" class="form-control" v-model="equiSchData.startDate" />
@@ -393,7 +393,7 @@ const openMaintModal = (type) => {
 
   <!-- 사용 여부 -->
   <div class="col-md-2">
-    <label class="form-label">사용 여부</label>
+    <label class="form-label search-label">사용 여부</label>
     <div v-for="yn in equiuseYn" :key="yn.detail_code" class="form-check">
       <input class="form-check-input" type="checkbox"
              v-model="equiSchData.useYn"
@@ -405,7 +405,7 @@ const openMaintModal = (type) => {
 
   <!-- 설비 상태 -->
   <div class="col-md-3">
-    <label class="form-label">설비 상태</label>
+    <label class="form-label search-label">설비 상태</label>
     <div class="row">
       <div class="col-6" v-for="state in equiStatus" :key="state.detail_code">
         <div class="form-check">
@@ -422,9 +422,9 @@ const openMaintModal = (type) => {
   </div>
 
   <!-- 버튼 -->
-  <div class="col-md-2 d-inline-flex  justify-content-end align-items-center mt-2">
-    <button class="btn btn-secondary me-2" @click="EquiSearchReset">초기화</button>
-    <button class="btn btn-primary" @click="EquiSearchHandler">조회</button>
+  <div class="col-md-2 d-flex  justify-content-end align-items-center mt-2">
+    <button class="btn btn-outline-secondary w-50 me-2" @click="EquiSearchReset">초기화</button>
+    <button class="btn btn-primary w-50" @click="EquiSearchHandler">조회</button>
   </div>
 </div>
     </div>
@@ -432,7 +432,7 @@ const openMaintModal = (type) => {
     <!-- 본문 영역 -->
     <div class="content-area d-flex gap-3">
       <!-- 좌측 목록 -->
-      <div class="col-md-7 d-flex flex-column overflow-auto">
+      <div class="col-md-7 d-flex flex-column">
         <tabulator-card class="flex-grow-1" 
         card-title="설비 목록" 
         :table-data="equiList" 
@@ -530,7 +530,7 @@ const openMaintModal = (type) => {
         <!-- 이력 카드 -->
         <div class="card mb-2 detail-card">
 
-          <div class="card flex-grow-1 overflow-auto">
+          <div class="card flex-grow-1">
             <tabulator-card card-title="설비 비가동 이력" :table-data="equiMaintHistoryList"
               :table-columns="equiMaintHistoryColumns" height="137px" />
           </div>
@@ -602,7 +602,11 @@ const openMaintModal = (type) => {
 
 .detail-body {
   max-height: 350px;
-  overflow-y: auto;
+  /* overflow-y: auto; */
   padding: 10px;
+}
+
+.search-label {
+  font-size: medium;
 }
 </style>
