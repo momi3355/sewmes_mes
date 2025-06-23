@@ -336,13 +336,13 @@ const insertPrdPref = async (details) => {
                     if (!newOutOrderCode) throw new Error("새로운 외주 발주 코드를 생성하지 못했습니다.");
                     console.log('sewingSemiProdCodeForOutsource', sewingSemiProdCodeForOutsource);
                     console.log('outsourceCompCode', outsourceCompCode);
-                    if (sewingSemiProdCodeForOutsource) { // ⭐ 조건문에 outsourceCompCode 추가
+                    if (sewingSemiProdCodeForOutsource) { 
                         const insertOutsourceOrderParams = [
                             newOutOrderCode,
                             currentProcessRow.work_process_code,
                             sewingSemiProdCodeForOutsource,
                             newProdQtyAccumulated,
-                            outsourceCompCode // ⭐ outsourceCompCode 파라미터 추가
+                           
                         ];
                         await connection.query(sqlList['inOunSoInboundForProcess'], insertOutsourceOrderParams);
                         console.log(`[PrdPrefService] ✅ 외주 발주 목록 (t_outsou_order) 등록 성공: 코드=${newOutOrderCode}, 품목=${sewingSemiProdCodeForOutsource}, 수량=${newProdQtyAccumulated}, 업체=${outsourceCompCode}`);

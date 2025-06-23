@@ -5,7 +5,8 @@ import { useStore } from "vuex";
 import { defineProps, defineEmits } from 'vue';
 const emit = defineEmits(['closeModal']);
 import groupcodelist from "../../assets/js/utils/groupcodelist";
-
+import moment from 'moment';
+import Swal from "sweetalert2"; // SweetAlert2 추가
 const defecttypeList=ref([]);
 
 const props = defineProps({
@@ -31,31 +32,90 @@ const handleCloseModal = () => {
     emit('closeModal');
 };
 
-const saveData=async()=>{
-  try{
-       const payload = {
-        work_process_code:props.prefProps[4],
-        work_inst_code:props.prefProps[0],
-        // props.prefProps[1],
-        // props.prefProps[2],
-            
-            prod_code:props.prefProps[1],
-            inst_qty:props.prefProps[2],
-            input_qty:input_qty.value,
-            prod_qty:prod_qty.value,
-            defect_qty:defect_qty.value,
-            pref_note:pref_note.value,
-            defect_type:defect_type.value,   
-            emp_num: userCode,
-        };
-        console.log('넘겨주는 값',payload);
-       const result = await axios.post('/api/prdPref', payload); 
-       console.log('결과',result);
-  }catch(error){
-    console.error(error);
-  }
+const saveData = async () => {
+    // 유효성 검사 (기존과 동일)
+    if (prod_qty.value === null || prod_qty.value < 0) {
+        Swal.fire({ title: "입력 오류", text: "생산량은 0 이상이어야 합니다.", icon: "warning", confirmButtonText: "확인" });
+        return;
+    }
+    if (defect_qty.value === null || defect_qty.value < 0) {
+        Swal.fire({ title: "입력 오류", text: "불량수량은 0 이상이어야 합니다.", icon: "warning", confirmButtonText: "확인" });
+        return;
+    }
+    if (input_qty.value === null || input_qty.value < 0) {
+        Swal.fire({ title: "입력 오류", text: "투입량은 0 이상이어야 합니다.", icon: "warning", confirmButtonText: "확인" });
+        return;
+    }
 
-} 
+    try {
+        // ⭐ 1. 작업 종료 시간 DB 업데이트 호출 (기존 /api/endWork) ⭐
+        const endWorkPayload = {
+            work_inst_code: props.prefProps[0],       // 작업지시코드
+            work_process_code: props.prefProps[4],    // 작업공정코드
+            process_code: props.prefProps[6],         // 공정코드
+            equi_code: props.prefProps[5],            // 설비코드
+            
+        };
+        console.log('props.prefProps[5]의 현재 값:', props.prefProps[5]); // ⭐ 이 라인 추가
+        console.log('작업 종료 요청 페이로드:', endWorkPayload)
+        const endWorkResponse = await axios.post('/api/endWork', endWorkPayload);
+
+        if (!endWorkResponse.data.success) {
+            Swal.fire({
+                title: "작업 종료 실패",
+                text: '작업 종료 시간 업데이트에 실패했습니다: ' + (endWorkResponse.data.message || '알 수 없는 오류'),
+                icon: "error",
+                confirmButtonText: "확인"
+            });
+            return; // 작업 종료 실패 시 실적 등록 진행하지 않음
+        }
+        console.log('작업 종료 시간 업데이트 성공');
+
+        // ⭐ 2. 생산 실적 등록 호출 (기존 /api/prdPref) ⭐
+        const perfPayload = {
+            work_process_code: props.prefProps[4],    // 작업공정코드
+            work_inst_code: props.prefProps[0],       // 작업지시코드
+            prod_code: props.prefProps[1],            // 제품코드
+            inst_qty: props.prefProps[2],             // 지시량
+            input_qty: input_qty.value,
+            prod_qty: prod_qty.value,
+            defect_qty: defect_qty.value,
+            pref_note: pref_note.value,
+            defect_type: defect_type.value,
+            emp_num: userCode, // 현재 로그인된 사용자 코드 (PrdPrefModal 자체에서 가져옴)
+        };
+        console.log('생산 실적 등록 요청 페이로드:', perfPayload);
+        const perfResult = await axios.post('/api/prdPref', perfPayload);
+
+        if (perfResult.data.success) {
+            Swal.fire({
+                title: "저장 성공",
+                text: "작업 종료 및 생산 실적 정보가 성공적으로 저장되었습니다.",
+                icon: "success",
+                confirmButtonText: "확인"
+            }).then(() => {
+                handleCloseModal(); // 성공 시 모달 닫기
+                // 부모 컴포넌트에 작업 완료 및 데이터 새로고침을 알리는 emit을 추가할 수 있음
+                // emit('workProcessCompleted');
+            });
+        } else {
+            Swal.fire({
+                title: "저장 실패",
+                text: perfResult.data.message || "생산 실적 저장에 실패했습니다.",
+                icon: "error",
+                confirmButtonText: "확인"
+            });
+        }
+    } catch (error) {
+        console.error('실적 저장 중 오류 발생:', error);
+        Swal.fire({
+            title: "오류",
+            text: "작업 종료 및 생산 실적 저장 중 오류가 발생했습니다.",
+            icon: "error",
+            confirmButtonText: "확인"
+        });
+    }
+};
 onMounted(()=>{
  groupcodelist.groupCodeList('0Q',defecttypeList);
 
