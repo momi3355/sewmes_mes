@@ -61,6 +61,9 @@ const selectProductByKeyword  = `
   WHERE prod_name LIKE CONCAT('%', ?, '%')
   LIMIT 10`;
 
+const deleteProdPlanByProdPlanCode = `
+    DELETE FROM t_prod_plan
+    WHERE prod_plan_code = ?`;  
 
 module.exports ={
   selectProdPlanByConditions,
@@ -69,5 +72,6 @@ module.exports ={
   insertProdPlan,
   updateProdPlan,
   updateOrderDetailState,
-  selectProductByKeyword
+  selectProductByKeyword,
+  deleteProdPlanByProdPlanCode
 };

@@ -1,17 +1,33 @@
 <script setup>
 import axios from 'axios';
-import { ref, shallowRef, computed, onBeforeMount, onMounted } from "vue";
+import { ref, onMounted } from "vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
-import { useRouter } from 'vue-router';
+import groupcodelist from "../../assets/js/utils/groupcodelist";
+import Swal from 'sweetalert2';
 
-const router = useRouter();
 
 const processData = ref([]);
 const processTableRef = ref(null);
-
 const searchProcessCode = ref('');
 const searchProcessName = ref('');
 const searchEquiType = ref('');
+
+// 공통 코드 변환 객체, 함수 ======================
+const euqiTypeList = ref([]);
+const euqiTypeMap = ref({});
+
+const loadEquiTypeList = async () => {
+  await groupcodelist.groupCodeList('1C', euqiTypeList);
+  // 리스트를 Map 형태로 변환
+  euqiTypeMap.value = Object.fromEntries(
+    euqiTypeList.value.map(item => [item.detail_code, item.detail_name])
+  );
+};
+// 공통코드 변환
+const convertCode = (code) => {
+  return euqiTypeMap.value[code] || code;
+};
+// =============================
 
 const resetSearch = async () => {
   searchProcessCode.value = '';
@@ -33,7 +49,7 @@ const searchProcess = async () => {
       processCode: item.process_code,
       processName: item.process_name,
       detail: item.detail,
-      equiType: convertCode(item.equi_type),
+      equiType: item.equi_type,
       needTime: item.need_time,
       processType: item.process_type,
       useYn: item.use_yn
@@ -58,8 +74,10 @@ const processColumns = [
   { title: "No", field: "rowNum", width: 80 },
   { title: "공정 코드", field: "processCode", width: 120 },
   { title: "공정명", field: "processName", width: 150 },
-  { title: "상세", field: "detail", width: 150 },
-  { title: "설비 유형", field: "equiType", width: 150 }
+  { title: "상세", field: "detail" },
+  { title: "설비 유형", field: "equiType", width: 150,
+    formatter: (cell) => convertCode(cell.getValue())
+  }
 ];
 
 // detailField는 모든 입력값을 포함한 객체로 구성
@@ -75,18 +93,19 @@ const detailFields = ref({
 
 const saveProcess = async () => {
   const df = detailFields.value;
+  console.log(df.equiType);
   // 유효성 검사
   if (!df.processName?.trim()) {
-    alert("공정명을 입력하세요.");
+    Swal.fire({ title: "미입력", text: "공정명을 입력하세요", icon: "error" });
     return;
   }
 
   if (!df.detail?.trim()) {
-    alert("공정 상세 내용을 입력하세요.");
+    Swal.fire({ title: "미입력", text: "공정 상세 내용을 입력하세요", icon: "error" });
     return;
   }
   if (isNaN(Number(df.needTime))) {
-    alert("소요 시간은 숫자만 입력 가능합니다.");
+    Swal.fire({ title: "오입력", text: "소요 시간은 숫자만 입력 가능합니다", icon: "error" });
     return;
   }
   // 기본값 설정
@@ -98,11 +117,11 @@ const saveProcess = async () => {
     if (!df.processCode) {
       // 신규 등록
       const result = await axios.post('/api/processInsert', df);
-      alert(`신규 등록 완료: ${result.data.processCode}`);
+      Swal.fire({ title: "완료", text: `신규 등록 완료: ${result.data.processCode}`, icon: "success" });
     } else {
       // 수정
       await axios.put('/api/processUpdate', df);
-      alert("수정 완료");
+      Swal.fire({ title: "완료", text: "수정 완료", icon: "success" });
     }
     await searchProcess(); // 목록 갱신
     // 입력란 초기화
@@ -117,23 +136,34 @@ const saveProcess = async () => {
     };
   } catch (err) {
     console.error(err);
-    alert("등록 중 오류");
+    Swal.fire({ title: "오류", text: "등록 중 오류", icon: "error" });
   }
 };
 
 const deleteProcess = async () => {
   if (!detailFields.value.processCode) {
-    alert("삭제할 공정이 선택되지 않았습니다.");
+    Swal.fire({ title: "미선택", text: "삭제할 공정이 선택되지 않았습니다", icon: "error" });
     return;
   }
 
-  const confirmed = confirm("정말 삭제하시겠습니까?");
-  if (!confirmed) return;
+  // 확인/취소 메시지 
+  const result = await Swal.fire({
+    title: '공정 삭제',
+    text: '정말 삭제하시겠습니까?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: '예, 진행합니다',
+    cancelButtonText: '취소'
+  });
+
+  if (!result.isConfirmed) return;
 
   try {
     await axios.delete(`/api/processDelete/${detailFields.value.processCode}`);
-    alert("삭제 완료");
-    await getProcessList();
+    Swal.fire({ title: "완료", text: "삭제 완료", icon: "success" });
+    await searchProcess();
     // 폼 초기화
     detailFields.value = {
       processCode: '',
@@ -146,7 +176,7 @@ const deleteProcess = async () => {
     };
   } catch (err) {
     console.error(err);
-    alert("삭제 중 오류 발생");
+    Swal.fire({ title: "오류", text: "삭제 중 오류 발생", icon: "error" });
   }
 };
 
@@ -181,42 +211,39 @@ const tabulatorEvent = [
     }
   }
 ];
-// 공통코드 변환환
-const convertCode = (code) => {
-  switch (code) {
-    case '1c1c': return '재단';
-    case '1c2c': return '단추';
-    case '1c3c': return '지퍼';
-    case '1c4c': return '자수';
-    case '1c5c': return '프린트';
-    default: return code;
-  }
-};
+
 onMounted(() => {
+  loadEquiTypeList();
   searchProcess();
+  groupcodelist.groupCodeList('1C',euqiTypeList);
 })
 </script>
 
 <template>
   <div class="container-fluid p-3">
-    <div class="row search-color">  
+    <div class="search-area bg-white rounded p-3 mb-3 shadow-sm">  
     <!-- 상단 검색 영역 -->
-    <div class="row mb-3">
+    <div class="row">
       <div class="col-md-2">
-        <label class="form-label">공정코드</label>
+        <label class="form-label search-label">공정코드</label>
         <input type="text" class="form-control" v-model="searchProcessCode">
       </div>
       <div class="col-md-2">
-        <label class="form-label">공정명</label>
+        <label class="form-label search-label">공정명</label>
         <input type="text" class="form-control" v-model="searchProcessName">
       </div>
       <div class="col-md-2">
-        <label class="form-label">설비 유형</label>
-        <input type="text" class="form-control" v-model="searchEquiType">
+        <label class="form-label search-label">설비 유형</label>
+        <select class="form-select" v-model="searchEquiType">
+          <option value="">선택하세요</option>
+          <option v-for="type in euqiTypeList":key="type.detail_code" :value="type.detail_code">
+            {{ type.detail_name }}
+          </option>
+        </select>
       </div>
-      <div class="col-md-4 d-flex align-items-end">
-        <button class="btn btn-secondary me-2" @click="resetSearch">초기화</button>
-        <button class="btn btn-primary" @click="searchProcess" style="margin-right: 10px;">조회</button>
+      <div class="col-md-2 d-flex align-items-end gap-2">
+        <button class="btn btn-outline-secondary w-50" @click="resetSearch">초기화</button>
+        <button class="btn btn-primary w-50" @click="searchProcess">조회</button>
       </div>
     </div>
     </div>
@@ -225,12 +252,6 @@ onMounted(() => {
     <div class="row">
       <!-- 좌측 Tabulator 영역 -->
       <div class="col-md-7">
-        <!-- <div class="card">
-          <div class="card-header">목록</div>
-          <div class="card-body p-2">
-            <div id="tabulator-table" style="height: 400px;"></div>
-          </div>
-        </div> -->
         <tabulator-card
           ref="processTableRef"
           card-title="공정 목록"
@@ -269,11 +290,9 @@ onMounted(() => {
                 <label class="form-label">설비 유형</label>
                 <select class="form-select" v-model="detailFields.equiType">
                   <option value="">선택하세요</option>
-                  <option value="1c1c">재단</option>
-                  <option value="1c2c">단추</option>
-                  <option value="1c3c">지퍼</option>
-                  <option value="1c4c">자수</option>
-                  <option value="1c5c">프린트</option>
+                  <option v-for="type in euqiTypeList":key="type.detail_code" :value="type.detail_code">
+                    {{ type.detail_name }}
+                  </option>
                 </select>
               </div>
               <div class="col-md-12">
@@ -282,48 +301,33 @@ onMounted(() => {
               </div>
               <div class="col-md-12">
                 <div class="form-label">작업 구분</div>
-                <div>
-                  <label><input type="radio" value="0m1m" v-model="detailFields.processType"> 내작업</label>
-                  <label><input type="radio" value="0m2m" v-model="detailFields.processType"> 외주</label>
-                  <label><input type="radio" value="0m3m" v-model="detailFields.processType" checked> 상관없음</label>
+                <div class="form-check use-radio">
+                  <input class="form-check-input" type="radio" value="0m1m" id="form-0m1m" v-model="detailFields.processType">
+                  <label class="form-check-label" for="form-0m1m">내작업</label>
+                </div>
+                <div class="form-check use-radio">
+                  <input class="form-check-input" type="radio" value="0m2m" id="form-0m2m" v-model="detailFields.processType">
+                  <label class="form-check-label" for="form-0m2m">외주</label>
+                </div>
+                <div class="form-check use-radio">
+                  <input class="form-check-input" type="radio" value="0m3m" id="form-0m3m" v-model="detailFields.processType" checked>
+                  <label class="form-check-label" for="form-0m3m">상관없음</label>
                 </div>
               </div>
               <div class="col-md-12">
                 <div class="form-label">사용 여부</div>
-                <div>
-                  <label><input type="radio" value="0b1b" v-model="detailFields.useYn" checked> 사용</label>
-                  <label><input type="radio" value="0b2b" v-model="detailFields.useYn"> 비사용</label>
+                <div class="form-check use-radio">
+                  <input class="form-check-input" type="radio" value="0b1b" id="form-0b1b" v-model="detailFields.useYn" checked>
+                  <label class="form-check-label" for="form-0b1b">사용</label>
+                </div>
+                <div class="form-check use-radio">
+                  <input class="form-check-input" type="radio" value="0b2b" id="form-0b2b" v-model="detailFields.useYn">
+                  <label class="form-check-label" for="form-0b2b">비사용</label>
                 </div>
               </div>
             </div>
           </div>
         </div>
-
-        <!-- 우측 하단 이력 그리드 (옵션)
-        <div v-if="showHistory" class="card">
-          <div class="card-header">하단그리드</div>
-          <div class="card-body p-2">
-            <table class="table table-sm">
-              <thead>
-                <tr>
-                  <th>컬럼 1</th>
-                  <th>컬럼 2</th>
-                  <th>컬럼 3</th>
-                  <th>컬럼 4</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr v-for="(item, index) in historyData" :key="index">
-                  <td>{{ item.col1 }}</td>
-                  <td>{{ item.col2 }}</td>
-                  <td>{{ item.col3 }}</td>
-                  <td>{{ item.col4 }}</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div> -->
-
       </div>
     </div>
   </div>
@@ -335,5 +339,17 @@ onMounted(() => {
   padding: 20px;
   border-radius: 15px;
   background-color: #FFF;
+}
+.use-radio {
+  display: inline-block;
+  padding-right: 15px;
+}
+.search-label {
+  font-size: medium;
+}
+.full-height {
+  height: 840px;
+  display: flex;
+  flex-direction: column;
 }
 </style>  

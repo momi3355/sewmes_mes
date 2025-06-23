@@ -1,12 +1,7 @@
 <template>
   <div class="modal-overlay" v-if="isOpen">
     <div class="modal-content" style="width: 600px;">
-    <h4>품명 입력
-        <small class="text-muted ms-3">
-            No.{{ props.targetInfo.rowNum }} /
-            주문상세번호 : {{ props.targetInfo.orderDetailCode }}
-        </small>
-    </h4>
+    <h4>공정순서 번호 : {{ props.targetInfo.rowNum }}</h4>
       <input type="text" class="form-control mb-2" v-model="keyword" @input="search" @keydown="handleKeydown" />
       <ul
         class="list-group"
@@ -14,12 +9,12 @@
       >
         <li
           v-for="(item, index) in results"
-          :key="item.prodCode"
+          :key="item.processCode"
           :class="['list-group-item', { active: index === selectedIndex }]"
           @dblclick="select(item)"
           @click="selectedIndex = index"
         >
-          {{ item.prodName }} ({{ item.prodCode }})
+          {{ item.processName }} | {{ item.processCode }} | {{ item.detail }}
         </li>
       </ul>
       <div class="text-end mt-2">
@@ -60,7 +55,7 @@ const search = async () => {
     results.value = [];
     return;
   }
-  const res = await axios.get('/api/productSearch', { params: { keyword: keyword.value } });
+  const res = await axios.get('/api/processSearch', { params: { keyword: keyword.value } });
   results.value = res.data.slice(0, 10);
   selectedIndex.value = 0;
 };

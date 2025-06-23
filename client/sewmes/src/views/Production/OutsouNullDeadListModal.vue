@@ -3,6 +3,7 @@ import { ref, watch } from 'vue';
 import axios from 'axios';
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import Swal from 'sweetalert2';
+import { formatToDate } from '@/utils/dateUtils';
 
 
 
@@ -27,7 +28,26 @@ const modalTableColumns = [
         openCpSelectModal(rowData); // 모달 열기
       }
     },
-    { title: "납기일자", field: "deadDate", editor: "input", width: 150 },
+    {
+      title: '납기일자',
+      field: 'deadDate',
+      editor: "input",
+      width: 150,
+      editorParams: {
+        elementAttributes: {
+          placeholder: "YYYYMMDD"
+        },
+        selectContents: true,
+        inputFormatter: (value) => {
+          return formatToDate(value);
+        }
+      },
+      cellEdited: (cell) => {
+        const rawValue = cell.getValue();
+        const fixed = formatToDate(rawValue);
+        cell.setValue(fixed, true);
+      }
+    },
     { title: "등록일자", field: "regDate", width: 150},
     { title: "작업공정코드", field: "workProcessCode", width: 150 },
     { title: "업체코드", field: "cpCode", visible: false }
