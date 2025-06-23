@@ -216,16 +216,16 @@ router.get('/productSearch', async (req, res) => {
   }
 });
 // prodPlanCode 기준 삭제
-router.delete('/prodPlanDelete/:code', async(req, res) => {
-    try {
-        const prodPlanCode = req.params.code;
-        await prodPlanService.deleteProcess(prodPlanCode);
-        res.send({ success : true, message : "삭제 완료" });
-    } catch (err) {
-        console.log(err);
-        res.status(500).send({ success : false, message : "삭제 중 오료" })
-    }
-})
+router.post('/prodPlanDelete', async(req, res) => {
+  try {
+    const plans = req.body.plans;
+    await prodPlanService.deleteProdPlan(plans);
+    res.send({ success : true, message : "삭제 완료" });
+  } catch (err) {
+    console.log(err);
+    res.status(500).send({ success : false, message : "삭제 중 오료" })
+  }
+});
 
 // ==============================================================
 
