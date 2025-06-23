@@ -220,6 +220,19 @@ const tabulatorEvents = [
   }
 ];
 
+const showImgModal = ref(false);
+const modalImgSrc = ref(null);
+
+const openImageModal = (src) => {
+  modalImgSrc.value = src;
+  showImgModal.value = true;
+};
+
+const closeImageModal = () => {
+  showImgModal.value = false;
+  modalImgSrc.value = null;
+};
+
 onMounted(() => {
   groupcodelist.groupCodeList('1B', testTargetCodeList);
   groupcodelist.groupCodeList('0B', useYnDetail);
@@ -347,13 +360,23 @@ onMounted(() => {
                 </tr>
                 <tr>
                   <th>참고자료</th>
+                  <!-- 참고자료 셀 -->
                   <td colspan="3">
-                    <input type="file" ref="imageInput" />
-                    <div v-if="qualityInfo.ref_img" class="image-preview mt-2">
-                      <img :src="`/api/getimgs/${qualityInfo.ref_img}`" style="max-height: 150px;" />
+                    <!-- 이미지 썸네일과 모달 -->
+                    <div v-if="qualityInfo.ref_img" class="image-preview mt-2" style="cursor:pointer;">
+                      <img :src="`/api/getimgs/${qualityInfo.ref_img}`" style="max-height: 150px;"
+                        @click="openImageModal(`/api/getimgs/${qualityInfo.ref_img}`)" alt="참고 이미지" />
                     </div>
-                    <div v-else>
-                      <span class="text-muted">참고 이미지가 없습니다.</span>
+
+                    <!-- 파일 입력은 항상 보여줌 -->
+                    <input type="file" ref="imageInput" />
+
+                    <!-- 모달 -->
+                    <div v-if="showImgModal" class="modal-overlay" @click.self="closeImageModal">
+                      <div class="modal-content">
+                        <button class="btn btn-close" style="color: red;" @click="closeImageModal">X</button>
+                        <img :src="modalImgSrc" style="max-width: 70vw; max-height: 70vh;" />
+                      </div>
                     </div>
                   </td>
                 </tr>
@@ -377,6 +400,31 @@ onMounted(() => {
 </template>
 
 <style scoped>
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+.modal-content {
+  position: relative;
+  background: white;
+  padding: 10px;
+  border-radius: 4px;
+}
+.btn-close {
+  position: absolute;
+  top: 5px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
 .full-height {
   height: 840px;
   display: flex;
@@ -424,7 +472,7 @@ onMounted(() => {
 
 .detail-body {
   max-height: 350px;
-  /* overflow-y: hidden; */
+  overflow-y: auto;
   padding: 10px;
 }
 

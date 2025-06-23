@@ -1,5 +1,6 @@
 // Service에서 필요하면 DB에 접속할 수 있도록 mapper를 가져옴
 const mariadb = require("../../database/mapper.js");
+const sqlList = require("../../database/sqlList.js");
 // 공통으로 사용하는 기능들 중 필요한 함수만 구조분해할당(Destructuring)으로 가져옴
 const { convertObjToAry } = require('../../utils/converts.js');
 
@@ -104,9 +105,27 @@ const qualityRenewal = async (qualityInfo) => {
     console.log(msg);
 
     if (msg == 'OK') {
-      const { qualityCode, ...updateFields } = qualityInfo;
+      const {
+        qualityCode,
+        fileName,
+        originalName,
+        filePath,
+        ...updateFields
+      } = qualityInfo;
       const data = [updateFields, qualityCode];
-      const update = conn.query("updateQualityinfo", data);
+      const update = await conn.query(sqlList["updateQualityinfo"], data);
+
+      if (qualityInfo.fileName) {
+        let imgfind = await conn.query(sqlList['selectIfImgfind'], qualityCode);
+        const imgParams = {file_name: qualityInfo.fileName,
+      original_name: qualityInfo.originalName,
+      file_path: qualityInfo.filePath};
+        if(imgfind.length > 0){
+          await conn.query(sqlList["updateImgInfo"], [imgParams, qualityCode]).catch(err => console.log(err));
+        }else{
+          await conn.query(sqlList['insertImages'], [qualityCode, fileName, originalName, filePath]).catch(err => console.log(err));
+        }
+      }
 
       if (update.affectedRows > 0) {
         result = {
@@ -121,7 +140,6 @@ const qualityRenewal = async (qualityInfo) => {
   } catch {
     //오류가 나면 롤백
     await conn.rollback();
-    console.error(error);
     result = {
       isSuccessed: false,
     };
