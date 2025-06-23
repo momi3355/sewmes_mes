@@ -130,7 +130,11 @@ const addSelectedMaterials = () => {
   if (!materialTableInstance) return;
   const selectedData = materialTableInstance.getSelectedData();
   if (selectedData.length === 0) {
-    alert("추가할 자재를 선택해주세요");
+    Swal.fire({
+      title: "",
+      text: "추가할 자재를 선택하십시오",
+      icon: "error"
+    });
     return;
   }
   const newProducts = selectedData
@@ -152,7 +156,11 @@ const addSelectedMaterials = () => {
     // ✨ Vue의 반응형 데이터를 직접 수정합니다.
     productData.value.push(...newProducts);
   } else if (selectedData.length > 0) {
-    alert("이미 추가된 자재입니다.");
+     Swal.fire({
+      title: "",
+      text: "이미 추가된 자재입니다.",
+      icon: "error"
+    });
   }
   materialTableInstance.deselectRow();
 };
@@ -277,7 +285,7 @@ const updateCompanyColumnEditor = () => {
           <div class="col-lg-12">
             <tabulator-card
               ref="materialTableCard"
-              card-title="공급할 자재 목록"
+              card-title="공급필요 자재 목록"
               :table-data="materialData"
               :table-columns="materialColumns"
               :tabulator-options="{
@@ -318,7 +326,7 @@ const updateCompanyColumnEditor = () => {
   background-color: #ffffff;
   border-radius: 1rem;
   margin-left: 0px;
-  margin-right: 22px;
+  margin-right: 3px;
 }
 .btn.btn-secondary.me-2 {
   margin-right: 10px;
@@ -341,11 +349,11 @@ const updateCompanyColumnEditor = () => {
 }
 .form-label {
   font-size: large;
-  margin: 10px;
-  margin-top: 12px;
+  margin-bottom: 15px;
 }
 .mb-3 {
   height: 120px;
+  margin-right: 22px;
 }
 .form-control {
   margin-left: 5px;
@@ -357,7 +365,7 @@ const updateCompanyColumnEditor = () => {
   margin: 13px;
 }
 .col-md-2 {
-  padding-bottom: 15px;
+  padding-bottom: 20px;
 }
 select.form-control {
   /* 1. 기본 브라우저 화살표 숨기기 */

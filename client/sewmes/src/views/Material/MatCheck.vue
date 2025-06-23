@@ -4,6 +4,8 @@ import { TabulatorFull as Tabulator } from "tabulator-tables";
 import { ref, onMounted } from "vue"; // Import ref and onMounted
 import { useStore } from "vuex";
 import axios from "axios";
+import Swal from 'sweetalert2';
+
 
 import ArgonButton from "@/components/ArgonButton.vue";
 import DefaultInfoCard from "@/examples/Cards/DefaultInfoCard.vue";
@@ -105,7 +107,11 @@ const startCheck = () => {
     }
   const selectedRows = tabulatorInstance.getSelectedData();
     if(selectedRows.length === 0){
-      alert("검사할 자재를 선택해주세요.");
+      Swal.fire({
+      title: "",
+      text: "검사할 자재를 선택하십시오.",
+      icon: "error"
+    });
       return;
     }
   const selectedItem = selectedRows[0];
@@ -199,10 +205,10 @@ function refreshPage() {
               card-title="수입검사 대기 목록"
               :table-data="matcheckData"
               :table-columns="materialColumns"
-              :tabulator-options="{
-                paginationSize: 7,
-                selectableRows: 1,
+              :tabulator-options = "{
+                selectableRows : 1
               }"
+              height="700px"
             >
               <template #actions>
                 <ArgonButton color="success" variant="gradient" @click="startCheck">
