@@ -289,4 +289,19 @@ const getSelectedRows = (tableRef) => {
 .col-md-2 {
   padding-bottom: 15px;
 }
+select.form-control {
+  /* 1. 기본 브라우저 화살표 숨기기 */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+
+  /* 2. 배경 이미지로 SVG 화살표 아이콘 추가 */
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right .75rem center; /* 오른쪽 끝에서 약간 떨어진 중앙에 위치 */
+  background-size: 16px 12px;
+  
+  /* 3. 텍스트가 화살표를 덮지 않도록 오른쪽 패딩 추가 */
+  padding-right: 2.5rem;
+}
 </style>
