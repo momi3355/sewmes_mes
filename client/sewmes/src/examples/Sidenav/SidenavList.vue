@@ -74,7 +74,7 @@ const getRoute = () => {
         <sidenav-item
           navText="영업"
           :subItems="[
-            { name: '주문서 관리', to: '/ordMngment' },
+            { name: '주문서 조회', to: '/ordMngment' },
             { name: '주문서 등록', to: '/ordSave' },
             // { name: '업체 관리', to: '/cpMngment' },
             // { name: '업체 거래내역 조회', to: '/tranHistory' },

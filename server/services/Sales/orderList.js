@@ -81,7 +81,7 @@ const orderAdd = async (orderData) => {
 
     // 상세 insert 반복
     for (let detail of orderData.orderDetails) {
-      const orderDetailCode = 'OD' + lastDetailNumber.toString().padStart(3, '0');
+      const orderDetailCode = 'OD' + lastDetailNumber.toString().padStart(6, '0');
       lastDetailNumber += 1;
 
       await conn.query(sqlList["orderDetailAdd"], [
@@ -120,6 +120,12 @@ const prodAll = async () => {
   return list;
 };
 
+// // 주문서 제품 검색 필터
+// const filterSearch ={
+//     let list = await mariadb.query("productList")
+//     .catch(err => console.log(err));
+//   return list;
+// };
 module.exports = {
   findAll,
   orderAdd,

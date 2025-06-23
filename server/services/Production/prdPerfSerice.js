@@ -71,21 +71,19 @@ const searchWorkperf = async ({ workDate, processCategory, instructionCode, empl
 };
 
 //상세보기 서비스 추가
-const getWorkPerfDetail = async (work_perf_code) => { // 매개변수: work_inst_code
+const getWorkPerfDetail = async (work_perf_code) => { // 매개변수
     let connection;
     try {
         connection = await getConnection();
-        const sql = sqlList.getWorkProcessPrefDetail;
         console.log("Service: SQL Alias fetched:", "getWorkProcessPrefDetail");
-        console.log("Service: Full SQL string:", sql); // SQL 쿼리 내용 확인 (가장 중요)
         console.log("Service: Parameters passed to mapper.query:", [work_perf_code]); 
 
-        // work_inst_code를 파라미터로 전달하여 단일 행 조회
-        const result = await query(connection, sql, [work_perf_code]); // ✨ 여기가 변경되었습니다.
+        // work_perf_code 파라미터로 전달하여 단일 행 조회
+        const result = await connection.query(sqlList['getWorkProcessPrefDetail'], [work_perf_code]); // ✨ 여기가 변경되었습니다.
 
         // 결과가 배열로 오고, 첫 번째 요소가 실제 상세 데이터라고 가정
-        if (result.rows && result.rows.length > 0) {
-            return { success: true, data: result.rows[0] };
+        if (result.length > 0) {
+            return { success: true, data: result[0] };
         } else {
             return { success: false, message: "상세 생산 실적을 찾을 수 없습니다.", data: null };
         }

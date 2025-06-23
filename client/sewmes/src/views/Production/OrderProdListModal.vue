@@ -4,6 +4,7 @@ import axios from 'axios';
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import Swal from 'sweetalert2';
 
+
 const props = defineProps({
     isModalOpen: Boolean
 });

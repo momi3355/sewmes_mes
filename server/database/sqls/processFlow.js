@@ -55,6 +55,15 @@ const getAttachFile = `
     WHERE flow_code = ?
     ORDER BY CAST(SUBSTRING(attach_code, 4) AS UNSIGNED) DESC
     LIMIT 1`;
+// 키워드를 통한 공정 정보 조회
+const selectProcessByKeyword  = `
+  SELECT
+    process_code AS processCode,
+    process_name AS processName,
+    detail
+  FROM t_process_master
+  WHERE process_name LIKE CONCAT('%', ?, '%')`;
+
 module.exports = {
     selectProductByConditions,
     getProcessFlow,
@@ -65,5 +74,6 @@ module.exports = {
     // 공정 흐름 이미지
     getNextAttachCode,
     insertAttachFile,
-    getAttachFile
+    getAttachFile,
+    selectProcessByKeyword
 }

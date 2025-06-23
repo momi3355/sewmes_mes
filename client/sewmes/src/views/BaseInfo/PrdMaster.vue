@@ -65,7 +65,7 @@ const productColumns = [
       typeArray: usetype,
     },
   },
-  { title: "비고", field: "note", width: 130, hozAlign: "right" },
+  { title: "비고", field: "note", hozAlign: "right" },
 ];
 
 const initialDetailFields = {
@@ -249,21 +249,12 @@ onMounted(async() => {
 </script>
 
 <template>
-  <div class="container-fluid p-3">
-    <div class="row search-color">
-      <!-- 상단 검색 영역 -->
-      <div class="row mb-3">
-        <div class="col-md-2">
-          <label class="form-label">제품명</label>
-          <input
-            type="text"
-            class="form-control"
-            v-model="searchData.prod_name"
-            onfocus="this.select()"
-          />
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">제품유형</label>
+  <div class="container-fluid p-3 full-height">
+    <div class="search-area bg-white rounded p-3 mb-3 shadow-sm">
+      <div class="row">
+        <!-- 상단 검색 영역 -->
+        <div class="col-md-1">
+          <label class="form-label search-label">제품유형</label>
           <select class="form-select" v-model="searchData.prod_type">
             <option selected value="">전체</option>
             <option v-for="type in prdtype" :value="type.detail_code">
@@ -272,7 +263,16 @@ onMounted(async() => {
           </select>
         </div>
         <div class="col-md-2">
-          <label class="form-label">카테고리</label>
+          <label class="form-label search-label">제품명</label>
+          <input
+            type="text"
+            class="form-control"
+            v-model="searchData.prod_name"
+            onfocus="this.select()"
+          />
+        </div>
+        <div class="col-md-1">
+          <label class="form-label search-label">카테고리</label>
           <select class="form-select" v-model="searchData.category">
             <option selected value="">전체</option>
             <option v-for="type in catetype" :value="type.detail_code">
@@ -280,8 +280,8 @@ onMounted(async() => {
             </option>
           </select>
         </div>
-        <div class="col-md-2">
-          <label class="form-label">사이즈</label>
+        <div class="col-md-1">
+          <label class="form-label search-label">사이즈</label>
           <select class="form-select" v-model="searchData.size">
             <option selected value="">전체</option>
             <option v-for="type in sizetype" :value="type.detail_code">
@@ -290,7 +290,7 @@ onMounted(async() => {
           </select>
         </div>
         <div class="col-md-2">
-          <label class="form-label">사용여부</label>
+          <label class="form-label search-label">사용여부</label>
           <div class="form-check">
             <input 
               class="form-check-input"
@@ -314,21 +314,21 @@ onMounted(async() => {
             </label>
           </div>
         </div>
-        <div class="col-md-2 d-flex align-items-end">
-          <button class="btn btn-secondary me-2" @click="resetHandler">
+        <div class="col-md-2 d-flex align-items-end gap-2">
+          <button class="btn btn-outline-secondary w-50" @click="resetHandler">
             초기화
           </button>
-          <button class="btn btn-primary" @click="searchHandler">조회</button>
+          <button class="btn btn-primary w-50" @click="searchHandler">조회</button>
         </div>
       </div>
     </div>
 
-    <div class="row me-3">
+    <div class="row">
       <div class="col-7 md-3">
         <tabulator-card
           ref="table"
           card-title="제품 리스트"
-          height="510px"
+          height="610px"
           :table-data="productData"
           :table-columns="productColumns"
           :tabulator-options="tabulatorOptions"
@@ -336,8 +336,8 @@ onMounted(async() => {
         />
       </div>
       <div class="col-md-5 d-flex flex-column">
-        <div class="card mb-2 flex-grow-1" style="min-height: 350px">
-          <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card flex-grow-1" style="min-height: 350px">
+          <div class="card-header header-fixed mt-3">
             <h5 class="mt-0 text-start">제품항목 상세</h5>
             <button class="btn btn-sm btn-success" @click="productClickhandler">저장</button>
           </div>
@@ -420,8 +420,25 @@ onMounted(async() => {
   border-radius: 1rem;
   background-color: #fff;
 }
+.search-label {
+  font-size: medium;
+}
+.full-height {
+  height: 840px;
+  display: flex;
+  flex-direction: column;
+}
 .use-radio {
   display: inline-block;
   padding-right: 15px;
+}
+.header-fixed {
+  height: 50px;
+  padding: 10px 15px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #dee2e6;
 }
 </style>

@@ -86,10 +86,33 @@ const equiHistoryList = async (equiCode) => {
   return list;
 }
 
+//설비 이력 등록
+const equiHistoryInsert = async (equiHistoryInfo) => {
+  let creCode = await mariadb.query("createCodeProc", [ 't_equi_history', 'history_code', 'EH' ])
+  let newCode = creCode[1][0].newCode;
+  equiHistoryInfo.history_code = newCode;
+
+  equiHistoryInfo = JSON.parse(JSON.stringify(equiInfo));
+  let resInfo = await mariadb.query("insertEquiHistoryInfo", equiHistoryInfo).catch(err => console.log(err));
+
+   let result = null;
+   if (resInfo.affectedRows > 0) {
+    result = {
+      isSuccessed: true,
+    }
+  } else {
+    result = {
+      isSuccessed: false
+    }
+  }
+  return result;
+}
+
 module.exports = {
   equiList
   , equiOneSelect
   , equiAdd
   , equiModify
   , equiHistoryList
+  , equiHistoryInsert
 }

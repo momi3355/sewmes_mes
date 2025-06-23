@@ -235,11 +235,11 @@ onMounted(() => {
     <div class="search-area bg-white rounded p-3 mb-3 shadow-sm">
       <div class="row">
         <div class="col-md-2">
-          <label class="form-label">검사명</label>
+          <label class="form-label search-label">검사명</label>
           <input type="text" class="form-control" v-model="qualSchData.testName" onfocus="this.select()" />
         </div>
         <div class="col-md-2">
-          <label class="form-label">대상품목</label>
+          <label class="form-label search-label">대상품목</label>
           <select class="form-select form-select-sm" v-model="qualSchData.testTarget">
             <option value="" disabled>선택하세요</option>
             <option v-for="target in testTargetCodeList" :key="target.detail_code" :value="target.detail_code">
@@ -248,11 +248,11 @@ onMounted(() => {
           </select>
         </div>
         <div class="col-md-2">
-          <label class="form-label">참조</label>
+          <label class="form-label search-label">참조</label>
           <input type="text" class="form-control" v-model="qualSchData.testRef" onfocus="this.select()" />
         </div>
         <div class="col-md-2">
-          <label class="form-label">사용여부</label>
+          <label class="form-label search-label">사용여부</label>
           <div class="form-check" v-for="yn in useYnDetail">
             <input class="form-check-input" type="checkbox" v-model="qualSchData.useYn" :value="yn.detail_code"
               :id="'sch'+yn.detail_code" />
@@ -261,7 +261,7 @@ onMounted(() => {
             </label>
           </div>
         </div>
-        <div class="col-md-2 d-flex align-items-end gap-2">
+        <div class="col-md-2 d-flex align-items-end justify-content-end  gap-2">
           <button class="btn btn-outline-secondary w-50" @click="qualitySearchReset">초기화</button>
           <button class="btn btn-primary w-50" @click="qualitySearchHandler">조회</button>
         </div>
@@ -271,7 +271,7 @@ onMounted(() => {
     <!-- 본문 영역 -->
     <div class="content-area d-flex gap-3">
       <!-- 좌측 목록 -->
-      <div class="col-md-7 d-flex flex-column overflow-auto">
+      <div class="col-md-7 d-flex flex-column">
         <tabulator-card class="flex-grow-1" 
         card-title="품질 기준 목록" 
         :table-data="qualityList"
@@ -364,7 +364,7 @@ onMounted(() => {
 
         <div class="card mb-2 detail-card">
         <!-- 이력 카드 -->
-        <div class="card flex-grow-1 overflow-auto">
+        <div class="card flex-grow-1">
           <tabulator-card card-title="품질기준 이력" 
           :table-data="qualityHistoryList" 
           :table-columns="qualityHistoryColumns"
@@ -424,7 +424,11 @@ onMounted(() => {
 
 .detail-body {
   max-height: 350px;
-  overflow-y: auto;
+  /* overflow-y: hidden; */
   padding: 10px;
+}
+
+.search-label {
+  font-size: medium;
 }
 </style>

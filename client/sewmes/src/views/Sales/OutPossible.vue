@@ -11,7 +11,7 @@
         :table-columns="companyColumns"
         :tabulator-options="{selectableRows : 1}"
         :on="selectCompany"
-                    height="615px"
+        height="750px"
       />
     </div>
 
@@ -23,13 +23,13 @@
         :table-data="modalSelectList"
         :table-columns="outpossible"
         :tabulator-options="{selectableRows : 1}"
-        style="height: 700px;"
+        height="745px"
       >
         <!-- actions 슬롯에 버튼을 삽입 -->
         <template #actions>
           <button class="btn btn-outline-secondary btn-sm me-2" id="openModal" @click="openModal">제품추가 🧾</button>
-          <ArgonButton class="removebtn" color="danger" variant="gradient" @click="deleteEvent">삭제</ArgonButton>
-          <argon-button color="success" variant="gradient" @click="saveEvent">저장</argon-button>
+          <ArgonButton class="removebtn" color="danger" id="delbtn" @click="deleteEvent">삭제</ArgonButton>
+          <argon-button color="success" @click="saveEvent">저장</argon-button>
         </template>
       </tabulator-card>
     </div>
@@ -316,7 +316,13 @@ const getlist = (modaldata) => {
     }
 
     // alert('저장되었습니다.');
-    location.reload();
+  Swal.fire({
+  title: '저장 완료',
+  text: '제품이 저장되었습니다.',
+  icon: 'success',
+}).then(() => {
+  location.reload(); // 알림창 닫히고 나서 새로고침
+});
   } catch (err) {
     console.error('저장 중 오류 발생:', err);
     Swal.fire({
@@ -352,5 +358,9 @@ onMounted(async () => {
 .search-color { margin: 10px; padding: 20px; border-radius: 1rem; background-color: #fff; }
 #openModal{
   margin: 0px;
+}
+
+#delbtn{
+  margin-right: 8px;
 }
 </style>

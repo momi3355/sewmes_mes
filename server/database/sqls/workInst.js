@@ -223,7 +223,7 @@ WHERE hold_id LIKE 'H%'
 
 // 자재 홀드 ID 생성을 위한 프로시저 호출
 const callCreateCodeProcForHoldId = `
-CALL createcode_proc('t_hold', 'hold_id', 'H', @newHoldId);
+CALL createcode_proc('t_hold', 'hold_id', 'TH', @newHoldId);
 SELECT @newHoldId AS new_hold_id;
 `;
 

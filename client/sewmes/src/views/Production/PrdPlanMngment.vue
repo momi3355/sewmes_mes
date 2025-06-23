@@ -7,6 +7,8 @@ import OrderProdListModal from "./OrderProdListModal.vue";
 import ProductSearchModal from "./ProductSearchModal.vue";
 import moment from 'moment';
 import Swal from 'sweetalert2';
+import { formatToDate } from '@/utils/dateUtils';
+
 
 // tabulatorCardRef 컴포넌트의 ref 선언
 const tabulatorCardRef = ref(null);
@@ -119,7 +121,6 @@ const saveProcess = async () => {
 
   try {
     await axios.post('/api/saveProdPlans', { plans: payload });
-    alert("저장 완료");
     Swal.fire({ title: "저장 완료", text: "저장이 완료 되었습니다.", icon: "success" });
     await searchProdPlan(); // 목록 갱신
   } catch (err) {
@@ -127,6 +128,7 @@ const saveProcess = async () => {
     Swal.fire({ title: "오류", text: "저장 중 오류 발생", icon: "error" });
   }
 };
+
 // 공통코드 변환환
 const convertCode = (code) => {
   switch (code) {
@@ -185,7 +187,7 @@ const prodPlanColumns = [
     width: 150,
     editorParams: {
       elementAttributes: {
-        placeholder: "YYYYMMDD or MMDD or DD"
+        placeholder: "YYYYMMDD"
       },
       selectContents: true,
       inputFormatter: (value) => {
@@ -285,54 +287,6 @@ const handleProductSelect = (item) => {
   });
 };
 
-// 사용자 날짜 입력 편의성
-const formatToDate = (input) => {
-  const today = new Date();
-  const currentYear = today.getFullYear().toString();
-  const currentMonth = String(today.getMonth() + 1).padStart(2, '0');
-
-  input = input.replace(/\D/g, '');
-
-  let y = '', m = '', d = '';
-
-  if (input.length === 8) {
-    y = input.slice(0, 4);
-    m = input.slice(4, 6);
-    d = input.slice(6, 8);
-  } else if (input.length === 6) {
-    y = '20' + input.slice(0, 2);
-    m = input.slice(2, 4);
-    d = input.slice(4, 6);
-  } else if (input.length === 4) {
-    y = currentYear;
-    m = input.slice(0, 2);
-    d = input.slice(2, 4);
-  } else if (input.length === 1 || input.length === 2) {
-    y = currentYear;
-    m = currentMonth;
-    d = input.padStart(2, '0');
-  } else {
-    return input;
-  }
-
-  // 숫자 변환
-  const yearNum = parseInt(y, 10);
-  const monthNum = Math.max(1, Math.min(parseInt(m, 10), 12));
-
-  // 각 월의 말일 계산
-  const getLastDay = (year, month) => {
-    return new Date(year, month, 0).getDate(); // 다음 달 0일 = 해당 월의 말일
-  };
-
-  const lastDay = getLastDay(yearNum, monthNum);
-  const dayNum = Math.max(1, Math.min(parseInt(d, 10), lastDay));
-
-  // 0패딩 후 반환
-  const fixedMonth = String(monthNum).padStart(2, '0');
-  const fixedDay = String(dayNum).padStart(2, '0');
-
-  return `${yearNum}-${fixedMonth}-${fixedDay}`;
-};
 onMounted(() => {
   searchProdPlan();
 })
@@ -340,11 +294,11 @@ onMounted(() => {
 
 <template>
   <div class="container-fluid p-3">
-    <div class="row search-color">
-      <div class="row mb-2">
+    <div class="search-area bg-white rounded p-3 mb-3 shadow-sm">
+      <div class="row">
         <!-- 등록일 -->
-        <div class="col-md-3">
-          <label class="form-label">시작일</label>
+        <div class="col-md-2">
+          <label class="form-label search-label">시작일</label>
           <div class="d-flex align-items-center gap-2">
             <input
               type="text"
@@ -365,39 +319,49 @@ onMounted(() => {
         </div>
 
         <!-- 납기일 -->
-        <div class="col-md-3">
-          <label class="form-label">종료일</label>
+        <div class="col-md-2">
+          <label class="form-label search-label">종료일</label>
           <div class="d-flex align-items-center gap-2">
-            <input type="text" class="form-control" v-model="searchEndDateStart">
+            <input
+              type="text"
+              class="form-control"
+              v-model="searchEndDateStart"
+              @blur="searchEndDateStart = formatToDate(searchEndDateStart)"
+              @keyup.enter="searchEndDateStart = formatToDate(searchEndDateStart)"
+            >
             <span>~</span>
-            <input type="text" class="form-control" v-model="searchEndDateEnd">
+            <input
+              type="text"
+              class="form-control"
+              v-model="searchEndDateEnd"
+              @blur="searchEndDateEnd = formatToDate(searchEndDateEnd)"
+              @keyup.enter="searchEndDateEnd = formatToDate(searchEndDateEnd)"
+            >
           </div>
         </div>
-        <div class="col-md-3">
-          <label class="form-label">주문번호</label>
+        <div class="col-md-1">
+          <label class="form-label search-label">주문번호</label>
           <input type="text" class="form-control" v-model="searchOrderCode">
         </div>
-      </div>
-      <div class="row mb-2">
-        <div class="col-md-3">
-          <label class="form-label">품번</label>
-          <input type="text" class="form-control" v-model="searchProdCode">
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">품명 포함 단어</label>
-          <input type="text" class="form-control" v-model="searchProdName">
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">완료 여부</label>
+        <div class="col-md-1">
+            <label class="form-label search-label">품번</label>
+            <input type="text" class="form-control" v-model="searchProdCode">
+          </div>
+          <div class="col-md-2">
+            <label class="form-label search-label">품명 포함 단어</label>
+            <input type="text" class="form-control" v-model="searchProdName">
+          </div>
+        <div class="col-md-1">
+          <label class="form-label search-label">완료 여부</label>
           <select class="form-select" v-model="searchComplete">
             <option value="">선택안함</option>
             <option value="1a1a">완료</option>
             <option value="1a2a">미완료</option>
           </select>
         </div>
-        <div class="col-md-3 d-flex align-items-end">
-          <button class="btn btn-secondary me-2" @click="resetFilter">초기화</button>
-          <button class="btn btn-primary" @click="searchProdPlan">조회</button>
+        <div class="col-md-2 d-flex align-items-end gap-2">
+          <button class="btn btn-outline-secondary w-50" @click="resetFilter">초기화</button>
+          <button class="btn btn-primary w-50" @click="searchProdPlan">조회</button>
         </div>
       </div>
     </div>
@@ -423,7 +387,7 @@ onMounted(() => {
           <template #actions>
             <button class="btn btn-secondary me-2" @click="addRow">행추가</button>
             <button class="btn btn-success me-2" @click="saveProcess">저장</button>
-            <button class="btn btn-delete" @click="deleteProcess" style="background-color: red; color: black;">삭제</button>
+            <button class="btn btn-delete" @click="deleteProdPlan" style="background-color: red; color: black;">삭제</button>
           </template>
         </tabulator-card>
       </div>
@@ -459,4 +423,12 @@ onMounted(() => {
   background-color: #f0f0f0 !important;
   color: #777 !important;
 } 
+.search-label {
+  font-size: medium;
+}
+.full-height {
+  height: 840px;
+  display: flex;
+  flex-direction: column;
+}
 </style>

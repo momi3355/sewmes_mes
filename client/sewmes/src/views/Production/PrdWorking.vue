@@ -34,20 +34,20 @@ const currentWorkOrder = ref({
     category: '',
     product_color: '',
     product_size: '',
-    isSelected: false,
+    
     materials: []
 });
 
 const selectedProcess = ref({
     process_code: '', process_name: '', detail: '', process_seq: null,
-    inst_qty: null, prod_code: '', isSelected: false,
+    inst_qty: null, prod_code: '', 
     process_start_date: '', // ⭐ 여기에 시작 시간 필드 추가 (null 또는 빈 문자열로 초기화) ⭐
     process_end_date: '' // 미리 종료 시간 필드도 추가
 });
 
 const selectedEquipment = ref({
     equi_code: '', equi_name: '', status: '', equip_type: '',
-    need_time: null, process_type: '', use_yn: '', isSelected: false
+    need_time: null, process_type: '', use_yn: '',
 });
 
 const isLoadingWorkOrders = ref(false);
@@ -98,22 +98,12 @@ const workOrderColumns = [
     },
 ];
 
-const workOrderTabulatorOptions = {
-    pagination: false,
-    selectableRows: 1,
-    rowFormatter: function(row) {
-        if (row.getData().isSelected) {
-            row.getElement().classList.add("selected-row");
-        } else {
-            row.getElement().classList.remove("selected-row");
-        }
-    }
-};
 
 const workOrderOnEvents = [
     {
         eventName: "rowClick",
         eventAction: (e, row) => {
+            console.log(row);
             selectWorkOrder(row.getData());
         }
     }
@@ -122,22 +112,13 @@ const workOrderOnEvents = [
 const processFlowColumns = [
     { title: "작업공정코드", field: "work_process_code", width: 100, visible: false  },
     { title: "공정코드", field: "process_code", width: 200, visible: false  },
-    { title: "공정명", field: "process_name", width: 150 },
-    { title: "공정순서", field: "process_seq", hozAlign: "right", width: 150 },
-    { title: "지시수량", field: "inst_qty", hozAlign: "right", width: 150 },
-    { title: "생산수량", field: "prod_qty", hozAlign: "right", width: 150 },
+    { title: "공정명", field: "process_name", width: 200 },
+    { title: "공정순서", field: "process_seq", hozAlign: "right", width: 200 },
+    { title: "지시수량", field: "inst_qty", hozAlign: "right", width: 200 },
+    { title: "생산수량", field: "prod_qty", hozAlign: "right", width: 200 },
 ];
 
-const processFlowTabulatorOptions = {
-    selectableRows: 1,
-    rowFormatter: function(row) {
-        if (row.getData().isSelected) {
-            row.getElement().classList.add("selected-row");
-        } else {
-            row.getElement().classList.remove("selected-row");
-        }
-    }
-};
+
 
 const processFlowOnEvents = [
     {
@@ -149,9 +130,9 @@ const processFlowOnEvents = [
 ];
 
 const equipmentColumns = [
-    { title: "설비코드", field: "equi_code", width: 100, hozAlign: "center" },
-    { title: "설비명", field: "equi_name", minWidth: 150 },
-    { title: "상태", field: "equi_status", width: 100, hozAlign: "center",
+    { title: "설비코드", field: "equi_code", width: 200, hozAlign: "center" },
+    { title: "설비명", field: "equi_name", minWidth: 200 },
+    { title: "상태", field: "equi_status", width: 200, hozAlign: "center",
         formatter: function(cell) {
             const status = cell.getValue();
             let colorClass = '';
@@ -167,16 +148,9 @@ const equipmentColumns = [
     },
 ];
 
-const equipmentTabulatorOptions = {
-    layout: 'fitColumns',
+const tabulatorOptions = {
     selectableRows: 1,
-    rowFormatter: function(row) {
-        if (row.getData().isSelected) {
-            row.getElement().classList.add("selected-row");
-        } else {
-            row.getElement().classList.remove("selected-row");
-        }
-    }
+    selectableRowsPersistence: false,
 };
 
 const equipmentOnEvents = [
@@ -194,7 +168,7 @@ const fetchAllWorkOrders = async () => {
     try {
         const response = await axios.get('/api/allworkInst');
         if (response.data.success && Array.isArray(response.data.data)) {
-            workOrderData.value = response.data.data.map(item => ({ ...item, isSelected: false }));
+            workOrderData.value = response.data.data.map(item => ({ ...item, }));
         } else {
             console.error('작업지시 목록 불러오기 실패:', response.data.message);
             workOrderData.value = [];
@@ -226,7 +200,7 @@ const fetchWorkOrderDetails = async (workInstCode) => {
                 work_start_date: data.work_start_date || '',
                 work_end_date: data.work_end_date || '',
                 inst_state: data.inst_state,
-                isSelected: true,
+               
                 materials: data.materials || []
             };
             console.log("작업지시 상세 정보 및 자재 정보 로드 완료:", currentWorkOrder.value);
@@ -257,7 +231,7 @@ const fetchProcessFlow = async (workInstCode) => {
             // 없다면 여기서 추가합니다.
             processFlowData.value = response.data.data.map(item => ({
                 ...item,
-                isSelected: false,
+               
 
             }));
         } else {
@@ -277,7 +251,7 @@ const fetchEquipmentByProcess = async (processCode) => {
     try {
         const response = await axios.get(`/api/processes/${processCode}/equipment`);
         if (response.data.success && Array.isArray(response.data.data)) {
-            equipmentData.value = response.data.data.map(item => ({ ...item, isSelected: false }));
+            equipmentData.value = response.data.data.map(item => ({ ...item, }));
         } else {
             console.error('설비 목록 불러오기 실패:', response.data.message);
             equipmentData.value = [];
@@ -292,10 +266,10 @@ const fetchEquipmentByProcess = async (processCode) => {
 
 // --- 선택 로직 (ref 직접 업데이트) ---
 const selectWorkOrder = async (workOrder) => {
-       workOrderData.value = workOrderData.value.map(item => ({
-        ...item,
-        isSelected: (item.work_inst_code === workOrder.work_inst_code) // 선택된 행만 true, 나머지는 false
-    }));
+    //    workOrderData.value = workOrderData.value.map(item => ({
+    //     ...item,
+       
+    // }));
     if (workOrder && workOrder.work_inst_code) {
         await fetchWorkOrderDetails(workOrder.work_inst_code);
         await fetchProcessFlow(workOrder.work_inst_code);
@@ -308,24 +282,23 @@ const selectWorkOrder = async (workOrder) => {
         processFlowData.value = [];
     }
 
-    selectedProcess.value = { process_code: '', process_name: '', detail: '', isSelected: false };
-    selectedEquipment.value = { equi_code: '', equi_name: '', status: '', isSelected: false };
+    selectedProcess.value = { process_code: '', process_name: '', detail: ''};
+    selectedEquipment.value = { equi_code: '', equi_name: '', status: ''};
     equipmentData.value = [];
-    // processFlowData.value.forEach(p => p.isSelected = false);
 };
 
 
 const selectProcess = async (process) => {
     // ⭐️ 이 부분을 수정합니다: forEach 대신 map을 사용하여 새 배열을 만들고 할당합니다.
-    processFlowData.value = processFlowData.value.map(item => ({
-        ...item, // 기존 item의 모든 속성을 복사
-        isSelected: (item.process_code === process.process_code) // 선택된 행만 true로 설정
-    }));
+    // processFlowData.value = processFlowData.value.map(item => ({
+    //     ...item, // 기존 item의 모든 속성을 복사
+       
+    // }));
 
     // 나머지 로직은 그대로 둡니다.
-    selectedProcess.value = { ...process, isSelected: true };
+    selectedProcess.value = { ...process};
 
-    selectedEquipment.value = { equi_code: '', equi_name: '', status: '', isSelected: false };
+    selectedEquipment.value = { equi_code: '', equi_name: '', status: ''};
     equipmentData.value = [];
 
     if (process && process.process_code) {
@@ -335,11 +308,11 @@ const selectProcess = async (process) => {
 
 const selectEquipment = (equipment) => {
     // ⭐️ 이 부분을 수정합니다: forEach 대신 map을 사용하여 새 배열을 만들고 할당합니다.
-    equipmentData.value = equipmentData.value.map(item => ({
-        ...item, // 기존 item의 모든 속성을 복사
-        isSelected: (item.equi_code === equipment.equi_code) // 선택된 행만 true로 설정
-    }));
-    selectedEquipment.value = { ...equipment, isSelected: true };
+    // equipmentData.value = equipmentData.value.map(item => ({
+    //     ...item, // 기존 item의 모든 속성을 복사
+      
+    // }));
+    selectedEquipment.value = { ...equipment};
 };
 
 // --- 작업 시작/종료 핸들러 ---
@@ -427,16 +400,16 @@ const endWorkHandler = async () => {
         return;
     }
 
-    // ⭐ 기존의 axios.post('/api/endWork', payload); 제거 ⭐
-    // ⭐ Swal.fire를 통해 사용자에게 정보만 제공하고 모달을 띄움 ⭐
-    Swal.fire({
-        title: "실적 등록 필요",
-        text: "공정 작업 종료를 위해 실적을 등록해주세요.",
-        icon: "info",
-        confirmButtonText: "확인"
-    }).then(() => {
+    // // ⭐ 기존의 axios.post('/api/endWork', payload); 제거 ⭐
+    // // ⭐ Swal.fire를 통해 사용자에게 정보만 제공하고 모달을 띄움 ⭐
+    // Swal.fire({
+    //     title: "실적 등록 필요",
+    //     text: "공정 작업 종료를 위해 실적을 등록해주세요.",
+    //     icon: "info",
+    //     confirmButtonText: "확인"
+    // }).then(() => {
         openModal(); // 실적 등록 모달 열기
-    });
+    // });
     // finally {
     // isProcessingWork.value = false;
     // }
@@ -468,37 +441,27 @@ onMounted(() => {
                             card-title="작업지시 선택"
                             :table-data="workOrderData"
                             :table-columns="workOrderColumns"
-                            :tabulator-options="workOrderTabulatorOptions"
+                            :tabulatorOptions="tabulatorOptions"
                             :on="workOrderOnEvents"
-                            :is-loading="isLoadingWorkOrders"
-                            empty-message="조회된 작업 지시가 없습니다."
-                            style="height: 450px;"
+                            height="450px"
                         />
 
                         <tabulator-card
                             card-title="공정 흐름도"
                             :table-data="processFlowData"
                             :table-columns="processFlowColumns"
-                            :tabulator-options="processFlowTabulatorOptions"
-                            :on="processFlowOnEvents"
-                            class="mt-4"
-                            :disabled="!isProcessGridEnabled"
-                            :is-loading="isLoadingProcesses"
-                            empty-message="조회된 공정이 없습니다."
-                            style="height: 420px;"
+                            :tabulatorOptions="tabulatorOptions"
+                            :on="processFlowOnEvents"                            
+                            height="420px"
                         />
 
                         <tabulator-card
                             card-title="설비 선택"
                             :table-data="equipmentData"
                             :table-columns="equipmentColumns"
-                            :tabulator-options="equipmentTabulatorOptions"
+                            :tabulatorOptions="tabulatorOptions"
                             :on="equipmentOnEvents"
-                            class="mt-4"
-                            :disabled="!isEquipmentGridEnabled"
-                            :is-loading="isLoadingEquipment"
-                            empty-message="조회된 설비가 없습니다."
-                            style="height: 250px;"
+                            height="250px"
                         />
                     </div>
 
@@ -644,10 +607,6 @@ onMounted(() => {
 </template>
 
 <style scoped>
-.selected-row {
-    background-color: #e0f2f1 !important; /* Light teal, similar to the image */
-    font-weight: bold;
-}
 
 .card-body {
     padding-bottom: 0.5rem;

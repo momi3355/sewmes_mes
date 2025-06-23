@@ -2,98 +2,86 @@
   <div class="container-fluid p-3">
     <!-- 📦 주문 목록 + 상세 -->
     <div class="container-fluid py-4" id="odlist">
-      <div class="row gx-4">
-        <!-- 주문 목록 -->
+      <!-- 높이 통일을 위해 row에 height 지정 -->
+      <div class="row gx-4" style="height: 800px;">
+        
+        <!-- 주문서 목록 -->
         <div class="col-lg-6 mb-4">
-          <tabulator-card
-            card-title="주문서 목록"
-            :table-data="OrderData"
-            :table-columns="OrderColumns"
-            :tabulator-options="tabulatorEvent"
-            :on="tabulatorEvent"
-            style="height: 800px;"
-            height="700px"
-          />
+              <tabulator-card
+                card-title="주문서 목록"
+                :table-data="OrderData"
+                :table-columns="OrderColumns"
+                :tabulator-options="tabulatorEvent"
+                :on="tabulatorEvent"
+                height="750px"
+                style="height: 100%;"
+              />
         </div>
 
         <!-- 주문 상세 + 등록 -->
         <div class="col-lg-6 mb-4">
           <div class="card">
-            <div class="card-body">
-              <form>
-              <div class="row g-3">
-                <div class="col-md-6 d-flex align-items-center">
-  <label class="form-label me-2 mb-0" style="min-width: 100px;">업체명:</label>
-  <div class="position-relative flex-grow-1" @focusin="listOpen = true" @focusout="onFocusOut">
-    <input type="text" class="form-control" v-model="ordercurrentOrder.cp_name">
-    <ul class="dropdown-menu show" v-if="listOpen" style="position:absolute; top:100%; left:0;">
-      <li v-for="(company, index) in filteredCompanyList" :key="index">
-        <a class="dropdown-item" href="#" @mousedown.prevent @click="selectCompany(company)">
-          {{ company.cp_name }}
-        </a>
-      </li>
-    </ul>
-  </div>
-</div>
+            <div class="card-header header-fixed">
+              <h5 class="mt-0 text-start">자재항목 상세</h5>
+            </div>
+            <div class="card-body" id="cardbody">
+              <table class="table table-bordered table-sm align-middle mb-2">
+                <tbody id="orderDetail">
+                  <tr>
+                    <th style="width: 30%;">업체명</th>
+                    <td>
+                      <div class="position-relative" @focusin="listOpen = true" @focusout="onFocusOut">
+                        <input type="text" class="form-control" v-model="ordercurrentOrder.cp_name" />
+                        <ul class="dropdown-menu show" v-if="listOpen" style="position:absolute; top:100%; left:0; z-index: 1000;">
+        
+                        </ul>
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <th>업체연락처</th>
+                    <td><input type="tel" class="form-control" v-model="ordercurrentOrder.cp_tel" /></td>
+                  </tr>
+                  <tr>
+                    <th>주소</th>
+                    <td><input type="text" class="form-control" v-model="ordercurrentOrder.address" /></td>
+                  </tr>
+                  <tr>
+                    <th>주문일자</th>
+                    <td><input type="date" class="form-control" v-model="orderDateStr" /></td>
+                  </tr>
+                  <tr>
+                    <th>납기일자</th>
+                    <td><input type="date" class="form-control" v-model="deadDateStr" /></td>
+                  </tr>
+                  <tr>
+                    <th>영업담당자</th>
+                    <td><input type="text" class="form-control" v-model="ordercurrentOrder.emp_name" /></td>
+                  </tr>
+                  <tr>
+                    <th>영업담당자 연락처</th>
+                    <td><input type="tel" class="form-control" v-model="ordercurrentOrder.emp_tel" /></td>
+                  </tr>
+                  <tr>
+                    <th>비고</th>
+                    <td><textarea class="form-control" rows="2" v-model="ordercurrentOrder.note"></textarea></td>
+                  </tr>
+                </tbody>
+              </table>
 
-                  <div class="col-md-6 d-flex align-items-center mb-2">
-  <label class="form-label me-2 mb-0" style="min-width: 100px;">업체연락처:</label>
-  <input type="tel" class="form-control flex-grow-1" v-model="ordercurrentOrder.cp_tel" />
-</div>
-
-<div class="col-md-12 d-flex align-items-center mb-2">
-  <label class="form-label me-2 mb-0" style="min-width: 100px;">주소:</label>
-  <input type="text" class="form-control flex-grow-1" v-model="ordercurrentOrder.address" />
-</div>
-
-<div class="col-md-6 d-flex align-items-center mb-2">
-  <label class="form-label me-2 mb-0" style="min-width: 100px;">주문일자:</label>
-  <input type="date" class="form-control flex-grow-1" v-model="orderDateStr" />
-</div>
-
-<div class="col-md-6 d-flex align-items-center mb-2">
-  <label class="form-label me-2 mb-0" style="min-width: 100px;">납기일자:</label>
-  <input type="date" class="form-control flex-grow-1" v-model="deadDateStr" />
-</div>
-
-<div class="col-md-6 d-flex align-items-center mb-2">
-  <label class="form-label me-2 mb-0" style="min-width: 100px;">영업 담당자:</label>
-  <input type="text" class="form-control flex-grow-1" v-model="ordercurrentOrder.emp_name" />
-</div>
-
-<div class="col-md-6 d-flex align-items-center mb-2">
-  <label class="form-label me-2 mb-0" style="min-width: 100px;">영업 담당자 연락처:</label>
-  <input type="tel" class="form-control flex-grow-1" v-model="ordercurrentOrder.emp_tel" />
-</div>
-
-<div class="col-12 d-flex align-items-start mb-2">
-  <label class="form-label me-2 mb-0" style="min-width: 100px;">비고:</label>
-  <textarea class="form-control flex-grow-1" rows="2" v-model="ordercurrentOrder.note"></textarea>
-</div>
-</div>
-</form>
-</div>
-
-<tabulator-card
-  card-title=""
-  :table-data="orderInfo"
-  :table-columns="OrderColumnsDetail"
-  style="height: 420px;"
-/>
-
-<!-- 제품 테이블 -->
-</div>
+              <!-- 하단 자재/제품 테이블 -->
+              <tabulator-card
+                card-title=""
+                :table-data="orderInfo"
+                :table-columns="OrderColumnsDetail"
+                style="height: 100%;"
+              />
+            </div>
+          </div>
         </div>
       </div>
     </div>
   </div>
-
-  <!-- 제품 추가 모달 -->
-  <prodModal
-    v-bind:isModalOpen="isModalOpen"
-    @selectPlans="getlist"
-    @close-modal="closeModal"
-  />
 </template>
 
 <script setup>
@@ -127,6 +115,11 @@ const sizecode = ref([]);
 const colorcode = ref([]);
 const statecode = ref([]);
 const standardcode = ref([]);
+// 검색 객체
+const searchReleaseCode = ref('');
+const searchLotCode = ref('');
+const searchProdName = ref('');
+const lotHistoryList = ref([]);
 
 const onFocusOut = () => {
   setTimeout(() => listOpen.value = false, 100);
@@ -145,7 +138,7 @@ const filteredCompanyList = computed(() => {
     company.cp_name.toLowerCase().includes(searchTerm.value.toLowerCase())
   );
 });
-
+// 검색
 // 주문서 목록 테이블
 const OrderColumns = [
   { title: "순번", formatter: "rownum", width: 80 },
@@ -282,4 +275,18 @@ const deadDateStr = computed({
 /* 기존 조회페이지 스타일 유지 */
 .search-color { margin: 10px; padding: 20px; border-radius: 1rem; background-color: #fff; }
 
+#cardbody{
+  padding: 10px;
+}
+.header-fixed {
+  height: 50px;
+  padding: 10px 16px;
+  margin-bottom: 0px;
+  margin-top: 10px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  /* border-bottom: 1px solid #dee2e6; */
+}
 </style>

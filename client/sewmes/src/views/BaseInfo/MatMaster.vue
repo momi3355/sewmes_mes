@@ -16,7 +16,7 @@ const materialData = ref([]);
 
 const materialColumns = [
   { title: "자재코드", field: "material_code", width: 100 },
-  { title: "자재명", field: "material_name", width: 170 },
+  { title: "자재명", field: "material_name" },
   {
     title: "자재유형",
     field: "material_type",
@@ -246,23 +246,23 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="container-fluid p-3">
-    <div class="row search-color">
-      <!-- 상단 검색 영역 -->
-      <div class="row mb-3">
-        <div class="col-md-2">
-          <label class="form-label">자재명</label>
-          <input type="text" class="form-control" v-model="searchData.material_name" onfocus="this.select()">
-        </div>
-        <div class="col-md-2">
-          <label class="form-label">자재유형</label>
+  <div class="container-fluid p-3 full-height">
+    <div class="search-area bg-white rounded p-3 mb-3 shadow-sm">
+      <div class="row">
+        <!-- 상단 검색 영역 -->
+        <div class="col-md-1">
+          <label class="form-label search-label">자재유형</label>
           <select class="form-select" v-model="searchData.material_type">
             <option selected value="">전체</option>
             <option v-for="type in mattype" :value="type.detail_code">{{ type.detail_name }}</option>
           </select>
         </div>
         <div class="col-md-2">
-          <label class="form-label">사용여부</label>
+          <label class="form-label search-label">자재명</label>
+          <input type="text" class="form-control" v-model="searchData.material_name" onfocus="this.select()">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label search-label">사용여부</label>
           <div class="form-check">
             <input 
               class="form-check-input"
@@ -286,19 +286,19 @@ onMounted(async () => {
             </label>
           </div>
         </div>
-        <div class="col-md-2 d-flex align-items-end">
-          <button class="btn btn-secondary me-2" @click="resetHandler">초기화</button>
-          <button class="btn btn-primary" @click="searchHandler">조회</button>
+        <div class="col-md-2 d-flex align-items-end gap-2">
+          <button class="btn btn-outline-secondary w-50" @click="resetHandler">초기화</button>
+          <button class="btn btn-primary w-50" @click="searchHandler">조회</button>
         </div>
       </div>
     </div>
 
-    <div class="row me-3">
-      <div class="col-7 md-3">
+    <div class="row">
+      <div class="col-7">
         <tabulator-card
           ref="table"
           card-title="자재 품목 리스트"
-          height="500px"
+          height="610px"
           :table-data="materialData"
           :table-columns="materialColumns"
           :tabulator-options="tabulatorOptions"
@@ -306,8 +306,8 @@ onMounted(async () => {
         />
       </div>
       <div class="col-md-5 d-flex flex-column">
-        <div class="card mb-2 flex-grow-1" style="min-height: 350px;">
-          <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card flex-grow-1" style="min-height: 350px;">
+          <div class="card-header header-fixed mt-3">
             <h5 class="mt-0 text-start">자재항목 상세</h5>
             <button class="btn btn-sm btn-success" @click="materialClickhandler">저장</button>
           </div>
@@ -372,14 +372,25 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.search-color {
-  margin: 10px;
-  padding: 20px;
-  border-radius: 1rem;
-  background-color: #fff;
+.full-height {
+  height: 840px;
+  display: flex;
+  flex-direction: column;
+}
+.search-label {
+  font-size: medium;
 }
 .use-radio {
   display: inline-block;
   padding-right: 15px;
+}
+.header-fixed {
+  height: 50px;
+  padding: 10px 15px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #dee2e6;
 }
 </style>

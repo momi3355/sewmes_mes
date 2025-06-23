@@ -94,7 +94,7 @@ onMounted(() => {
         <ul class="navbar-nav justify-content-end">
           <li class="nav-item d-flex align-items-center">
                           <div v-if="isLoggedIn" id="h6">
-    <h6>{{ store.state.user.emp_num }}</h6>
+    <h6>{{ store.state.user.emp_name }} 님</h6>
   </div>
             <router-link
               :to="{ name: 'Signin' }"

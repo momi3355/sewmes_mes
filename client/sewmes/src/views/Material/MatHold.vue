@@ -4,6 +4,7 @@ import { TabulatorFull as Tabulator } from "tabulator-tables";
 import { ref, onMounted } from "vue"; // Import ref and onMounted
 import axios from "axios";
 
+
 import ArgonButton from "@/components/ArgonButton.vue";
 
 import DefaultInfoCard from "@/examples/Cards/DefaultInfoCard.vue";
@@ -33,12 +34,12 @@ const materialColumns = [
 },
   { title: "자재코드", field: "material_code", hozAlign: "left" },
   { title: "자재명", field: "material_name", hozAlign: "left"},
-  { title: "LOT", field: "lot_code",  hozAlign: "left"},
+  // { title: "LOT", field: "lot_code",  hozAlign: "left"},
   { title: "자재유형", field: "material_type",  hozAlign: "left"},
   { title: "홀드수량", field: "hold_qty", hozAlign: "left"},
   { title: "출고수량", field: "release_qty", hozAlign: "left"},
   { title: "단위", field: "unit", hozAlign: "left"},
-  { title: "입고일자", field: "inbound_date", hozAlign: "left"},
+  // { title: "입고일자", field: "inbound_date", hozAlign: "left"},
   { title: "완료여부", field: "use_yn", hozAlign: "left"},
 ];
 
@@ -78,7 +79,7 @@ const deleteSelectedHolds = async () => {
     fetchHoldList();
   } catch(error){
     console.error("삭제 실패: ", error);
-    alert("삭제 중 오류가 발생했습니다.");
+    alert("사용중인 자재는 삭제할 수 없습니다.");
   }
 };
 
@@ -160,10 +161,9 @@ onMounted(() => {
               card-title="예약 자재 목록"
               :table-data="materialData"
               :table-columns="materialColumns"
-              :tabulator-options="{
-                paginationSize: 7,
-                rowClick: handleMatRowClick,
-              }"
+              :tabulator-options="tabulatorEvent"
+              style="height: 800px;"
+              height="700px"
             >
               <!-- actions 슬롯에 버튼을 삽입합니다 -->
               <template #actions>
@@ -180,9 +180,10 @@ onMounted(() => {
   </div>
 </template>
 <style scoped>
+
  .col-lg-12{
   margin-top: 85px;
-}
+ }
  .searchbox{
   background-color: #FFFFFF;
   border-radius: 1rem;
@@ -194,8 +195,46 @@ onMounted(() => {
  }
  .btn-secondary.me-2{
   margin-right: 10px;
+  width: 70px;
  }
  .removebtn{
   width: 70px;
  }
+ .form-label {
+  font-size: large;
+  margin: 10px;
+  margin-top: 12px;
+}
+.mb-3 {
+  height: 120px;
+  margin: 0px;
+}
+.form-control {
+  margin-left: 5px;
+}
+.btn.btn-secondary.me-2 {
+  margin: 13px;
+}  
+.btn.btn-primary {
+  margin: 13px;
+  width: 60px;
+}
+.col-md-2 {
+  padding-bottom: 15px;
+}
+select.form-control {
+  /* 1. 기본 브라우저 화살표 숨기기 */
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+
+  /* 2. 배경 이미지로 SVG 화살표 아이콘 추가 */
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right .75rem center; /* 오른쪽 끝에서 약간 떨어진 중앙에 위치 */
+  background-size: 16px 12px;
+  
+  /* 3. 텍스트가 화살표를 덮지 않도록 오른쪽 패딩 추가 */
+  padding-right: 2.5rem;
+}
 </style>

@@ -3,6 +3,7 @@
 import { TabulatorFull as Tabulator } from "tabulator-tables";
 import { ref, onMounted } from "vue"; // Import ref and onMounted
 import axios from "axios";
+import Swal from 'sweetalert2';
 
 import ArgonButton from "@/components/ArgonButton.vue";
 
@@ -32,7 +33,11 @@ const showDetails = async () => {
 
   const selectedRows = tabulatorInstance.getSelectedData();
   if (selectedRows.length === 0){
-    alert("조회할 항목을 선택해주세요");
+     Swal.fire({
+      title: "",
+      text: "조회할 항목을 선택하시오.",
+      icon: "error"
+    });
     return
   }
   const selectedItem = selectedRows[0];
@@ -48,11 +53,25 @@ const showDetails = async () => {
   }
 };
 
+const dateFormatter = (cell) => {
+  const value = cell.getValue();
+
+  if(!value){
+    return "";
+  }
+  return value.split('T')[0];
+};
+
 const completedListColumns = [
   { title: "검사코드", field: "inbound_check_code" },
   { title: "자재명", field: "material_name", hozAlign: "left" },
   { title: "합격수량", field: "pass_qty", hozAlign: "left" },
-  { title: "수입일자", field: "inbound_date", hozAlign: "left"},
+  { title: "수입일자", 
+    field: "inbound_date", 
+    width: 150, 
+    hozAlign: "left", 
+    formatter: dateFormatter
+  },
   { title: "검사결과", field: "check_status", hozAlign: "left"},
 ];
 
@@ -105,10 +124,10 @@ onMounted(() => {
         <!-- 상단 검색 영역 (기존과 동일) -->
         <div class="row searchbox mb-3">
           <!-- ... 검색 필드들 ... -->
-          <div class="col-md-2 d-flex align-items-end">
+          <!-- <div class="col-md-2 d-flex align-items-end">
             <button class="btn btn-secondary me-2">초기화</button>
             <button class="btn btn-primary">조회</button>
-          </div>
+          </div> -->
         </div>
 
         <!-- '수입처리 자재 목록' 테이블 -->
@@ -119,11 +138,14 @@ onMounted(() => {
               card-title="수입처리 자재 목록"
               :table-data="completedList"
               :table-columns="completedListColumns"
-              :tabulator-options="{ paginationSize: 7, selectableRows: 1 }"
+              :tabulator-options = "{
+                selectableRows : 1
+              }"
+              height="700px"
             >
               <template #actions>
                 <button class="btn btn-primary" @click="showDetails">조회</button>
-                <ArgonButton color="info" variant="gradient">PDF로 저장</ArgonButton>
+                <!-- <ArgonButton color="info" variant="gradient">PDF로 저장</ArgonButton> -->
               </template>
             </tabulator-card>
           </div>

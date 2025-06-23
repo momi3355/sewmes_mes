@@ -67,8 +67,7 @@ const getWorkInstDetails = async (workInstCode) => {
                     material_name: row.material_name,
                     material_unit: row.material_unit,
                     material_standard: row.material_standard,
-                    material_type: row.material_type, // SQL 쿼리에 vw.material_type 추가했다면
-                    // ⭐⭐⭐ 새로 추가된 필드들 ⭐⭐⭐
+                    material_type: row.material_type, // SQL 쿼리에 vw.material_type 추가했다면                   
                     lot_number: row.lot_number,             // SQL 쿼리에서 가져온 lot_number
                     total_current_hold_qty: row.total_current_hold_qty // SQL 쿼리에서 가져온 total_current_hold_qty
                 });
@@ -110,6 +109,11 @@ const startWorkProcess = async (workInstCode, processCode, equiCode, startDate) 
             workInstCode
         ]);
 
+        const updateEquiState= await connection.query(sqlList['updateEquiState'],[
+            '0u2u'
+            ,equiCode
+        ])
+
         if (updateInstStateResult.affectedRows === 0) {
             console.warn(`[PrdWorkingService] 작업지시(${workInstCode}) 상태를 '생산중'으로 업데이트하는 데 영향을 받은 행이 없습니다. (이미 '0s2s'일 수 있음)`);
             // throw new Error(`작업지시(${workInstCode})의 상태 업데이트에 실패했습니다.`); // 치명적인 오류가 아니라면 주석 처리 가능
@@ -130,7 +134,7 @@ const startWorkProcess = async (workInstCode, processCode, equiCode, startDate) 
 };
 
 
-const endWorkProcess = async (workInstCode, processCode) => { // endDate 파라미터 제거
+const endWorkProcess = async (workInstCode, processCode,equiCode) => { // endDate 파라미터 제거
     const connection = await getConnection();
     try {
         await connection.beginTransaction();
@@ -145,8 +149,11 @@ const endWorkProcess = async (workInstCode, processCode) => { // endDate 파라�
         if (updateProcessResult.affectedRows === 0) {
             throw new Error(`해당 작업지시(${workInstCode})의 공정(${processCode})을 찾을 수 없거나 종료 업데이트에 실패했습니다.`);
         }
-
-
+        
+        //  const updateEquiState= await connection.query(sqlList['updateEquiState'],[
+        //     ''
+        //     ,equiCode
+        // ])
 
         await connection.commit();
 
@@ -217,7 +224,7 @@ const insertPrdPref = async (details) => {
         if (!allWorkProcesses || allWorkProcesses.length === 0) { 
             throw new Error(`작업지시(${details.work_inst_code})에 해당하는 공정 정보를 찾을 수 없습니다.`);
         }
-
+         let isProcessCompleted = false;
         // ------------------------------------------------------------------
         // 2. for 루프 시작: t_work_process 업데이트 및 공정별 추가 로직 처리
         // ------------------------------------------------------------------
@@ -239,7 +246,8 @@ const insertPrdPref = async (details) => {
                     console.log(`[PrdPrefService] 공정순서 3 이상이므로 합격량(${newProdQtyAccumulated})을 지시수량으로 설정.`);
                 }
 
-                let isProcessCompleted = false; // 이 변수를 이 범위에서 선언
+                
+               
                 // 1-2 공정완료여부 조건부 업데이트
                 if (currentProcessRow.inst_qty <= newInputQtyAccumulated) { // process 대신 currentProcessRow 사용, 등호 포함
                     isProcessCompleted = true; // 공정 완료 플래그 설정

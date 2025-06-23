@@ -8,7 +8,8 @@ import groupcodelist from "../../assets/js/utils/groupcodelist";
 import moment from 'moment';
 import Swal from "sweetalert2"; // SweetAlert2 추가
 const defecttypeList=ref([]);
-
+const equirunningopt=ref([]);
+const selectEquiOpt=ref("");
 const props = defineProps({
     isModalOpen: Boolean,
   prefProps:Array
@@ -118,6 +119,7 @@ const saveData = async () => {
 };
 onMounted(()=>{
  groupcodelist.groupCodeList('0Q',defecttypeList);
+ groupcodelist.groupCodeList('1D',equirunningopt);
 
 })
 
@@ -164,10 +166,22 @@ onMounted(()=>{
 
         </select>
       </div>
+      <div>
+        <div>
+          <label>설비상태</label>
+        </div>
+        <div v-for="opt in equirunningopt" :key="opt.detail_code" class="form-check form-check-inline me-2">
+                        <input type="radio" :value="opt.detail_code" :id="'info'+opt.detail_code"
+                          v-model="selectEquiOpt" class="form-check-input">
+                        <label :for="'info'+opt.detail_code" class="form-check-label">{{ opt.detail_name }}</label>
+                      </div>
+      </div>
       <div class="mb-4">
         <label class="form-label">비고</label>
+        
         <input type="text" class="form-control" v-model="pref_note" placeholder="사용자입력 선택사항">
       </div>
+
 
       <!-- 하단 버튼 -->
       <div class="d-flex justify-content-end">

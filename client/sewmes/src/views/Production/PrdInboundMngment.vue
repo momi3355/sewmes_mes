@@ -7,6 +7,7 @@ import PrdInboundTestModal from './PrdInboundTestModal.vue';
 import ArgonButton from "@/components/ArgonButton.vue";
 import moment from 'moment';
 import Swal from 'sweetalert2';
+import { formatToDate } from '@/utils/dateUtils';
 
 const productTableRef = ref(null);
 // 사원정보 가져오기
@@ -189,44 +190,66 @@ onMounted(() => {
 
 <template>
   <div class="container-fluid p-3">
-    <div class="row search-color">
-      <div class="row mb-2">
+    <div class="search-area bg-white rounded p-3 mb-3 shadow-sm">
+      <div class="row">
         <!-- 등록일 -->
-        <div class="col-md-3">
-          <label class="form-label">등록일</label>
+        <div class="col-md-2">
+          <label class="form-label search-label">등록일</label>
           <div class="d-flex align-items-center gap-2">
-            <input type="text" class="form-control" v-model="searchRegDateStart">
+            <input
+              type="text"
+              class="form-control"
+              v-model="searchRegDateStart"
+              @blur="searchRegDateStart = formatToDate(searchRegDateStart)"
+              @keyup.enter="searchRegDateStart = formatToDate(searchRegDateStart)"
+            >
             <span>~</span>
-            <input type="text" class="form-control" v-model="searchRegDateEnd">
+            <input
+              type="text"
+              class="form-control"
+              v-model="searchRegDateEnd"
+              @blur="searchRegDateEnd = formatToDate(searchRegDateEnd)"
+              @keyup.enter="searchRegDateEnd = formatToDate(searchRegDateEnd)"
+            >
           </div>
         </div>
 
         <!-- 납기일 -->
-        <div class="col-md-3">
-          <label class="form-label">검사일</label>
+        <div class="col-md-2">
+          <label class="form-label search-label">검사일</label>
           <div class="d-flex align-items-center gap-2">
-            <input type="text" class="form-control" v-model="searchCheckDateStart">
+            <input
+              type="text"
+              class="form-control"
+              v-model="searchCheckDateStart"
+              @blur="searchCheckDateStart = formatToDate(searchCheckDateStart)"
+              @keyup.enter="searchCheckDateStart = formatToDate(searchCheckDateStart)"
+            >
             <span>~</span>
-            <input type="text" class="form-control" v-model="searchCheckDateEnd">
+            <input
+              type="text"
+              class="form-control"
+              v-model="searchCheckDateEnd"
+              @blur="searchCheckDateEnd = formatToDate(searchCheckDateEnd)"
+              @keyup.enter="searchCheckDateEnd = formatToDate(searchCheckDateEnd)"
+            >
           </div>
         </div>
-      </div>
-      <div class="row mb-2">
-        <div class="col-md-3">
-          <label class="form-label">품명 포함 단어</label>
+        <div class="col-md-2">
+          <label class="form-label search-label">품명 포함 단어</label>
           <input type="text" class="form-control" v-model="searchProdName">
         </div>
-        <div class="col-md-2">
-          <label class="form-label">검사 상태</label>
+        <div class="col-md-1">
+          <label class="form-label search-label">검사 상태</label>
           <select class="form-select" v-model="searchTestState">
             <option value="">선택안함</option>
             <option value="not_tested">검사 전</option>
             <option value="pass">검사 완료</option>
           </select>
         </div>
-        <div class="col-md-3 d-flex align-items-end">
-            <button class="btn btn-secondary me-2" @click="resetFilter">초기화</button>
-          <button class="btn btn-primary" @click="searchPrdInboundList">조회</button>
+        <div class="col-md-2 d-flex align-items-end gap-2">
+          <button class="btn btn-outline-secondary w-50" @click="resetFilter">초기화</button>
+          <button class="btn btn-primary w-50" @click="searchPrdInboundList">조회</button>
         </div>
       </div>
     </div>
@@ -285,5 +308,13 @@ onMounted(() => {
 .selected-row {
   background-color: #e0e0e0 !important; /* 원하는 강조 색상으로 변경 */
   font-weight: bold; /* 선택된 행의 텍스트를 굵게 */
+}
+.search-label {
+  font-size: medium;
+}
+.full-height {
+  height: 840px;
+  display: flex;
+  flex-direction: column;
 }
 </style>
