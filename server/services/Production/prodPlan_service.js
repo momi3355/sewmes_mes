@@ -114,8 +114,15 @@ const searchProductByKeyword = async (keyword) => {
   return result;
 };
 
-const deleteProdPlan = async (prodPlanCode) => {
-  await mariadb.query("deleteProdPlanByProdPlanCode", [prodPlanCode]);
+const deleteProdPlan = async (plans) => {
+  try {
+    for(const plan of plans){
+      const { prodPlanCode } = plan;
+      await mariadb.query("deleteProdPlanByProdPlanCode", [prodPlanCode]);
+    }
+  } catch (err) {
+    console.log(err);
+  }
 }
 
 
