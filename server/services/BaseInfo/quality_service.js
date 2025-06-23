@@ -2,6 +2,8 @@
 const mariadb = require("../../database/mapper.js");
 // 공통으로 사용하는 기능들 중 필요한 함수만 구조분해할당(Destructuring)으로 가져옴
 const { convertObjToAry } = require('../../utils/converts.js');
+const sqlList = require("../../database/sqlList.js"); 
+
 
 // 실제 제공할 서비스 등록 영역
 
@@ -92,21 +94,23 @@ const qualityModify = async (qualityCode, qualityInfo) => {
 
 // 갱신
 const qualityRenewal = async (qualityInfo) => {
+  qualityInfo = JSON.parse(JSON.stringify(qualityInfo));
+
   //트랜잭션 처리...
   const conn = await mariadb.getConnection();
   let result = null;
   try {
     await conn.beginTransaction();
 
-    const renew = await mariadb.query("renewQuality", qualityInfo.qualityCode);
+    const renew = await conn.query(sqlList["renewQuality"], qualityInfo.quality_code);
     const msg = renew[1][0].msg;
 
     console.log(msg);
 
     if (msg == 'OK') {
-      const { qualityCode, ...updateFields } = qualityInfo;
-      const data = [updateFields, qualityCode];
-      const update = conn.query("updateQualityinfo", data);
+      const { quality_code, ...updateFields } = qualityInfo;
+      const data = [updateFields, quality_code];
+      const update = await conn.query(sqlList["updateQualityinfo"], data);
 
       if (update.affectedRows > 0) {
         result = {

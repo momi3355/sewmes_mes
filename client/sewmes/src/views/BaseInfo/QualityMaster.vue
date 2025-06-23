@@ -3,6 +3,7 @@ import { onMounted, reactive, ref } from "vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import axios from "axios";
 import groupcodelist from "../../assets/js/utils/groupcodelist";
+import Swal from "sweetalert2";
 
 let qualityList = ref([]);
 let qualityInfo = ref({});
@@ -40,12 +41,17 @@ const qualityColumns = [
 
 //품질기준정보 이력 컬럼
 const qualityHistoryColumns = [
-  { title: "버전", field: "qualityVer", width: 80},
-  { title: "검사명", field: "testName"}, 
-  { title: "대상 품목", field: "testTarget"},
-  { title: "검사 방법", field: "testMethod"},
-  { title: "참조", field: "testRef"},
-  { title: "검사 기준", field: "testStandard"},];
+  { title: "버전", field: "quality_ver", width: 80},
+  { title: "검사명", field: "test_name"}, 
+  { title: "대상 품목", field: "test_target",
+    formatter: (cell) => {
+      const code = cell.getValue();
+      const matched = testTargetCodeList.value.find(item => item.detail_code == code);
+      return matched ? matched.detail_name : code;
+    }, },
+  { title: "검사 방법", field: "test_method"},
+  { title: "참조", field: "test_ref"},
+  { title: "검사 기준", field: "test_standard"},];
 
 const qualitySch = {
   testName: '',
@@ -102,17 +108,17 @@ const qualitySearchReset = () => {
 };
 
 const saveQualityMaster = async () => {
-const testName = qualityInfo.value.test_name ?.trim();
-const testTarget = qualityInfo.value.test_target?.trim();
+  const testName = qualityInfo.value.test_name?.trim();
+  const testTarget = qualityInfo.value.test_target?.trim();
 
-// 기본 유효성 검사
-if (!testName || !testTarget) {
-  Swal.fire({
-    text: '검사명과 대상품목은 필수입니다.',
-    icon: 'warning'
-  });
-  return;
-}
+  // 기본 유효성 검사
+  if (!testName || !testTarget) {
+    Swal.fire({
+      text: '검사명과 대상품목은 필수입니다.',
+      icon: 'warning'
+    });
+    return;
+  }
 
   const formData = new FormData();
 
@@ -127,27 +133,69 @@ if (!testName || !testTarget) {
   if (file) {
     formData.append('image', file);
   }
-
+  //품질 코드 없으면 등록
   if (!qualityInfo.value.quality_code) {
-    await axios.post('/api/quality', formData, {
+    let insertRes = await axios.post('/api/quality', formData, {
       headers: {
         'Content-Type': 'multipart/form-data'
       }
     });
+    if (insertRes.data.isSuccessed) {
+      Swal.fire({
+        text: "성공적으로 등록되었습니다.",
+        icon: "success"
+      })
+      await getQualityList();
+      qualityInfo.value = {};
+      if (imageInput.value) {
+        imageInput.value.value = ''
+      };
+    } else {
+      Swal.fire({
+        text: "처리 중 오류가 발생했습니다.",
+        icon: "error"
+      })
+    }
   } else {
-    formData.append('quality_code', qualityInfo.value.quality_code);
-    await axios.put(`/api/quality/${qualityInfo.value.quality_code}`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data'
+    //없으면 갱신 여부 물어봄 
+    Swal.fire({
+      text: "품질 기준 정보를 갱신하시겠습니까?",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#3085d6",
+      cancelButtonColor: "#d33",
+      confirmButtonText: "확인",
+      cancelButtonText: "취소",
+    }).then(async (result) => {
+      if (result.isConfirmed) {
+        let renewRes = await axios.put(`/api/quality/renew/${qualityInfo.value.quality_code}`, formData, {
+          headers: {
+            'Content-Type': 'multipart/form-data'
+          }
+        });
+        console.log(renewRes);
+        if (renewRes.data.isSuccessed) {
+          Swal.fire({
+            text: "갱신되었습니다.",
+            icon: "success"
+          });
+          await getQualityList();
+          qualityInfo.value = {};
+          if (imageInput.value) {
+            imageInput.value.value = ''
+          };
+        } else {
+          Swal.fire({
+            text: "처리 중 오류가 발생했습니다.",
+            icon: "error"
+          })
+        }
       }
     });
+
   }
 
-  await getQualityList();
-  qualityInfo.value = {};
-  if (imageInput.value) {
-    imageInput.value.value = ''
-  };
+
 
 };
   
@@ -164,8 +212,9 @@ const tabulatorEvents = [
         const info = await axios.get(`/api/quality/${rowData.quality_code}`);
         qualityInfo.value = info.data;
         const historyList = await axios.get(`/api/quality/history/${rowData.quality_code}`);
+        qualityHistoryList.splice(0, qualityHistoryList.length);
         if(historyList.data.length > 0){
-          qualityHistoryList.push(historyList.data);
+          qualityHistoryList.splice(0, qualityHistoryList.length, ...historyList.data);
         }
     }
   }

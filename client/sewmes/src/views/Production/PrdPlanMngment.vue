@@ -4,6 +4,7 @@ import { useStore } from "vuex";
 import { ref, nextTick, onMounted  } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
 import OrderProdListModal from "./OrderProdListModal.vue";
+import ProductSearchModal from "./ProductSearchModal.vue";
 import moment from 'moment';
 import Swal from 'sweetalert2';
 
@@ -25,6 +26,10 @@ const searchEndDateStart = ref('');
 const searchEndDateEnd = ref('');
 const searchOrderCode = ref('');
 const prodPlanData = ref([]);
+
+// 제품목록 가져오기 모달 객체
+const isSearchModalOpen = ref(false);
+const modalTargetRow = ref(null);
 
 // 제품 목록 조건에 따른 검색
 const searchProdPlan = async () => {
@@ -138,10 +143,61 @@ const prodPlanColumns = [
   },
   { title: "No", field: "rowNum", width: 80, cssClass: 'non-editable-cell' },
   { title: '주문상세번호', field: 'orderDetailCode', width: 150, cssClass: 'non-editable-cell' },
-  { title: '품번', field: 'prodCode', editor: "input", width: 150 },
-  { title: '품명', field: 'prodName', width: 300, cssClass: 'non-editable-cell' },
-  { title: '시작일', field: 'startDate', editor: "input", width: 150 },
-  { title: '종료일', field: 'endDate', editor: "input", width: 150 },
+  { title: '품번', field: 'prodCode', width: 150, cssClass: 'non-editable-cell',
+      cellClick: (e, cell) => {
+      const row = cell.getRow();
+      openProductSearchModal(row); // 선택된 RowComponent 전달
+    }
+  },
+  { title: '품명', field: 'prodName', width: 300, cssClass: 'non-editable-cell',
+      cellClick: (e, cell) => {
+      const row = cell.getRow();
+      openProductSearchModal(row);
+    }
+  },
+  {
+    title: '시작일',
+    field: 'startDate',
+    editor: "input",
+    width: 150,
+    editorParams: {
+      elementAttributes: {
+        placeholder: "YYYYMMDD"
+      },
+      // 사용자가 입력 완료 후 → 날짜 형식 보정
+      // Tabulator가 셀 값을 update하기 전에 호출됨
+      selectContents: true,
+      // 아래는 기본 input element에 이벤트를 걸 수 있는 방법
+      inputFormatter: (value) => {
+        return formatToDate(value);
+      }
+    },
+    cellEdited: (cell) => {
+      const rawValue = cell.getValue();
+      const fixed = formatToDate(rawValue);
+      cell.setValue(fixed, true); // `mutate=true` 옵션으로 재입력 방지
+    }
+  },
+  {
+    title: '종료일',
+    field: 'endDate',
+    editor: "input",
+    width: 150,
+    editorParams: {
+      elementAttributes: {
+        placeholder: "YYYYMMDD or MMDD or DD"
+      },
+      selectContents: true,
+      inputFormatter: (value) => {
+        return formatToDate(value);
+      }
+    },
+    cellEdited: (cell) => {
+      const rawValue = cell.getValue();
+      const fixed = formatToDate(rawValue);
+      cell.setValue(fixed, true);
+    }
+  },
   { title: '주문수량', field: 'orderQty', width: 150, cssClass: 'non-editable-cell' },
   { title: '생산수량', field: 'prodQty', editor: "input", width: 150 },
   { title: '완료여부', field: 'complete', width: 150, cssClass: 'non-editable-cell' },
@@ -168,13 +224,12 @@ const tabulatorEvent = [
     eventAction: 
       async (e, row) => {
         
-
       const tableInstance = tabulatorCardRef.value?.$el?.querySelector('.tabulator')?.__tabulator__;
       if (tableInstance) {
         tableInstance.redraw(true);
       }
     }
-  }
+  },
 ];
 // 형태 변환
 const formatDate = (str) => {
@@ -216,6 +271,20 @@ const openModal = () => {
 const closeModal = () => {
     isModalOpen.value = false;
 };
+// 제품목록 가져오기 모달 ============================
+const openProductSearchModal = (row) => {
+  isSearchModalOpen.value = true;
+  modalTargetRow.value = row;
+};
+
+const handleProductSelect = (item) => {
+  if (!modalTargetRow.value) return;
+  modalTargetRow.value.update({
+    prodCode: item.prodCode,
+    prodName: item.prodName
+  });
+};
+
 // 사용자 날짜 입력 편의성
 const formatToDate = (input) => {
   const today = new Date();
@@ -345,6 +414,7 @@ onMounted(() => {
         <tabulator-card
           ref="tabulatorCardRef"
           card-title="생산계획 목록"
+          :height="550"
           :table-data="prodPlanData"
           :table-columns="prodPlanColumns"
           :on="tabulatorEvent"
@@ -361,6 +431,15 @@ onMounted(() => {
         :isModalOpen="isModalOpen"
         @selectOrder="handleSelectedOrder"
         @closeModal="closeModal"
+      />
+      <ProductSearchModal
+        :isOpen="isSearchModalOpen"
+        :targetInfo="{
+          rowNum: modalTargetRow?.getData()?.rowNum,
+          orderDetailCode: modalTargetRow?.getData()?.orderDetailCode
+        }"
+        @select="handleProductSelect"
+        @close="() => { isSearchModalOpen = false }"
       />
     </div>
   </div>

@@ -23,18 +23,17 @@ JOIN t_work_process wp ON wp.work_inst_code = wi.work_inst_code
 WHERE wi.inst_reg_date BETWEEN DATE_FORMAT(NOW(), '%Y-%m-01') AND LAST_DAY(NOW());
 */
 const selectProcessChartUse = `
-SELECT reg_date
-       , plan_qty
-       , plan_start
-       , plan_complete
-       , inst_reg_date
-       , inst_state
-       , work_process_code
-       , process_code
-       , defect_qty
-       , process_qty
-       , process_complete
-FROM   v_process_chart
+SELECT
+  reg_date,
+  SUM(plan_qty) AS total_plan_qty,   -- 생산계획량
+  SUM(inst_qty) AS total_inst_qty,   -- 작업지시량
+  SUM(input_qty) AS total_input_qty, -- 투입량 (실제 투입된 양)
+  SUM(process_qty) AS total_prod_qty,   -- 생산량 (양품)
+  SUM(defect_qty) AS total_defect_qty -- 불량량
+FROM v_process_chart
+WHERE reg_date BETWEEN DATE_FORMAT(NOW(), '%Y-%m-01') AND LAST_DAY(NOW())
+GROUP BY reg_date
+ORDER BY reg_date;
 `;
 
 // 작업지시별 공정 완료율

@@ -75,6 +75,7 @@
                 <argon-button color="success" variant="gradient" id="arbtn" @click="saveOrder">저장</argon-button>
               </div>
               <tabulator-card
+              ref="productTableCardRef"
               card-title=""
               :table-data="ordlist"
               :table-columns="OrderColumns"
@@ -91,6 +92,7 @@
   </template>
   
   <script setup>
+  import { TabulatorFull as Tabulator } from 'tabulator-tables';
   import { ref, computed, onMounted } from "vue"; // Import ref and onMounted
   import { useStore } from 'vuex';
   import axios from "axios";
@@ -98,6 +100,7 @@
   import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
   import prodModal from "./prodModal.vue";
   import groupcodelist from "../../assets/js/utils/groupcodelist.js"
+  import Swal from "sweetalert2";
   
   const isModalOpen = ref(false); //초기상태
   const ordlist = ref([]);
@@ -113,7 +116,7 @@
   const note = ref("");
   // 드롭다운에서 업체명 선택시 업체코드 따로 저장
   const selectedCompanyCode = ref("");
-
+  const productTableCardRef = ref(null);
     // 로그인 정보 가져오기
   const store = useStore();
   const user = computed(() => store.state.user);
@@ -132,6 +135,9 @@
     listOpen.value = false;
   }, 100);
 };
+  // Tabulator 테이블 참조
+  const tabulatorRef = ref(null);
+
   // 선택시에 동작할것들
   const selectCompany = (company) => {
   searchTerm.value = company.cp_name;  // 인풋에는 업체명 표시
@@ -175,18 +181,15 @@ const filteredCompanyList = computed(() => {
   };
   console.log("로그인 유저 정보:", user.value);
   // 선택한 제품 리스트 출력
-  const OrderColumns = [
+const OrderColumns = [
   {
-  title: "", field: "selected", width: 50, hozAlign: "center", headerSort: false,
-  formatter: function(cell) {
-    const value = cell.getValue();
-    return `<input type="checkbox" ${value ? 'checked' : ''} />`;
+    title: "", 
+    formatter: "rowSelection", 
+    titleFormatter: "rowSelection", 
+    headerSort: false,
+    hozAlign: "center", 
+    width: 50
   },
-  cellClick: function(e, cell) {
-    const current = cell.getValue();
-    cell.setValue(!current); // true/false 토글
-  }
-},
     { title: "제품명", field: "prodname", width: 350},
     { title: "색상", field: "prodcolor", width: 80,
         formatter: function(cell) {
@@ -284,6 +287,7 @@ console.log('🏢 DB에서 받아온 업체 데이터:', companyList.value);
 
   // 모달에서 선택한 제품 데이터
   const getlist = (modaldata) =>{
+    ordlist.value.splice(0, ordlist.value.length, ...modaldata);
     console.log('자식한테 받아온 데이터', JSON.stringify(modaldata, null, 2));
     console.log('자식한테 받아온 데이터', modaldata);
     ordlist.value = modaldata;
@@ -296,15 +300,27 @@ console.log('🏢 DB에서 받아온 업체 데이터:', companyList.value);
   const closeModal = () => {
       isModalOpen.value = false;
   };
-  const deleteSelectedRows = () => {
-  const selectedCount = ordlist.value.filter(item => item.selected).length;
+// Tabulator 인스턴스를 가져오는 헬퍼 함수
+const getTabulatorInstance = (refInstance) => {
+  if (!refInstance.value || !refInstance.value.$el) return null;
+  const element = refInstance.value.$el.querySelector('.tabulator');
+  if (!element) return null;
+  return Tabulator.findTable(element)[0] || null;
+};
 
-  if (selectedCount === 0) {
-    alert("삭제할 제품을 선택해주세요.");
-    return;
+// 선택한 제품 삭제
+const deleteSelectedRows = async () => {
+  const productTableInstance = getTabulatorInstance(productTableCardRef);
+  if (!productTableInstance) return;
+  const selectedData = productTableInstance.getSelectedRows();
+  if (selectedData?.length > 0) {
+    selectedData.forEach(e => {
+      if (e.getData()) {
+        const row = ordlist.value.filter(el => el.prodname !== e.getData().prodname);
+        if (row) ordlist.value = row;
+      }
+    });
   }
-
-  ordlist.value = ordlist.value.filter(item => !item.selected);
 };
 
   // 총 주문금액 계산
@@ -318,6 +334,74 @@ console.log('🏢 DB에서 받아온 업체 데이터:', companyList.value);
   // 주문 등록
 const saveOrder = async () => {
   try {
+    // 유효성 검사부터 수행
+    if (!searchTerm.value || !selectedCompanyCode.value) {
+      await Swal.fire({
+        title: "필수 입력 항목",
+        text: '업체명을 선택해주세요.',
+        icon: 'error',
+      });
+      return;
+    }
+
+    if (!orderDate.value) {
+      await Swal.fire({
+        title: "필수 입력 항목",
+        text: '주문일자를 입력해주세요.',
+        icon: 'error',
+      });
+      return;
+    }
+
+    if (!deadDate.value) {
+      await Swal.fire({
+        title: "필수 입력 항목",
+        text: '납기일자를 입력해주세요.',
+        icon: 'error',
+      });
+      return;
+    }
+
+    if (!ordlist.value.length) {
+      await Swal.fire({
+        title: "필수 입력 항목",
+        text: '제품을 한 개 이상 선택해주세요.',
+        icon: 'error',
+      });
+      return;
+      
+    }
+    for (let i = 0; i < ordlist.value.length; i++) {
+  const item = ordlist.value[i];
+  const rowNumber = i + 1;
+
+  if (!item.standard) {
+    await Swal.fire({
+      title: "필수 입력 항목",
+      text: `규격을 입력해 주세요.`,
+      icon: 'error'
+    });
+    return;
+  }
+
+  if (!item.qty || isNaN(item.qty) || parseInt(item.qty) <= 0) {
+    await Swal.fire({
+      title: "필수 입력 항목",
+      text: `box 수량을 입력해 주세요.`,
+      icon: 'error'
+    });
+    return;
+  }
+
+  if (!item.unitprice || isNaN(item.unitprice) || parseInt(item.unitprice) <= 0) {
+    await Swal.fire({
+      title: "필수 입력 항목",
+      text: `제품단가를 입력해 주세요.`,
+      icon: 'error'
+    });
+    return;
+  }
+}
     // 💡 먼저 selprice 계산부터 한다
     ordlist.value = ordlist.value.map(item => {
       // const qty = parseInt(item.total_qty || 0);
@@ -355,33 +439,7 @@ const saveOrder = async () => {
     alert('저장 중 오류가 발생했습니다.');
   }
 }
-// const saveOrder = async () => {
-//   try {
-//     const orderData = {
-//       cp_code: searchTerm.value,  // 업체코드 (업체명 선택시 cp_code를 받아야 함)
-//       emp_num: user.value.emp_num,       // 로그인 유저 사번
-//       orderDate: orderDate.value,
-//       deadDate: deadDate.value,
-//       note: note.value || '',
-//       totalprice: calculateTotalOrderPrice(),
-//       orderDetails: ordlist.value  // 제품 상세 리스트 (배열)
 
-//     };
-
-//     console.log('보낼 주문 데이터:', orderData);
-
-//     const res = await axios.post('/api/orderAdd', orderData);
-
-//     if (res.data.success) {
-//       alert('주문서가 성공적으로 저장되었습니다.');
-//     } else {
-//       alert('저장에 실패했습니다.');
-//     }
-//   } catch (err) {
-//     console.error('저장 중 오류:', err);
-//     alert('저장 중 오류가 발생했습니다.');  // 👈 이렇게 수정
-//   }
-// }
   </script>
   
   <style>
