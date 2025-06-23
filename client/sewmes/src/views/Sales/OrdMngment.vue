@@ -1,26 +1,5 @@
 <template>
   <div class="container-fluid p-3">
-    <!-- 필터 검색 창 -->
-    <div class="row search-color">
-      <div class="row mb-2">
-        <div class="col-md-3">
-          <label class="form-label">업체명</label>
-          <input type="text" class="form-control" v-model="searchReleaseCode">
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">주문일자</label>
-          <input type="date" id="orderdate" class="form-control" max="2039-12-31" min="2000-01-01" v-model="searchLotCode">
-        </div>
-        <div class="col-md-3">
-          <label class="form-label">납기일자</label>
-          <input type="date" id="deaddate" class="form-control" max="2039-12-31" min="2000-01-01" v-model="searchProdName">
-        </div>
-        <div class="col-md-3 d-flex align-items-end">
-          <button class="btn btn-secondary me-2" @click="resetFilter">초기화</button>
-          <button class="btn btn-primary" @click="searchLotHistoryList">조회</button>
-        </div>
-      </div>
-    </div>
     <!-- 📦 주문 목록 + 상세 -->
     <div class="container-fluid py-4" id="odlist">
       <!-- 높이 통일을 위해 row에 height 지정 -->
