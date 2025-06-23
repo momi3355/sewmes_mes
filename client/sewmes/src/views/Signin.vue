@@ -35,7 +35,6 @@
                     <div class="text-center">
                       <argon-button
                         class="mt-4"
-                        variant="gradient"
                         color="success"
                         fullWidth
                         size="lg"

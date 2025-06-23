@@ -71,8 +71,8 @@
     </div>
                 <div class="card-footer d-flex justify-content-end pt-0">
                   <button class="btn btn-outline-secondary btn-sm me-2" @click="openModal">제품추가 🧾</button>
-                <argon-button color="secondary" variant="gradient" class="me-2" id="arbtn" @click="deleteSelectedRows">삭제</argon-button>
-                <argon-button color="success" variant="gradient" id="arbtn" @click="saveOrder">저장</argon-button>
+                <argon-button color="danger" class="me-2" id="arbtn" @click="deleteSelectedRows">삭제</argon-button>
+                <argon-button color="success" id="arbtn" @click="saveOrder">저장</argon-button>
               </div>
               <tabulator-card
               ref="productTableCardRef"
