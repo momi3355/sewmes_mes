@@ -181,13 +181,32 @@ const bomClickhandler = async () => {
     });
     return;
   }
-
+  
+  for (const bom of bomTable) {
+    if (!Number(bom.need)) {
+      Swal.fire({
+        title: "잘못된 숫자",
+        text: "BOM소요량이 숫자가 아닙니다.",
+        icon: "error"
+      });
+      return;
+    } else if (bom.unit === "EA") {
+      if (!Number.isInteger(Number(bom.need))) {
+        Swal.fire({
+          title: "잘못된 숫자",
+          text: "EA는 소수점이 들어갈 수 없습니다.",
+          icon: "error"
+        });
+        return;
+      }
+    }
+  } 
+  
   // '[
   //    {"need": 1.500, "item_type": "0w1w", "item_code": "ITEMA001"},
   //    {"need": 2.250, "item_type": "0w2w", "item_code": "ITEMB002"},
 	//    {"need": 0.750, "item_type": "0w1w", "item_code": "ITEMC003"}
   // ]';
-  //TODO: 단위를 보고 소수점이나 숫자를 유효성검사.
   let bomDetailInfo = bomTable.map(e => {
     let detailInfo = {
       need: e.need,
@@ -199,17 +218,6 @@ const bomClickhandler = async () => {
     }
     return detailInfo;
   });
-
-  for (const bom of bomDetailInfo) {
-    if (!Number(bom.need)) {
-      Swal.fire({
-        title: "잘못된 숫자",
-        text: "BOM소요량이 숫자가 아닙니다.",
-        icon: "error"
-      });
-      return;
-    }
-  } 
 
   const bomInfo = {
     prod_code: prodCode,
@@ -293,7 +301,7 @@ const handleAfterModalSaved = async (prdData) => {
       item_code: selectRow.prod_code,
   });
   bomData.value = tabulator.getData();
-  console.log(bomData.value);
+  // console.log(bomData.value);
 
   if (bomData.value[0]?.bom_code)
     detailFields.value.bom_code = bomData.value[0].bom_code;
@@ -336,12 +344,12 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="container-fluid p-3">
-    <div class="row search-color">
-      <!-- 상단 검색 영역 -->
-      <div class="row mb-3">
-        <div class="col-md-2">
-          <label class="form-label">품목유형</label>
+  <div class="container-fluid p-3 full-height">
+    <div class="search-area bg-white rounded p-3 mb-3 shadow-sm">
+      <div class="row">
+        <!-- 상단 검색 영역 -->
+        <div class="col-md-1">
+          <label class="form-label search-label">품목유형</label>
           <select class="form-select" v-model="searchData.item_type">
             <option selected value="">전체</option>
             <option v-for="type in itemtype" :value="type.detail_code">
@@ -350,7 +358,7 @@ onMounted(async () => {
           </select>
         </div>
         <div class="col-md-2">
-          <label class="form-label">품명</label>
+          <label class="form-label search-label">품명</label>
           <input
             type="text"
             class="form-control"
@@ -359,7 +367,7 @@ onMounted(async () => {
           />
         </div>
         <div class="col-md-2">
-          <label class="form-label">사용여부</label>
+          <label class="form-label search-label">사용여부</label>
           <div class="form-check">
             <input 
               class="form-check-input"
@@ -383,22 +391,22 @@ onMounted(async () => {
             </label>
           </div>
         </div>
-        <div class="col-md-2 d-flex align-items-end">
-          <button class="btn btn-secondary me-2" @click="resetHandler">
+        <div class="col-md-2 d-flex align-items-end gap-2">
+          <button class="btn btn-outline-secondary w-50" @click="resetHandler">
             초기화
           </button>
-          <button class="btn btn-primary" @click="searchHandler">조회</button>
+          <button class="btn btn-primary w-50" @click="searchHandler">조회</button>
         </div>
       </div>
     </div>
 
-    <div class="row me-3">
-      <div class="col-md-6 d-flex flex-column">
-        <div class="card mb-2 flex-grow-1" style="min-height: 180px">
+    <div class="row">
+      <div class="col-md-6">
+        <div class="card mb-2">
           <div class="card-header pb-0 d-flex justify-content-between align-items-center">
             <h5 class="mt-0 text-start">BOM 정보</h5>
             <div class="btn-container">
-              <button class="btn btn-sm btn-success" @click="bomClickhandler">저장</button>
+              <button class="btn btn-sm btn-success me-2" @click="bomClickhandler">저장</button>
               <button class="btn btn-sm btn-secondary" @click="bomResethandler">초기화</button>
             </div>
           </div>
@@ -436,7 +444,7 @@ onMounted(async () => {
         <tabulator-card
           ref="bom_table"
           card-title="BOM 상세 정보"
-          height="280px"
+          height="350px"
           :table-data="bomData"
           :table-columns="bomColumns"
           :tabulator-options="bomOptions"
@@ -446,7 +454,7 @@ onMounted(async () => {
         <tabulator-card
           ref="item_table"
           card-title="품목 리스트"
-          height="540px"
+          height="600px"
           :table-data="itemData"
           :table-columns="itemColumns"
           :tabulator-options="itemOptions"
@@ -464,10 +472,15 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.search-color {
-  margin: 10px;
-  padding: 20px;
-  border-radius: 1rem;
-  background-color: #fff;
+.search-label {
+  font-size: medium;
+}
+.full-height {
+  height: 840px;
+  display: flex;
+  flex-direction: column;
+}
+.search-area {
+  flex-shrink: 0;
 }
 </style>

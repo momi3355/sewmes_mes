@@ -31,7 +31,7 @@ const orderData = ref([]);
 const orderColumns = [
   { title: "제품코드", field: "prod_code", width: 120 },
   { title: "제품명", field: "prod_name", width: 230 },
-  { title: "납품처", field: "cp_name", width: 230 },
+  { title: "납품처", field: "cp_name", width: 200 },
   { title: "주문수량", field: "qty" },
   {
     title: "납기일",
@@ -194,12 +194,12 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="container-fluid p-3">
-    <div class="row search-color">
-      <!-- 상단 검색 영역 -->
-      <div class="row mb-3">
+  <div class="container-fluid p-3 full-height">
+    <div class="search-area bg-white rounded p-3 mb-3 shadow-sm">
+      <div class="row">
+        <!-- 상단 검색 영역 -->
         <div class="col-md-2">
-          <label class="form-label">제품명</label>
+          <label class="form-label search-label">제품명</label>
           <input
             type="text"
             class="form-control"
@@ -208,7 +208,7 @@ onMounted(async () => {
           />
         </div>
         <div class="col-md-2">
-          <label for="date" class="form-label">납기일자</label>
+          <label for="date" class="form-label search-label">납기일자</label>
           <div class="date-input-wrapper">
             <input type="date"
               id="date"
@@ -218,29 +218,30 @@ onMounted(async () => {
               min="2000-01-01">
           </div>
         </div>
-        <div class="col-md-2 d-flex align-items-end">
-          <button class="btn btn-secondary me-2" @click="resetHandler">
+        <div class="col-md-2 d-flex align-items-end gap-2">
+          <button class="btn btn-outline-secondary w-50" @click="resetHandler">
             초기화
           </button>
-          <button class="btn btn-primary" @click="searchHandler">조회</button>
+          <button class="btn btn-primary w-50" @click="searchHandler">조회</button>
         </div>
       </div>
     </div>
-    <div class="row me-3">
-      <div class="col-7 md-3">
+    <div class="row">
+      <div class="col-7">
         <tabulator-card
           ref="order_table"
           card-title="주문 리스트"
+          height="640px"
           :table-data="orderData"
           :table-columns="orderColumns"
           :tabulator-options="orderOptions"
           :on="orderEvent"
         />
       </div>
-      <div class="col-md-5 d-flex flex-column">
-        <div class="card mb-2 flex-grow-1" style="min-height: 180px">
-          <div class="card-header pb-0 d-flex justify-content-between align-items-center">
-            <span>주문 상세</span>
+      <div class="col-md-5">
+        <div class="card mb-2">
+          <div class="card-header header-fixed mt-3">
+            <h5 class="mt-0 text-start">주문 상세</h5>
             <div class="btn-container">
               <button class="btn btn-sm btn-success" @click="releaseClickhandler">저장</button>
             </div>
@@ -331,6 +332,7 @@ onMounted(async () => {
         </div>
         <tabulator-card
           ref="release_table"
+          height="235px"
           card-title="출고리스트"
           :table-data="releaseData"
           :table-columns="releaseColumns"
@@ -352,10 +354,27 @@ onMounted(async () => {
 </template>
 
 <style scoped>
+.search-label {
+  font-size: medium;
+}
+.full-height {
+  height: 840px;
+  display: flex;
+  flex-direction: column;
+}
 .search-color {
   margin: 10px;
   padding: 20px;
   border-radius: 1rem;
   background-color: #fff;
+}
+.header-fixed {
+  height: 50px;
+  padding: 10px 15px;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #dee2e6;
 }
 </style>

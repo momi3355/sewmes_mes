@@ -122,7 +122,7 @@ const selectedSave = () => {
 <template>
   <div class="modal-overlay" v-if="props.isModalOpen">
     <div class="modal-content">
-      <div class="search-bar">
+      <div class="align-items-center search-bar">
         <div>
           <label>제품코드:</label>
           <input v-model="searchData.prod_code" class="form-control-sm" placeholder="제품코드검색" />
@@ -158,9 +158,9 @@ const selectedSave = () => {
             </option>
           </select>
         </div>
-        <div class="btn-container">
-          <button class="btn btn-secondary" @click="searchResetHandler">초기화</button>
-          <button class="btn btn-primary" @click="searchActionHandler">검색</button>
+        <div class="col-md-2 d-flex gap-2">
+          <button class="btn btn-outline-secondary w-50" @click="searchResetHandler">초기화</button>
+          <button class="btn btn-primary w-50" @click="searchActionHandler">검색</button>
         </div>
       </div>
 
@@ -172,7 +172,7 @@ const selectedSave = () => {
           :tabulatorOptions="{ selectableRows: 1 }" >
       </TabulatorCard>
 
-      <div class="modal-actions">
+      <div class="modal-actions mt-3">
         <button class="btn btn-success" @click="selectedSave">선택</button>
         <button class="btn btn-secondary ms-2" @click="handleCloseModal">닫기</button>
       </div>
