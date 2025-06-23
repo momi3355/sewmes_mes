@@ -316,7 +316,13 @@ const getlist = (modaldata) => {
     }
 
     // alert('저장되었습니다.');
-    location.reload();
+  Swal.fire({
+  title: '저장 완료',
+  text: '제품이 저장되었습니다.',
+  icon: 'success',
+}).then(() => {
+  location.reload(); // 알림창 닫히고 나서 새로고침
+});
   } catch (err) {
     console.error('저장 중 오류 발생:', err);
     Swal.fire({

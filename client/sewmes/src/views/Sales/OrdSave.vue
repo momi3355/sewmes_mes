@@ -429,7 +429,11 @@ const saveOrder = async () => {
     const res = await axios.post('/api/orderAdd', orderData);
 
     if (res.data.success) {
-      alert('주문서가 성공적으로 저장되었습니다.');
+      await Swal.fire({
+        title: '저장 완료',
+        text: `주문서가 성공적으로 저장되었습니다.`,
+        icon: 'success'
+    });
       location.reload();
     } else {
       alert('저장에 실패했습니다.');
