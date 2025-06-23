@@ -8,10 +8,11 @@ const companyListCheck =
         cp_ceo,
         address,
         region,
-        first_reg,
+        DATE_FORMAT(first_reg, '%Y-%m-%d') AS first_reg,
         note,
         cls,
-        use_yn
+        use_yn,
+        DATE_FORMAT(end_tran, '%Y-%m-%d') AS end_tran
 FROM t_company`
 
 const companyDropDown =
