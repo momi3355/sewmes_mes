@@ -48,12 +48,13 @@ FROM t_outsou_order_list
 ORDER BY outsou_list_code DESC LIMIT 1`
 
 // 외주업체 가능제품 삭제
-const outProdCompanyDelect =
+const outProdCompanyDelete =
 `DELETE FROM t_outsou_order_list WHERE outsou_list_code = ?`
 
   // 해당 외주업체 의 가능외주제품 조회
  const yesOutProdList =
-`SELECT b.prod_code,
+`SELECT a.outsou_list_code,
+        b.prod_code,
         b.prod_name,
         b.category,
         b.color,
@@ -81,7 +82,7 @@ module.exports = {
   yesOutProdList,
   getNextOrderCode,
   bongJaeProd,
-  outProdCompanyDelect,
+  outProdCompanyDelete,
 }
 
 

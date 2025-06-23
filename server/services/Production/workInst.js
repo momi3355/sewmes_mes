@@ -115,10 +115,16 @@ const saveWorkInstructions = async (workInstructions) => {
 
             // 3. 기존 작업지시 코드 존재 여부 확인 및 처리
             if (p_work_inst_code_in) {
+                console.log(`[검사] p_work_inst_code_in:`, p_work_inst_code_in);
                 const checkExistsResult = await conn.query(sqlList['checkWorkInstCode'], [p_work_inst_code_in]);
+                console.log(`[검사] p_work_inst_code_in:`, p_work_inst_code_in);
                 const exists = checkExistsResult && checkExistsResult.length > 0 && checkExistsResult[0].count > 0;
+                console.log(`[DEBUG] work_inst_code from frontend: '${instruction.work_inst_code}' → parsed: '${p_work_inst_code_in}'`);
+                console.log(`[DEBUG] checkExistsResult:`, checkExistsResult);
+                console.log(`[DEBUG] exists?:`, exists);
 
                 if (exists) { // 기존 작업지시인 경우 UPDATE
+                    console.log(`[검사] p_work_inst_code_in:`, p_work_inst_code_in);
                     console.log(`[saveWorkInstructions] Updating existing work instruction: ${p_work_inst_code_in}`);
                     currentWorkInstCode = p_work_inst_code_in;
 
@@ -166,6 +172,7 @@ const saveWorkInstructions = async (workInstructions) => {
             // 4. 신규 작업지시인 경우에만 t_work_inst 테이블에 INSERT 실행 및 작업공정 생성
             if (isNewInstruction) {
                 // conn.query의 반환값 형태에 따라 'rows' 배열을 올바르게 추출
+                console.log(`[DEBUG] isNewInstruction?:`, isNewInstruction);
                 let bomRowsResult = await conn.query(sqlList['selectBomByProdCode'], [p_prod_code]);
                 let bomRows;
                 if (Array.isArray(bomRowsResult) && Array.isArray(bomRowsResult[0])) {

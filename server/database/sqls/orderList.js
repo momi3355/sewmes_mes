@@ -6,17 +6,19 @@ const orderListCheck =
         total_qty
 FROM t_order`
 
+// 주문서 조회 그룹바이로 제품당 조회페이지 행 추가 개선
 const orderListCheck2 = 
-`SELECT a.order_code,
-          a.total_qty,
-          a.order_state,
-          DATE_FORMAT(b.order_date, '%Y-%m-%d') AS order_date,
-          DATE_FORMAT(b.dead_date, '%Y-%m-%d') AS dead_date, 
-          c.cp_name
-
-FROM t_order a JOIN t_order_detail b ON a.order_code = b.order_code
-                     JOIN t_company c 
-                      ON(b.cp_code = c.cp_code)`
+`SELECT 
+  a.order_code,
+  a.total_qty,
+  a.order_state,
+  DATE_FORMAT(MAX(b.order_date), '%Y-%m-%d') AS order_date,
+  DATE_FORMAT(MAX(b.dead_date), '%Y-%m-%d') AS dead_date,
+  c.cp_name
+FROM t_order a
+JOIN t_order_detail b ON a.order_code = b.order_code
+JOIN t_company c ON b.cp_code = c.cp_code
+GROUP BY a.order_code, a.total_qty, a.order_state, c.cp_name`
 
 // 주문서 관리(조회) 페이지 주문목록 및 주문상세정보 같이 출력
 const orderListCheck3 =

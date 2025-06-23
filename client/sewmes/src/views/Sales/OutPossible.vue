@@ -18,7 +18,7 @@
     <!-- 주문서 목록2 -->
     <div class="col-lg-6 mb-4">
       <tabulator-card
-        ref="selectCheckBox"
+        ref="productTableCardRef"
         card-title="외주 가능 제품"
         :table-data="modalSelectList"
         :table-columns="outpossible"
@@ -28,7 +28,7 @@
         <!-- actions 슬롯에 버튼을 삽입 -->
         <template #actions>
           <button class="btn btn-outline-secondary btn-sm me-2" id="openModal" @click="openModal">제품추가 🧾</button>
-          <!-- <ArgonButton class="removebtn" color="danger" variant="gradient" @click="deleteEvent">삭제</ArgonButton> -->
+          <ArgonButton class="removebtn" color="danger" variant="gradient" @click="deleteEvent">삭제</ArgonButton>
           <argon-button color="success" variant="gradient" @click="saveEvent">저장</argon-button>
         </template>
       </tabulator-card>
@@ -47,6 +47,7 @@
 </template>
 
 <script setup>
+import { TabulatorFull as Tabulator } from 'tabulator-tables';
 import Swal from 'sweetalert2';
 import { ref, onMounted } from "vue";
 // import { useStore } from 'vuex';
@@ -62,7 +63,7 @@ const statecode = ref([]);
 const categorycode = ref([]);
 const colorcode = ref([]);
 const sizecode = ref([]);
-
+const productTableCardRef = ref(null);
 const companyData = ref([]); // 업체 정보
 const modalSelectList = ref([]); // 모달에서 선택한 제품들
 const ModalState = ref(false); // 모달 on/off 초기값 설정
@@ -72,6 +73,8 @@ const originalData = ref([]);
 const outprodTable = ref(null);
 const selectCheckBox = ref([]);
 const outCpCode = ref({});
+// 삭제
+const deletedItems = ref([]);
 
 // 외주업체 목록
 const companyColumns = [
@@ -168,7 +171,8 @@ const outcompanyList = async() => {
         prodname: item.prod_name,
         prodcategory: item.category,
         prodcolor: item.color,
-        prodsize: item.size
+        prodsize: item.size,
+        outsoulistcode : item.outsou_list_code
       }));
 
       // 이 부분 수정 (덮어쓰기 대신 병합)
@@ -202,50 +206,47 @@ const closeModal = () => {
   ModalState.value = false;
 };
 
-// 삭제버튼
-const deleteEvent = async () => {
-  if (!selectCpcode.value) {
-    alert("업체를 먼저 선택해주세요.");
-    return;
-  }
+// Tabulator 인스턴스를 가져오는 헬퍼 함수
+const getTabulatorInstance = (refInstance) => {
+  if (!refInstance.value || !refInstance.value.$el) return null;
+  const element = refInstance.value.$el.querySelector('.tabulator');
+  if (!element) return null;
+  return Tabulator.findTable(element)[0] || null;
+};
 
-  const tableInstance = selectCheckBox.value?.getTabulator?.();
-  const selectedRows = tableInstance?.getSelectedData();
+// 선택한 제품 삭제
+const deleteEvent = () => {
+  const productTableInstance = getTabulatorInstance(productTableCardRef);
+  if (!productTableInstance) return;
 
+  const selectedRows = productTableInstance.getSelectedRows();
   if (!selectedRows || selectedRows.length === 0) {
-    console.log("선택한 모달제품",item);
-    alert("삭제할 제품을 선택하세요.");
+    Swal.fire({
+      title: "필수 입력 항목",
+      text: "삭제할 제품을 선택해주세요.",
+      icon: "error"
+    });
     return;
   }
 
-  try {
+  for (const row of selectedRows) {
+    const rowData = row.getData();
 
-      for (const item of selectedRows) {
-        const isOriginal = originalData.value.some(orig => orig.prodcode === item.prodcode);
-
-        if (isOriginal) {
-          // 기존 DB에 등록된 데이터면 서버에 삭제 요청
-          const res = await axios.delete('/api/outProdDelete', {
-            data: {
-              cp_code: selectCpcode.value,
-              prod_code: item.prodcode
-            }
-          });
-
-          if (!res.data.success) {
-            console.error(`삭제 실패: ${item.prodcode}`);
-          }
-        }
-        // 화면 목록에서는 무조건 제거
-        modalSelectList.value = modalSelectList.value.filter(
-          prod => prod.prodcode !== item.prodcode
-        );
-      
+    // 삭제 대상이라면 deletedItems에 추가
+    const isSavedInDB = originalData.value.some(item => item.prodcode === rowData.prodcode);
+    if (isSavedInDB) {
+      const originalItem = originalData.value.find(item => item.prodcode === rowData.prodcode);
+      deletedItems.value.push(originalItem.outsoulistcode); // outsou_list_code 저장
     }
-  } catch (err) {
-    console.error("삭제 중 오류:", err);
-    alert("삭제에 실패했습니다.");
+
+    // 화면에서 제거
+    modalSelectList.value = modalSelectList.value.filter(item => item.prodcode !== rowData.prodcode);
   }
+
+  // 순번 다시 정렬
+  modalSelectList.value.forEach((item, idx) => {
+    item.nums = idx + 1;
+  });
 };
 
   // 모달에서 선택한 제품 데이터
@@ -282,11 +283,24 @@ const getlist = (modaldata) => {
   // 저장버튼 이벤트
   const saveEvent = async () => {
   try {
+    // 먼저 삭제 처리
+    for (const code of deletedItems.value) {
+      const delRes = await axios.delete(`/api/yesOutProdListDelete/${code}`);
+      if (!delRes.data.success) {
+        console.warn(`제품 삭제 실패: ${code}`);
+      }
+    }
+
+    // 추가 저장 처리
     const originalCodes = originalData.value.map(item => item.prodcode);
     const newItems = modalSelectList.value.filter(item => !originalCodes.includes(item.prodcode));
 
-    if (newItems.length === 0) {
-      alert("추가된 제품이 없습니다. 제품을 추가하세요.");
+    if (newItems.length === 0 && deletedItems.value.length === 0) {
+      Swal.fire({
+      title: "필수 입력 항목",
+      text: "변경된 내용이 없습니다.",
+      icon: "error"
+    });
       return;
     }
 
@@ -295,21 +309,21 @@ const getlist = (modaldata) => {
         cp_code: selectCpcode.value,
         prod_code: item.prodcode
       };
-
       const res = await axios.post('/api/outProdCpInsert', selectData);
-
-      if (res.data.success) {
-        console.log(`제품 ${item.prodcode} 저장 성공`);
-      } else {
+      if (!res.data.success) {
         console.error(`제품 ${item.prodcode} 저장 실패`);
       }
     }
 
-    alert('저장되었습니다.');
+    // alert('저장되었습니다.');
     location.reload();
   } catch (err) {
     console.error('저장 중 오류 발생:', err);
-    alert('저장에 실패했습니다.');
+    Swal.fire({
+      title: "",
+      text: "저장에 실패했습니다.",
+      icon: "error"
+    });
   }
 };
 

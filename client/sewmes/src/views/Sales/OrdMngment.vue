@@ -12,7 +12,7 @@
             :tabulator-options="tabulatorEvent"
             :on="tabulatorEvent"
             style="height: 800px;"
-            height="576px"
+            height="700px"
           />
         </div>
 
@@ -164,7 +164,6 @@ const OrderColumns = [
 
 // 등록 폼 상세 제품 테이블
 const OrderColumnsDetail = [
-  {formatter:"rowSelection", titleFormatter:"rowSelection", hozAlign:"center", headerSort:false, width: 20,},
   { title: "제품명", field: "prod_name", width: 150 },
   { title: "색상", field: "color", width: 80,
     formatter:(cell)=>{

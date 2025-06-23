@@ -187,6 +187,20 @@ router.post('/saveProdPlans', async (req, res) => {
     res.status(500).send({ message: '저장 실패', error: err.message });
   }
 });
+// 제품 정보 가져오기
+router.get('/productSearch', async (req, res) => {
+  try {
+    const { keyword } = req.query;
+    if (!keyword || keyword.trim() === '') {
+      return res.status(400).send({ message: '검색어를 입력해주세요.' });
+    }
+    const result = await prodPlanService.searchProductByKeyword(keyword);
+    res.send(result);
+  } catch (err) {
+    console.error("제품 검색 오류:", err);
+    res.status(500).send({ message: '서버 오류 발생' });
+  }
+});
 
 
 // ==============================================================
