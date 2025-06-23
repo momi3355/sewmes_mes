@@ -248,4 +248,45 @@ const getSelectedRows = (tableRef) => {
     height: 40px;
     margin-top: 10px;
   }
+  .col-lg-12{
+  margin-top: 85px;
+}
+ .searchbox{
+  background-color: #FFFFFF;
+  border-radius: 1rem;
+  margin: 30px;
+ }
+ .btn{
+  padding: 10px;
+  margin: 0px;
+ }
+ .btn-secondary.me-2{
+  margin-right: 10px;
+  width: 70px;
+ }
+ .removebtn{
+  width: 70px;
+ }
+ .form-label {
+  font-size: large;
+  margin: 10px;
+  margin-top: 12px;
+}
+.mb-3 {
+  height: 120px;
+  margin: 0px;
+}
+.form-control {
+  margin-left: 5px;
+}
+.btn.btn-secondary.me-2 {
+  margin: 13px;
+}  
+.btn.btn-primary {
+  margin: 13px;
+  width: 60px;
+}
+.col-md-2 {
+  padding-bottom: 15px;
+}
 </style>

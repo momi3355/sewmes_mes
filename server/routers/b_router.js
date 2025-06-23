@@ -5,7 +5,7 @@ const matCheckService = require('../services/Material/matCheck.js');
 const checkedMaterialService = require('../services/Material/matCheckView.js')
 const companyService = require('../services/Material/company.js');
 const matHold = require('../services/Material/matHold.js');
-
+const matInOutService = require('../services/Material/matInOut.js');
 
 router.get("/matorderview", async (req, res) => {
   try {
@@ -134,6 +134,16 @@ router.post("/material/hold/delete", async (req, res) => {
   }
 });
 
+router.get("/material/inout-list", async (req, res) => {
+  try {
+    // 나중에 검색 기능을 추가하면 req.query를 서비스로 넘겨줄 수 있음
+    // const searchConditions = req.query;
+    const result = await matInOutService.getInOutList();
+    res.send(result);
+  } catch (err) {
+    res.status(500).send({ message: "입출고 내역 조회 중 오류 발생" });
+  }
+});
 
 //router.post("/material/start-check", async (req, res) => {
 //  try {
