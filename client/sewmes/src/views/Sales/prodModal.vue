@@ -46,22 +46,22 @@ const modalTableColumns = [
     },
     { title: "순번", field: "num", width: 100 },
     { title: "제품코드", field: "prodcode", width: 175 },
-    { title: "제품명", field: "prodname", width: 400 },
-    { title: "카테고리", field: "category", width: 225, 
-    formatter:(cell)=>{
+    { title: "제품명", field: "prodname"},
+    { title: "카테고리", field: "category", width: 150, 
+        formatter:(cell)=>{
     const code = cell.getValue();
     const matched = categorycode.value.find(item => item.detail_code == code);
     return matched ? matched.detail_name : code;
   }
     },
-    { title: "색상", field: "prodcolor", width: 225,
+    { title: "색상", field: "prodcolor", width: 100,
     formatter:(cell)=>{
     const code = cell.getValue();
     const matched = colorcode.value.find(item => item.detail_code == code);
     return matched ? matched.detail_name : code;
   }
      },
-    { title: "사이즈", field: "prodsize", width: 225,
+    { title: "사이즈", field: "prodsize", width: 150,
     formatter:(cell)=>{
     const code = cell.getValue();
     const matched = sizecode.value.find(item => item.detail_code == code);
