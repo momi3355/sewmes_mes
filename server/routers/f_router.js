@@ -18,9 +18,11 @@ const storage = multer.diskStorage({
     cb(null, path.join(__dirname, '../uploads/'));
   },
   filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname); 
-    const basename = path.basename(file.originalname, ext);
-    const safeFilename = Date.now() + '-' + basename.replace(/\s/g, '_') + ext;
+    const ext = path.extname(file.originalname);
+    // 한글 포함 모든 문자를 제거하고 영문+숫자, 하이픈만 허용 (파일명 안전하게)
+    const basename = path.basename(file.originalname, ext)
+      .replace(/[^a-zA-Z0-9\-]/g, '_');
+    const safeFilename = Date.now() + '-' + basename + ext;
     cb(null, safeFilename);
   }
 });
@@ -87,10 +89,16 @@ router.put('/quality/:code', upload.single('image'), async(req, res) => {
 });
 
 //품질 갱신
-router.put('/quality/renew/:code', upload.none(), async(req, res) => {
+router.put('/quality/renew/:code', upload.single('image'), async(req, res) => {
   let qualityInfo = req.body;
   let quality_code = req.params.code;
-  qualityInfo.quality_code = quality_code
+  qualityInfo.qualityCode = quality_code;
+  console.log(qualityInfo.qualityCode)
+  if(req.file){
+    qualityInfo.fileName = req.file.filename;
+    qualityInfo.originalName = req.file.originalname;
+    qualityInfo.filePath = req.file.filename;
+  }
   let result = await qualityService.qualityRenewal(qualityInfo)
                                    .catch(err => console.log(err));
   res.send(result);

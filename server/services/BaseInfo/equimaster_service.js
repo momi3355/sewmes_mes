@@ -62,8 +62,14 @@ const equiModify = async(equiCode, equiInfo) => {
   let resInfo = await mariadb.query("updateEquiInfo", data).catch(err => console.log(err));
 
   if(equiInfo.fileName) {
-    const imgParams = [equiCode, equiInfo.fileName, equiInfo.originalName, equiInfo.filePath];
-    await mariadb.query("updateImgInfo", imgParams).catch(err => console.log(err));
+    let imgfind = await mariadb.query('selectIfImgfind', equiCode);
+    const imgParams = {file_name: fileName, original_name: originalName, file_path: filePath};
+    if(imgfind.length > 0){
+      await mariadb.query("updateImgInfo", [imgParams, equiCode]).catch(err => console.log(err));
+    }else{
+
+    }
+    await mariadb.query("insertImages", [equiCode,  fileName, originalName, filePath]).catch(err => console.log(err));
   }
 
   let result = null;

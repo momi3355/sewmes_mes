@@ -6,7 +6,7 @@ import groupcodelist from "../../assets/js/utils/groupcodelist.js";
 import moment from 'moment';
 import Swal from 'sweetalert2';
 
-import EquiMaint from "../Equipment/EquiMaint.vue";
+// import EquiMaint from "../Equipment/EquiMaint.vue";
 
 let equiList = ref([]);
 let equiInfo = ref({});
@@ -335,6 +335,19 @@ const selectedEquiCode = ref('');
 const selectedEquiName = ref('');
 const loggedInEmpNum = ref('emp1234');  // 실제 사원번호는 로그인 정보에서 받아서 세팅
 
+const showImgModal = ref(false);
+const modalImgSrc = ref(null);
+
+const openImageModal = (src) => {
+  modalImgSrc.value = src;
+  showImgModal.value = true;
+};
+
+const closeImageModal = () => {
+  showImgModal.value = false;
+  modalImgSrc.value = null;
+};
+
 // 설비 목록에서 행 클릭 시 설비 정보 세팅 (기존 rowClick 이벤트 내에 추가 가능)
 const onEquiRowClick = (rowData) => {
   selectedEquiCode.value = rowData.equi_code;
@@ -448,8 +461,8 @@ const openMaintModal = (type) => {
         <div class="card mb-2 detail-card">
           <div class="card-header header-fixed mb-3 mt-3 d-flex align-items-center gap-2">
             <h5 class="mt-0 text-start flex-grow-1">설비 상세</h5>
-            <button class="btn btn-secondary" @click="openMaintModal('0t1t')">점검</button>
-            <button class="btn btn-danger" @click="openMaintModal('0t3t')">수리</button>
+            <!-- <button class="btn btn-secondary" @click="openMaintModal('0t1t')">점검</button>
+            <button class="btn btn-danger" @click="openMaintModal('0t3t')">수리</button> -->
             <button class="btn btn-success" @click="saveEquiMaster">저장</button>
           </div>
           <div class="card-body detail-body">
@@ -513,12 +526,21 @@ const openMaintModal = (type) => {
                 <tr>
                   <th>이미지</th>
                   <td colspan="3">
-                    <input type="file" ref="imageInput" />
-                    <div v-if="equiInfo.equi_img" class="image-preview mt-2">
-                      <img :src="`/api/getimgs/${equiInfo.equi_img}`" style="max-height: 150px;" />
+                    <!-- 이미지 썸네일과 모달 -->
+                    <div v-if="equiInfo.equi_img" class="image-preview mt-2" style="cursor:pointer;">
+                      <img :src="`/api/getimgs/${equiInfo.equi_img}`" style="max-height: 150px;"
+                        @click="openImageModal(`/api/getimgs/${equiInfo.equi_img}`)" alt="참고 이미지" />
                     </div>
-                    <div v-else>
-                      <span class="text-muted">참고 이미지가 없습니다.</span>
+
+                    <!-- 파일 입력은 항상 보여줌 -->
+                    <input type="file" ref="imageInput" />
+
+                    <!-- 모달 -->
+                    <div v-if="showImgModal" class="modal-overlay" @click.self="closeImageModal">
+                      <div class="modal-content">
+                        <button class="btn btn-close" style="color: red;" @click="closeImageModal">X</button>
+                        <img :src="modalImgSrc" style="max-width: 70vw; max-height: 70vh;" />
+                      </div>
                     </div>
                   </td>
                 </tr>
@@ -528,19 +550,19 @@ const openMaintModal = (type) => {
         </div>
 
         <!-- 이력 카드 -->
-        <div class="card mb-2 detail-card">
+        <!-- <div class="card mb-2 detail-card">
 
           <div class="card flex-grow-1">
             <tabulator-card card-title="설비 비가동 이력" :table-data="equiMaintHistoryList"
               :table-columns="equiMaintHistoryColumns" height="137px" />
           </div>
-        </div>
+        </div> -->
       </div>
     </div>
   </div>
 
   <!-- 점검/수리 모달 -->
-   <EquiMaint
+   <!-- <EquiMaint
   v-if="isMaintModalOpen"
   :type="maintType"
   :equiCode="selectedEquiCode"
@@ -551,10 +573,35 @@ const openMaintModal = (type) => {
   :lastCheck="equiInfo.last_check"
   :nextCheck="equiInfo.check_date"
   @close="isMaintModalOpen = false"
-/>
+/> -->
 </template>
 
 <style scoped>
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+}
+.modal-content {
+  position: relative;
+  background: white;
+  padding: 10px;
+  border-radius: 4px;
+}
+.btn-close {
+  position: absolute;
+  top: 5px;
+  right: 8px;
+  background: transparent;
+  border: none;
+  font-size: 20px;
+  cursor: pointer;
+}
+
 .full-height {
   height: 840px;
   display: flex;
@@ -601,8 +648,8 @@ const openMaintModal = (type) => {
 }
 
 .detail-body {
-  max-height: 350px;
-  /* overflow-y: auto; */
+  height: 575px;
+  overflow-y: auto;
   padding: 10px;
 }
 

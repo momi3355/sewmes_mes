@@ -88,6 +88,14 @@ SET ?
 WHERE  code = ?
 `;
 
+//이미지 있는지 조회
+const selectIfImgfind = 
+`
+SELECT code 
+FROM   images 
+WHERE  code = ?
+`;
+
 //공통코드 조회(groupcode)
 const groupCodeSearch = `
 SELECT group_name, detail_code, detail_name 
@@ -114,4 +122,5 @@ module.exports = {
   , updateImgInfo
   , groupCodeSearch
   , detailCodeSearch
+  , selectIfImgfind
 }
