@@ -93,11 +93,20 @@ const fetchProductList = async () => {
 
 watch(() => props.isModalOpen, async (isOpen) => {
   if (isOpen) {
-    await groupcodelist.groupCodeList("0k", prdtype);
-    await groupcodelist.groupCodeList("0j", catetype);
-    await groupcodelist.groupCodeList("0h", sizetype);
-    await groupcodelist.groupCodeList("0i", colortype);
-    fetchProductList();
+    Promise.all([
+      groupcodelist.groupCodeList("0k", prdtype),
+      groupcodelist.groupCodeList("0j", catetype),
+      groupcodelist.groupCodeList("0h", sizetype),
+      groupcodelist.groupCodeList("0i", colortype),
+    ]).then(() => {
+      fetchProductList();
+    }).catch(() => {
+      Swal.fire({
+        title: "접속실패",
+        text: "네트워크 접속에 실패했습니다.",
+        icon: "error"
+      });
+    });
   }
 }, { immediate: true });
 
@@ -110,7 +119,11 @@ const selectedSave = () => {
   const selectedData = tabulator.getSelectedData();
 
   if (!selectedData.length) {
-    alert("선택한 행이 없습니다.");
+    Swal.fire({
+      title: "필수 정보",
+      text: "선택한 행이 없습니다",
+      icon: "error"
+    });
     return;
   }
 
