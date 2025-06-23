@@ -122,7 +122,7 @@ VALUES(
             work_inst_code
         FROM t_hold 
         WHERE work_inst_code = ?
-        AND   use_yn = '0b1b'
+        AND   use_yn = '0b2b'
 `;
 
 
@@ -150,7 +150,8 @@ VALUES(
 const updateMaterialHold=
 `
 UPDATE t_hold
-SET ?
+SET use_yn=?,
+    release_qty=?
 WHERE hold_id=?`;
 
 //마지막공정 반제품출고
@@ -164,7 +165,7 @@ INSERT INTO t_semi_prod_out(semi_release_code
                                 ,lot)
 
 VALUES(                          ?
-                                ,?
+                                ,NOW()
                                 ,?
                                 ,?
                                 ,?
@@ -180,7 +181,7 @@ WHERE hold_id = ?`;
 
 const updateWorkInstStatus =`
 UPDATE t_work_inst
-SET ?              
+SET  inst_state = ?              
 WHERE work_inst_code = ?;
 `;
 
@@ -221,15 +222,14 @@ FROM
     t_hold         
 WHERE
     work_inst_code = ?     
-    AND material_code = ?  
-    AND lot_code = ?     
+    AND material_code = ?     
     AND use_yn IN ('0b1b', '0b2b');
 `;
 
 const updateProdPlanComplete=`
 UPDATE t_prod_plan
 SET
-    complete= 'Y',        
+    complete= ?,        
  
 WHERE
     prod_plan_code = ?
@@ -310,6 +310,16 @@ SET equi_status=?
 WHERE equi_code=?
 `
 
+const updateWorkProcessWithCompletion=`
+     UPDATE t_work_process
+        SET
+            input_qty = ?,
+            prod_qty = ?,
+            defect_qty = ?,
+            complete = ?,
+            work_end_date = NOW()  -- ⭐ 여기에 NOW()를 직접 추가합니다 ⭐
+        WHERE work_process_code = ?
+`
 
 module.exports={
         inOunSoInboundForProcess,

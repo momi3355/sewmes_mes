@@ -85,7 +85,7 @@ WHERE
 `;
 
 //작업지시상세 조회
-const getWorkInstDetails = `
+let getWorkInstDetailInfo = `
 SELECT
     twi.work_inst_code,
     twi.inst_qty,
@@ -143,6 +143,32 @@ ORDER BY
     vw.item_code
 `;
 
+//제품코드에 대한 필요 자재
+const needMaterialPrdCode =`
+SELECT material_code
+        ,need 
+FROM v_winst_details
+WHERE prod_code= ?
+AND material_code = ?
+`;
+//화면에서 필요한 자재들 표시, 
+const displayMaterials=
+`SELECT th.hold_id
+		,th.work_inst_code
+        ,th.material_code
+        ,tm.material_name
+        ,th.lot_code
+        ,tm.unit
+        ,tm.standard
+        ,tm.color
+        ,wd.need
+FROM t_hold th
+LEFT JOIN t_material tm ON th.material_code = tm.material_code
+join v_winst_details wd on tm.material_code = wd.material_code
+WHERE work_inst_code= ?
+`;
+
+
 module.exports={
     getProcessFlowByWorkInst,
     getEquipmentByProcess,
@@ -150,7 +176,9 @@ module.exports={
     deleteWorkProcessByworkInstCode,
     updateWorkProcessByWorkInstCode,
     updateProcessStartDate,
-    getWorkInstDetails,
+    getWorkInstDetailInfo,
     updateWorkInstStateToInProgress,
-    updateEndWorkTime
+    updateEndWorkTime,
+    needMaterialPrdCode,
+    displayMaterials
 }
