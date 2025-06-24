@@ -327,12 +327,6 @@ const updateCompanyColumnEditor = () => {
 .form-control {
   margin-left: 5px;
 }
-.materialTableCard{
-  width: 1666px;
-}
-.productTableCardRef{
-  width: 1666px;
-}
 select.form-control {
   /* 1. 기본 브라우저 화살표 숨기기 */
   -webkit-appearance: none;
