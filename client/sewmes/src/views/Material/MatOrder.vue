@@ -281,7 +281,7 @@ const updateCompanyColumnEditor = () => {
 
       <div class="row mt-4">
         <div class="col-lg-12">
-          <tabulator-card ref class="materialTableCard" card-title="공급필요 자재 목록" :table-data="materialData"
+          <tabulator-card ref="materialTableCard" card-title="공급필요 자재 목록" :table-data="materialData"
             :table-columns="materialColumns" :tabulator-options="{
                 apginationSize: 7,
                 rowClick: handleMatRowClick,
