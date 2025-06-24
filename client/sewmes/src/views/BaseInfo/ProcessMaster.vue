@@ -1,6 +1,7 @@
 <script setup>
 import axios from 'axios';
-import { ref, onMounted } from "vue";
+import { onBeforeMount, ref, onMounted } from "vue";
+import { useStore } from "vuex";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import groupcodelist from "../../assets/js/utils/groupcodelist";
 import Swal from 'sweetalert2';
@@ -11,6 +12,16 @@ const processTableRef = ref(null);
 const searchProcessCode = ref('');
 const searchProcessName = ref('');
 const searchEquiType = ref('');
+
+// 부서별 권한 관련
+const store = useStore(); 
+const dept = ref("");
+onBeforeMount(() => {
+  dept.value = store.state.user.dept;
+})
+const canShow = (allowedDepts) => {
+  return allowedDepts.includes(dept.value);
+};
 
 // 공통 코드 변환 객체, 함수 ======================
 const euqiTypeList = ref([]);
@@ -268,8 +279,8 @@ onMounted(() => {
           <div class="card-header d-flex justify-content-between align-items-center">
             <span>공정 등록</span>
             <div>
-              <button class="btn btn-sm btn-success" @click="saveProcess" style="margin-right: 10px;">저장</button>
-              <button class="btn btn-sm btn-delete" @click="deleteProcess" style="background-color: red; color: black;">삭제</button>
+              <button class="btn btn-sm btn-success" @click="saveProcess" style="margin-right: 10px;" v-if="canShow(['0c2c', '0c5c'])">저장</button>
+              <button class="btn btn-sm btn-delete" @click="deleteProcess" style="background-color: red; color: black;" v-if="canShow(['0c2c', '0c5c'])">삭제</button>
             </div>
           </div>
           <div class="card-body">

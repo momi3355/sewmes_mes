@@ -1,11 +1,20 @@
 <script setup>
-import { ref, watch } from 'vue';
+import { onBeforeMount, ref, watch } from 'vue';
+import { useStore } from "vuex";
 import axios from 'axios';
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import Swal from 'sweetalert2';
 import { formatToDate } from '@/utils/dateUtils';
 
-
+// 부서별 권한 관련
+const store = useStore(); 
+const dept = ref("");
+onBeforeMount(() => {
+  dept.value = store.state.user.dept;
+})
+const canShow = (allowedDepts) => {
+  return allowedDepts.includes(dept.value);
+};
 
 
 const props = defineProps({
@@ -182,7 +191,7 @@ const selectCp = (cp) => {
           </TabulatorCard>
 
           <div class="modal-actions">
-              <button class="btn btn-primary" @click="selectedSave">저장</button>
+              <button class="btn btn-primary" @click="selectedSave" v-if="canShow(['0c2c', '0c5c'])">저장</button>
               <button class="btn btn-secondary ms-2" @click="handleCloseModal">닫기</button>
           </div>
       </div>

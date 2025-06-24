@@ -1,13 +1,22 @@
 <script setup>
 import axios from 'axios';
 import { useStore } from "vuex";
-import { ref, onMounted } from 'vue';
+import { onBeforeMount, ref, onMounted } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
 import OutsouInboundTestModal from './OutsouInboundTestModal.vue';
 import ArgonButton from "@/components/ArgonButton.vue";
 import moment from 'moment';
 import Swal from 'sweetalert2';
 import { formatToDate } from '@/utils/dateUtils';
+
+// 부서별 권한 관련
+const dept = ref("");
+onBeforeMount(() => {
+  dept.value = store.state.user.dept;
+})
+const canShow = (allowedDepts) => {
+  return allowedDepts.includes(dept.value);
+};
 
 const productTableRef = ref(null);
 // 사원정보 가져오기
@@ -251,7 +260,7 @@ onMounted(() => {
           :on="tabulatorEvent"
         >
           <template #actions>
-            <ArgonButton style="width: 150px;" color="success" variant="gradient" @click="openModal">
+            <ArgonButton style="width: 150px;" color="success" variant="gradient" @click="openModal" v-if="canShow(['0c2c', '0c5c'])">
               검수 진행
             </ArgonButton>
           </template>

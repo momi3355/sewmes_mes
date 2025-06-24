@@ -1,5 +1,6 @@
 <script setup>
-import { onMounted, reactive, ref, computed } from "vue";
+import { onBeforeMount, onMounted, reactive, ref, computed } from "vue";
+import { useStore } from "vuex";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import axios from "axios";
 import groupcodelist from "../../assets/js/utils/groupcodelist.js";
@@ -19,6 +20,15 @@ let imageInput = ref();
 let equiStatus = ref([]);
 let maintCate = ref([]);
 
+// 부서별 권한 관련
+const store = useStore(); 
+const dept = ref("");
+onBeforeMount(() => {
+  dept.value = store.state.user.dept;
+})
+const canShow = (allowedDepts) => {
+  return allowedDepts.includes(dept.value);
+};
 
 //설비기준정보 컬럼
 const equiListColumns = [
@@ -463,7 +473,7 @@ const openMaintModal = (type) => {
             <h5 class="mt-0 text-start flex-grow-1">설비 상세</h5>
             <!-- <button class="btn btn-secondary" @click="openMaintModal('0t1t')">점검</button>
             <button class="btn btn-danger" @click="openMaintModal('0t3t')">수리</button> -->
-            <button class="btn btn-success" @click="saveEquiMaster">저장</button>
+            <button class="btn btn-success" @click="saveEquiMaster" v-if="canShow(['0c4c', '0c5c'])">저장</button>
           </div>
           <div class="card-body detail-body">
             <table class="table table-bordered table-sm align-middle mb-2">

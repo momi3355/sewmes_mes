@@ -1,5 +1,6 @@
 <script setup>
-import { ref, nextTick, watch, onMounted} from "vue";
+import { onBeforeMount, ref, nextTick, watch, onMounted} from "vue";
+import { useStore } from "vuex";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue"; // 이 경로가 맞는지 다시 확인하세요.
 import ProductionPlanModal from "./ProductionPlanModal.vue";
 import axios from 'axios';
@@ -7,6 +8,16 @@ import moment from 'moment';
 import Swal from 'sweetalert2';
 // 실제 작업지시 데이터
 const workInstData = ref([]); //초기에는 빈값
+
+// 부서별 권한 관련
+const store = useStore(); 
+const dept = ref("");
+onBeforeMount(() => {
+  dept.value = store.state.user.dept;
+})
+const canShow = (allowedDepts) => {
+  return allowedDepts.includes(dept.value);
+};
 
 // 공통 코드 -> 사용자 친화적 문구 맵핑 객체
 const instStateMap = {
@@ -387,7 +398,7 @@ const searchAllField = async () => {
 
         <div class="row mt-3">
             <div class="col-12">
-                <button class="btn btn-info" @click="openModal">생산계획서 불러오기</button>
+                <button class="btn btn-info" @click="openModal" v-if="canShow(['0c2c', '0c5c'])">생산계획서 불러오기</button>
                 </div>
         </div>
 
@@ -402,9 +413,9 @@ const searchAllField = async () => {
                         :body-padding="'5px'"
                         > <template #actions>
                             <!-- <button class="btn btn-success me-2" @click="saveWorkInstructions(workInstData)">전체저장</button> -->
-                            <button class="btn btn-success me-2" @click="saveSelectedRows">저장</button>
-                            <button class="btn btn-secondary me-2" @click="addRow">행추가</button>
-                            <button class="btn btn-warning me-2" @click="deleteSelectedRows">삭제</button>
+                            <button class="btn btn-success me-2" @click="saveSelectedRows" v-if="canShow(['0c2c', '0c5c'])">저장</button>
+                            <button class="btn btn-secondary me-2" @click="addRow" v-if="canShow(['0c2c', '0c5c'])">행추가</button>
+                            <button class="btn btn-warning me-2" @click="deleteSelectedRows" v-if="canShow(['0c2c', '0c5c'])">삭제</button>
                         </template>
                     </tabulator-card>
                 </div>
