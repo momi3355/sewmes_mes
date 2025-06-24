@@ -293,7 +293,7 @@ const updateCompanyColumnEditor = () => {
           </div>
         </div>
         <div class="col-12 mt-4">
-          <tabulator-card ref class="productTableCardRef" card-title="발주 요청서 작성" :table-data="productData"
+          <tabulator-card ref="productTableCardRef" card-title="발주 요청서 작성" :table-data="productData"
             :table-columns="productColumns">
             <template #actions>
               <button class="btn btn-secondary" @click="delOrder">삭제</button>
