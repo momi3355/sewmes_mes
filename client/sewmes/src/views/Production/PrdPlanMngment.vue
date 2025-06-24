@@ -410,7 +410,7 @@ onMounted(() => {
       <div class="d-flex justify-content-between align-items-center">
         <!-- 왼쪽: 조회 버튼 -->
         <div>
-          <button class="btn btn-info" style="width: 150px;" @click="openModal">주문 제품 목록 조회</button>
+          <button class="btn btn-info" style="width: 200px;" @click="openModal">주문 제품 목록 조회</button>
         </div> 
       </div>
     </div>
