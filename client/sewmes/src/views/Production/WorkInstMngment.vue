@@ -11,6 +11,10 @@ const workInstData = ref([]); //초기에는 빈값
 
 // 부서별 권한 관련
 const store = useStore(); 
+
+const employeeMap = ref({});
+const userCode = store.state.user.emp_num;
+const userName = store.state.user.emp_name;
 const dept = ref("");
 onBeforeMount(() => {
   dept.value = store.state.user.dept;
@@ -40,13 +44,13 @@ const workInstColumns = [
     { title: "NO", field: "NO", width: 180 },
     { title: "작업지시코드", field: "work_inst_code", width: 180 , visible: false },
     { title: "생산계획코드", field: "prod_plan_code", width: 180, visible: false },
-    {title:"제품코드", field: "prod_code", width: 180  },
-    { title: "제품명", field: "prod_name", width: 250, editor: "input" },
+    {title:"제품코드", field: "prod_code" },
+    { title: "제품명", field: "prod_name",  editor: "input" },
     { title: "지시수량", field: "inst_qty", width: 200, editor: "input",hozAlign: "right" },
     {
         title: "납기일자",
         field: "dead_date",
-        width: 200 ,
+       
         hozAlign: "right",
         // 납기일자 포맷터 추가
         formatter: function(cell){
@@ -64,8 +68,24 @@ const workInstColumns = [
             return instStateMap[value] || value;
         }
     },
-    { title: "담당자", field: "emp_num", width: 180, editor: "input" },
-    {
+{ 
+        title: "담당자", 
+        field: "emp_num", // 데이터 필드는 emp_num 유지
+        width: 180, 
+        // emp_name을 표시하기 위한 formatter
+        formatter: function(cell) {
+            const empNum = cell.getValue(); // emp_num 값을 가져옴
+            // empNum이 'A006'인 경우, 무조건 '조정민'을 반환
+            if (empNum === 'A006') {
+                return '조정민';
+            }
+            // 그 외의 경우, employeeMap에서 empNum에 해당하는 emp_name을 찾아 반환
+            // 없다면 (null이거나 맵에 없는 경우) empNum을 그대로 반환하거나 빈 문자열 반환
+            return employeeMap.value[empNum] || empNum || ''; 
+        },
+        // 담당자 필드는 직접 편집 불가능하도록 설정 (팝업 등으로 선택하게 하는 경우)
+        editable: false 
+    },    {
         title: "지시서등록일자",
         field: "inst_reg_date",
         width: 350,
@@ -134,7 +154,8 @@ const handleSelectedPlans = (plans) => {
         inst_qty: plan.prod_qty,
         dead_date: plan.dead_date, //주문상세테이블과 조인해서 가져올 납기일자
         inst_state: '0s1s', //초기상태
-        emp_num: '', // 담당자번호 초기화
+        emp_num: userCode, // 담당자번호 초기화
+        emp_name: userName 
         //inst_date: inst_reg_date 저장버튼 누르면 등록일 나오고 지시버튼 누르면 들어가는 내용
     }));
     workInstData.value = [...workInstData.value, ...newWorkInsts];
@@ -171,7 +192,8 @@ const addRow = () => {
         inst_qty: 0, //지시수량 사용자입력
         dead_date: '',
         inst_state: '0s1s', //초기상태
-        emp_num: '',
+        emp_num: userCode,
+        emp_name: userName 
     }
     workInstData.value.push(newRow);
 
@@ -230,7 +252,11 @@ const saveSelectedRows = async () => {
 
     const selectedRows = tabulatorInstance.getSelectedRows();
     if (selectedRows.length === 0) {
-        alert("저장할 작업지시를 선택해주세요.");
+       Swal.fire({
+            title: "경고",
+            text: "저장할 작업지시를 선택해주세요.",
+            icon: "warning"
+        });
         return;
     }
 
@@ -245,8 +271,11 @@ const saveSelectedRows = async () => {
 
     } catch (error) {
         console.error("선택된 행 저장 중 오류 발생:", error);
-        alert("선택된 작업지시 저장 중 오류가 발생했습니다.");
-    }
+        Swal.fire({
+            title: "오류",
+            text: "선택된 작업지시 저장 중 오류가 발생했습니다.",
+            icon: "error"
+        });    }
 };
 
 
@@ -262,13 +291,27 @@ const deleteSelectedRows = async () => {
 
     const selectedRows = tabulatorInstance.getSelectedRows(); // 인스턴스를 통해 메서드 호출
     if (selectedRows.length === 0) {
-        alert("삭제할 작업지시를 선택해주세요.");
+        Swal.fire({
+            title: "경고",
+            text: "삭제할 작업지시를 선택해주세요.",
+            icon: "warning"
+        });
         return;
     }
 
-    const confirmDelete = confirm("선택된 작업지시를 정말 삭제하시겠습니까? (생산 전 상태의 작업지시만 삭제 가능합니다.)");
-    if (!confirmDelete) {
-        return;
+    const result = await Swal.fire({
+        title: "정말 삭제하시겠습니까?",
+        text: "선택된 작업지시를 정말 삭제하시겠습니까? (생산 전 상태의 작업지시만 삭제 가능합니다.)",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonColor: "#3085d6",
+        cancelButtonColor: "#d33",
+        confirmButtonText: "삭제",
+        cancelButtonText: "취소"
+    });
+
+    if (!result.isConfirmed) {
+        return; // 사용자가 '취소'를 클릭했으면 함수 종료
     }
 
     const deletableWorkInstCodes = [];
@@ -355,6 +398,7 @@ const searchAllField = async () => {
                 dead_date: item.dead_date,
                 inst_state: item.inst_state,
                 emp_num: item.emp_num,
+                emp_name: item.emp_name,
                 inst_reg_date: item.inst_reg_date,
             }));
             console.log("검색된 작업지시 목록이 성공적으로 로드되었습니다:", workInstData.value);
