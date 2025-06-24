@@ -48,7 +48,7 @@ const getWorkInstAll= async(searchParams = {}) => { // searchParams를 인자로
         // 프론트엔드에서 넘어온 검색 파라미터들을 구조 분해 할당
         // 이 이름들은 프론트엔드에서 axios.get('/api/allworkInst', { params: validParams })로 보낸 파라미터 이름과 일치해야 합니다.
         const {  prodName, instState, empNum } = searchParams;
-
+        
        
         // 2. 제품명 (prodName) 검색 조건 추가 (tp.prod_name 컬럼)
         if (prodName) {
@@ -83,6 +83,9 @@ const getWorkInstAll= async(searchParams = {}) => { // searchParams를 인자로
         throw error;
     }
 }
+
+
+
 
 // 작업지시서 저장 (재고 부족 시에도 홀드 기록, use_yn 고정, 수량은 필요량으로)
 const saveWorkInstructions = async (workInstructions) => {
@@ -475,4 +478,5 @@ module.exports ={
     getWorkInstAll,
     generateWorkInstCode,
     deleteWorkInstructions,
+    
 };
