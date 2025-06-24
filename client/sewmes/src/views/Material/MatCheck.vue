@@ -1,7 +1,7 @@
 <!--자재 수입검사 관리-->
 <script setup>
 import { TabulatorFull as Tabulator } from "tabulator-tables";
-import { ref, onMounted } from "vue"; // Import ref and onMounted
+import { onBeforeMount, ref, onMounted } from "vue"; // Import ref and onMounted
 import { useStore } from "vuex";
 import axios from "axios";
 import Swal from 'sweetalert2';
@@ -25,6 +25,15 @@ const userInfo = ref(null);
 
 // 모달 컴포넌트 참조
 const isTestModalOpen = ref(false);
+
+// 부서별 권한 관련 
+const dept = ref("");
+onBeforeMount(() => {
+  dept.value = store.state.user.dept;
+})
+const canShow = (allowedDepts) => {
+  return allowedDepts.includes(dept.value);
+};
 
 // 모달을 여는 함수
 const openCheckModal = (item) => {
@@ -199,7 +208,7 @@ function refreshPage() {
           height="800px"
         >
           <template #actions>
-            <ArgonButton class="check" color="success" variant="gradient" @click="startCheck">
+            <ArgonButton class="check" color="success" variant="gradient" @click="startCheck" v-if="canShow(['0c3c', '0c5c'])">
               수입검사
             </ArgonButton>
           </template>

@@ -27,9 +27,9 @@
       >
         <!-- actions 슬롯에 버튼을 삽입 -->
         <template #actions>
-          <button class="btn btn-outline-secondary btn-sm me-2" id="openModal" @click="openModal">제품추가 🧾</button>
-          <ArgonButton class="removebtn" color="danger" id="delbtn" @click="deleteEvent">삭제</ArgonButton>
-          <argon-button color="success" @click="saveEvent">저장</argon-button>
+          <button class="btn btn-outline-secondary btn-sm me-2" id="openModal" @click="openModal" v-if="canShow(['0c1c', '0c5c'])">제품추가 🧾</button>
+          <ArgonButton class="removebtn" color="danger" id="delbtn" @click="deleteEvent" v-if="canShow(['0c1c', '0c5c'])">삭제</ArgonButton>
+          <argon-button color="success" @click="saveEvent" v-if="canShow(['0c1c', '0c5c'])">저장</argon-button>
         </template>
       </tabulator-card>
     </div>
@@ -49,7 +49,8 @@
 <script setup>
 import { TabulatorFull as Tabulator } from 'tabulator-tables';
 import Swal from 'sweetalert2';
-import { ref, onMounted } from "vue";
+import { onBeforeMount, ref, onMounted } from "vue";
+import { useStore } from "vuex";
 // import { useStore } from 'vuex';
 import axios from "axios";
 import ArgonButton from "@/components/ArgonButton.vue";
@@ -75,6 +76,16 @@ const selectCheckBox = ref([]);
 const outCpCode = ref({});
 // 삭제
 const deletedItems = ref([]);
+
+// 부서별 권한 관련
+const store = useStore(); 
+const dept = ref("");
+onBeforeMount(() => {
+  dept.value = store.state.user.dept;
+})
+const canShow = (allowedDepts) => {
+  return allowedDepts.includes(dept.value);
+};
 
 // 외주업체 목록
 const companyColumns = [

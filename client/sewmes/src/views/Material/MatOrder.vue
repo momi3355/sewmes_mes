@@ -1,9 +1,10 @@
 <!--자재 발주서 -->
 <script setup>
-import { ref, onMounted } from "vue";
+import { onBeforeMount, ref, onMounted } from "vue";
 import { TabulatorFull as Tabulator } from "tabulator-tables";
 import axios from "axios";
 import Swal from 'sweetalert2';
+import { useStore } from "vuex";
 
 import ArgonButton from "@/components/ArgonButton.vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
@@ -18,6 +19,17 @@ const productData = ref([]); // '발주 요청서' 테이블의 데이터
 const companyList = ref([]);  // 공급처 목록
 const materialTableCard = ref(null);
 const productTableCardRef = ref(null); // '발주 요청서' 테이블을 감싸는 카드 컴포넌트의 ref
+
+// 부서별 권한 관련
+const store = useStore(); 
+const dept = ref("");
+onBeforeMount(() => {
+  dept.value = store.state.user.dept;
+})
+const canShow = (allowedDepts) => {
+  return allowedDepts.includes(dept.value);
+};
+
 
 // --- 2. Tabulator 컬럼 정의 (가장 안정적인 일반 상수 형태) ---
 
@@ -287,7 +299,7 @@ const updateCompanyColumnEditor = () => {
                 rowClick: handleMatRowClick,
               }" />
           <div class="button-container">
-            <ArgonButton class="addbutton" color="info" variant="gradient" @click="addSelectedMaterials">
+            <ArgonButton class="addbutton" color="info" variant="gradient" @click="addSelectedMaterials" v-if="canShow(['0c3c', '0c5c'])">
               추가
             </ArgonButton>
           </div>
@@ -296,8 +308,8 @@ const updateCompanyColumnEditor = () => {
           <tabulator-card ref class="productTableCardRef" card-title="발주 요청서 작성" :table-data="productData"
             :table-columns="productColumns">
             <template #actions>
-              <button class="btn btn-secondary" @click="delOrder">삭제</button>
-              <button class="btn btn-success" @click="saveOrder">저장</button>
+              <button class="btn btn-secondary" @click="delOrder" v-if="canShow(['0c3c', '0c5c'])">삭제</button>
+              <button class="btn btn-success" @click="saveOrder" v-if="canShow(['0c3c', '0c5c'])">저장</button>
             </template>
           </tabulator-card>
         </div>

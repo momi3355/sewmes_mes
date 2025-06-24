@@ -1,5 +1,5 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { onBeforeMount, onMounted, ref } from "vue";
 import { useStore } from "vuex";
 import axios from "axios";
 
@@ -24,6 +24,16 @@ const itemData = ref([]);
 const bomData = ref([]);
 
 const isModalOpen = ref(false);
+
+// 부서별 권한 관련
+
+const dept = ref("");
+onBeforeMount(() => {
+  dept.value = store.state.user.dept;
+})
+const canShow = (allowedDepts) => {
+  return allowedDepts.includes(dept.value);
+};
 
 const itemColumns = [
   { title: "품목코드", field: "item_code", width: 120 },
@@ -411,8 +421,8 @@ onMounted(async () => {
           <div class="card-header pb-0 d-flex justify-content-between align-items-center">
             <h5 class="mt-0 text-start">BOM 정보</h5>
             <div class="btn-container">
-              <button class="btn btn-sm btn-success me-2" @click="bomClickhandler">저장</button>
-              <button class="btn btn-sm btn-secondary" @click="bomResethandler">초기화</button>
+              <button class="btn btn-sm btn-success me-2" @click="bomClickhandler" v-show="canShow(['0c2c', '0c5c'])">저장</button>
+              <button class="btn btn-sm btn-secondary" @click="bomResethandler" v-if="canShow(['0c2c', '0c5c'])">초기화</button>
             </div>
           </div>
           <div class="card-body p-2">

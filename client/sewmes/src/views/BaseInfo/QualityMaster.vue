@@ -1,5 +1,6 @@
 <script setup>
-import { onMounted, reactive, ref } from "vue";
+import { onBeforeMount, onMounted, reactive, ref } from "vue";
+import { useStore } from "vuex";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import axios from "axios";
 import groupcodelist from "../../assets/js/utils/groupcodelist";
@@ -11,6 +12,16 @@ let qualityHistoryList = reactive([]);
 let testTargetCodeList = ref([]);
 let imageInput = ref();
 let useYnDetail = ref([]);
+
+// 부서별 권한 관련
+const store = useStore(); 
+const dept = ref("");
+onBeforeMount(() => {
+  dept.value = store.state.user.dept;
+})
+const canShow = (allowedDepts) => {
+  return allowedDepts.includes(dept.value);
+};
 
 //품질기준정보 컬럼
 const qualityColumns = [
@@ -300,7 +311,7 @@ onMounted(() => {
         <div class="card mb-2 detail-card">
           <div class="card-header header-fixed mb-3 mt-3">
             <h5 class="mt-0 text-start">검사항목 상세</h5>
-            <button class="btn btn-sm btn-success" @click="saveQualityMaster">저장</button>
+            <button class="btn btn-sm btn-success" @click="saveQualityMaster" v-if="canShow(['0c2c', '0c3c', '0c4c', '0c5c'])">저장</button>
           </div>
           <div class="card-body detail-body">
             <table class="table table-bordered table-sm align-middle mb-2">
