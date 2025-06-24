@@ -93,7 +93,7 @@ const addRow = () => {
 
 }
 // 저장 기능
-const saveProcess = async () => {
+const saveProdPlan = async () => {
   await nextTick(); // DOM 업데이트 이후 실행 보장
 
   const tableInstance = tabulatorCardRef.value?.getTabulator?.();
@@ -128,6 +128,47 @@ const saveProcess = async () => {
     Swal.fire({ title: "오류", text: "저장 중 오류 발생", icon: "error" });
   }
 };
+// 생산계획 삭제
+const deleteProdPlan = async () => {
+  const tableInstance = tabulatorCardRef.value?.getTabulator?.();
+  if (!tableInstance) {
+    console.warn("Tabulator 인스턴스를 찾을 수 없음");
+    return;
+  }
+    const selectedRows = tableInstance.getSelectedData();
+  if (selectedRows.length === 0) {
+    Swal.fire({ title: "미선택", text: "삭제할 데이터를 선택해주세요", icon: "error" });
+    return;
+  }
+
+   // 확인/취소 메시지 
+  const result = await Swal.fire({
+    title: '생산계획 삭제',
+    text: '정말로 삭제 처리하시겠습니까?',
+    icon: 'warning',
+    showCancelButton: true,
+    confirmButtonColor: '#3085d6',
+    cancelButtonColor: '#d33',
+    confirmButtonText: '예, 진행합니다',
+    cancelButtonText: '취소'
+  });
+
+  if (!result.isConfirmed) return;
+
+  const deletePlanList = selectedRows.map(item  => ({
+    prodPlanCode: item.prodPlanCode
+  }));
+  
+  try {
+    await axios.post('/api/prodPlanDelete', { plans: deletePlanList });
+    Swal.fire({ title: "삭제 완료", text: "삭제 되었습니다.", icon: "success" });
+    await searchProdPlan(); // 목록 갱신
+  } catch (err) {
+    console.error("삭제 실패:", err);
+    Swal.fire({ title: "오류", text: "삭제 중 오류 발생", icon: "error" });
+  }
+}
+
 
 // 공통코드 변환환
 const convertCode = (code) => {
@@ -386,7 +427,7 @@ onMounted(() => {
         >
           <template #actions>
             <button class="btn btn-secondary me-2" @click="addRow">행추가</button>
-            <button class="btn btn-success me-2" @click="saveProcess">저장</button>
+            <button class="btn btn-success me-2" @click="saveProdPlan">저장</button>
             <button class="btn btn-delete" @click="deleteProdPlan" style="background-color: red; color: black;">삭제</button>
           </template>
         </tabulator-card>

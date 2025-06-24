@@ -31,7 +31,7 @@
                     <th style="width: 30%;">업체명</th>
                     <td>
                       <div class="position-relative" @focusin="listOpen = true" @focusout="onFocusOut">
-                        <input type="text" class="form-control" v-model="ordercurrentOrder.cp_name" />
+                        <input type="text" class="form-control" v-model="ordercurrentOrder.cp_name" readonly/>
                         <ul class="dropdown-menu show" v-if="listOpen" style="position:absolute; top:100%; left:0; z-index: 1000;">
         
                         </ul>
@@ -40,31 +40,31 @@
                   </tr>
                   <tr>
                     <th>업체연락처</th>
-                    <td><input type="tel" class="form-control" v-model="ordercurrentOrder.cp_tel" /></td>
+                    <td><input type="tel" class="form-control" v-model="ordercurrentOrder.cp_tel" readonly/></td>
                   </tr>
                   <tr>
                     <th>주소</th>
-                    <td><input type="text" class="form-control" v-model="ordercurrentOrder.address" /></td>
+                    <td><input type="text" class="form-control" v-model="ordercurrentOrder.address" readonly/></td>
                   </tr>
                   <tr>
                     <th>주문일자</th>
-                    <td><input type="date" class="form-control" v-model="orderDateStr" /></td>
+                    <td><input type="date" class="form-control" v-model="orderDateStr" readonly/></td>
                   </tr>
                   <tr>
                     <th>납기일자</th>
-                    <td><input type="date" class="form-control" v-model="deadDateStr" /></td>
+                    <td><input type="date" class="form-control" v-model="deadDateStr" readonly/></td>
                   </tr>
                   <tr>
                     <th>영업담당자</th>
-                    <td><input type="text" class="form-control" v-model="ordercurrentOrder.emp_name" /></td>
+                    <td><input type="text" class="form-control" v-model="ordercurrentOrder.emp_name" readonly/></td>
                   </tr>
                   <tr>
                     <th>영업담당자 연락처</th>
-                    <td><input type="tel" class="form-control" v-model="ordercurrentOrder.emp_tel" /></td>
+                    <td><input type="tel" class="form-control" v-model="ordercurrentOrder.emp_tel" readonly/></td>
                   </tr>
                   <tr>
                     <th>비고</th>
-                    <td><textarea class="form-control" rows="2" v-model="ordercurrentOrder.note"></textarea></td>
+                    <td><textarea class="form-control" rows="2" v-model="ordercurrentOrder.note" readonly></textarea></td>
                   </tr>
                 </tbody>
               </table>

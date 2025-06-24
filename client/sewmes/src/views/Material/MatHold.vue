@@ -22,16 +22,6 @@ const materialData = ref([]);
 
 
 const materialColumns = [
-  {
-  formatter: "rowSelection",  // 행 선택 체크박스를 생성합니다.
-  titleFormatter: "rowSelection", // 헤더에 '전체 선택' 체크박스를 생성합니다.
-  hozAlign: "center",
-  headerSort: false,          // 이 열은 정렬 기능을 비활성화합니다.
-  cellClick: function(e, cell) { // 셀의 아무 곳이나 클릭해도 체크되도록 합니다.
-    cell.getRow().toggleSelect();
-  },
-   width: 1
-},
   { title: "자재코드", field: "material_code", hozAlign: "left" },
   { title: "자재명", field: "material_name", hozAlign: "left"},
   // { title: "LOT", field: "lot_code",  hozAlign: "left"},
@@ -114,127 +104,55 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="py-4 container-fluid">
-    <div class="row">
-      <div class="col-12">
+  <div class="container-fluid p-3 full-height">
+    <div class="search-area bg-white rounded p-3 mb-3 shadow-sm">
+      <div class="row">
         <!-- 상단 검색 영역 -->
-<div class="row searchbox mb-3">
-  <div class="col-md-2">
-    <label class="form-label">자재명</label>
-    <input type="text" class="form-control" v-model="searchField1">
-  </div>
-  <div class="col-md-2">
-    <label class="form-label">자재코드</label>
-    <input type="text" class="form-control" v-model="searchField2">
-  </div>
-  <div class="col-md-2">
-    <label class="form-label">공급처</label>
-    <input type="text" class="form-control" v-model="searchField3">
-  </div>
-
-  <!-- '수입일자'를 '자재유형' 드롭다운으로 변경 -->
-  <div class="col-md-2">
-    <label for="material-type" class="form-label">자재유형</label>
-    <select id="material-type" class="form-control" v-model="searchMaterialType">
-      <option value="">전체</option>
-      <option value="원자재">원자재</option>
-      <option value="부자재">부자재</option>
-      <option value="소모품">소모품</option>
-    </select>
-  </div>
-  
-  <div class="col-md-2 d-flex align-items-end">
-    <button class="btn btn-secondary me-2">초기화</button>
-    <button class="btn btn-primary">조회</button>
-  </div>
-</div>
-
-        <div class="row mt-4">
-          <div class="col-lg-12">
-            <!-- 
-              수정된 부분: 
-              1. 버튼을 TabulatorCard 안으로 옮깁니다.
-              2. <template #actions>로 감싸줍니다.
-            -->
-            <tabulator-card
-              ref="holdListCard"
-              card-title="예약 자재 목록"
-              :table-data="materialData"
-              :table-columns="materialColumns"
-              :tabulator-options="tabulatorEvent"
-              style="height: 800px;"
-              height="700px"
-            >
-              <!-- actions 슬롯에 버튼을 삽입합니다 -->
-              <template #actions>
-                <ArgonButton class="removebtn"color="danger" variant="gradient" @click="deleteSelectedHolds">
-                  삭제
-                </ArgonButton>
-              </template>
-            </tabulator-card>
-          </div>
+        <div class="col-md-2">
+          <label class="form-label search-label">자재명</label>
+          <input type="text" class="form-control" v-model="searchField1">
+        </div>
+        <!-- '수입일자'를 '자재유형' 드롭다운으로 변경 -->
+        <div class="col-md-2">
+          <label for="material-type" class="form-label search-label">자재유형</label>
+          <select id="material-type" class="form-control" v-model="searchMaterialType">
+            <option value="">전체</option>
+            <option value="원자재">원자재</option>
+            <option value="부자재">부자재</option>
+            <option value="소모품">소모품</option>
+          </select>
         </div>
         
+        <div class="col-md-2 d-flex align-items-end gap-2">
+          <button class="btn btn-outline-secondary w-50">초기화</button>
+          <button class="btn btn-primary w-50">조회</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-12">
+        <!-- 
+          수정된 부분: 
+          1. 버튼을 TabulatorCard 안으로 옮깁니다.
+          2. <template #actions>로 감싸줍니다.
+        -->
+        <tabulator-card
+          ref="holdListCard"
+          card-title="예약 자재 목록"
+          :table-data="materialData"
+          :table-columns="materialColumns"
+          :tabulator-options="tabulatorEvent"
+          style="height: 800px;"
+          height="700px"
+        />
       </div>
     </div>
   </div>
 </template>
+
 <style scoped>
-
- .col-lg-12{
-  margin-top: 85px;
- }
- .searchbox{
-  background-color: #FFFFFF;
-  border-radius: 1rem;
-  margin: 30px;
- }
- .btn{
-  padding: 10px;
-  margin: 0px;
- }
- .btn-secondary.me-2{
-  margin-right: 10px;
-  width: 70px;
- }
- .removebtn{
-  width: 70px;
- }
- .form-label {
-  font-size: large;
-  margin: 10px;
-  margin-top: 12px;
-}
-.mb-3 {
-  height: 120px;
-  margin: 0px;
-}
-.form-control {
-  margin-left: 5px;
-}
-.btn.btn-secondary.me-2 {
-  margin: 13px;
-}  
-.btn.btn-primary {
-  margin: 13px;
-  width: 60px;
-}
-.col-md-2 {
-  padding-bottom: 15px;
-}
-select.form-control {
-  /* 1. 기본 브라우저 화살표 숨기기 */
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-
-  /* 2. 배경 이미지로 SVG 화살표 아이콘 추가 */
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M2 5l6 6 6-6'/%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right .75rem center; /* 오른쪽 끝에서 약간 떨어진 중앙에 위치 */
-  background-size: 16px 12px;
-  
-  /* 3. 텍스트가 화살표를 덮지 않도록 오른쪽 패딩 추가 */
-  padding-right: 2.5rem;
+.search-label {
+  font-size: medium;
 }
 </style>

@@ -30,8 +30,9 @@ const getEquipmentByProcess = async (processCode) => {
 const getWorkInstDetails = async (workInstCode) => {
     try {
         console.log('Calling SQL for getWorkInstDetails with workInstCode:', workInstCode);
-        const rows = await query('getWorkInstDetails', [workInstCode]);
-
+        const rows = await query('getWorkInstDetailInfo', [workInstCode]);
+        const mateneeds = await query('displayMaterials', [workInstCode])
+        
         if (rows.length === 0) {
             return null; // 데이터가 없는 경우
         }
@@ -40,36 +41,27 @@ const getWorkInstDetails = async (workInstCode) => {
         const firstRow = rows[0];
         const details = {
             work_inst_code: firstRow.work_inst_code,
+            prod_code:firstRow.prod_code,
             prod_name: firstRow.prod_name,
             inst_qty: firstRow.inst_qty,
             inst_date: firstRow.inst_date,
             inst_state: firstRow.inst_state,
-            prod_code: firstRow.prod_code,
-            prod_type: firstRow.prod_type,
-            category: firstRow.category,
-
-            color: firstRow.color,
-            
-            size: firstRow.size,
- 
             work_start_date: firstRow.overall_work_start_date || '',
             work_end_date: firstRow.overall_work_end_date || '',
             materials: [] // 자재 정보를 담을 배열 초기화
         };
 
         const materials = [];
-        rows.forEach(row => {
+        mateneeds.forEach(mateneedInfo => {
             // item_code가 있는 경우 (즉, 유효한 자재 정보가 있는 행)에만 추가
-            if (row.item_code) {
+            if (mateneedInfo.material_code) {
                 materials.push({
-                    item_code: row.item_code,
-                    required_quantity: row.required_quantity,
-                    material_name: row.material_name,
-                    material_unit: row.material_unit,
-                    material_standard: row.material_standard,
-                    material_type: row.material_type, // SQL 쿼리에 vw.material_type 추가했다면                   
-                    lot_number: row.lot_number,             // SQL 쿼리에서 가져온 lot_number
-                    total_current_hold_qty: row.total_current_hold_qty // SQL 쿼리에서 가져온 total_current_hold_qty
+                    item_code: mateneedInfo.material_code,
+                    required_quantity: mateneedInfo.need,
+                    material_name: mateneedInfo.material_name,
+                    material_unit: mateneedInfo.material_unit,
+                    material_standard: mateneedInfo.material_standard,                 
+                    lot_number: mateneedInfo.lot_code,             // SQL 쿼리에서 가져온 lot_number
                 });
             }
         });
@@ -261,6 +253,7 @@ const insertPrdPref = async (details) => {
                     complete: isProcessCompleted ? '1a1a' : (currentProcessRow.complete || 'N') 
                 };
 
+                
                 const updateWorkProcResult = await connection.query(
                     sqlList['updateWorkProcess'], 
                     [
@@ -382,34 +375,34 @@ const insertPrdPref = async (details) => {
 
                             // 2. 해당 자재의 홀드 정보 조회
                             // 여기서 'getMaterialHoldForRelease'는 제공된 'getWorkInstMaterials' 쿼리와 유사합니다.
-                            const holdInfoResult = await connection.query(sqlList['getMaterialHoldForRelease'], [
-                                details.work_inst_code,
-                                material.item_code, // 자재 코드
-                                material.lot_number // LOT 번호
+                            const holdInfoResult = await connection.query(sqlList['needMaterialPrdCode'], [
+                                details.prod_code, material.item_code
+                                
                             ]);
-
+                            console.log(holdInfoResult);
                             // 3. 홀드 정보 유효성 검증 및 수량 확인
-                            if (holdInfoResult[0] && holdInfoResult[0].length > 0) {
-                                const hold = holdInfoResult[0][0];
+                            if ( holdInfoResult.length > 0) {
+                                const hold = holdInfoResult[0];
                                 const holdIdToUse = hold.hold_id;
                                 const currentUsedQty = hold.used_qty || 0;
                                 const availableHoldQty = hold.hold_qty - currentUsedQty; // 가용 홀드 수량
 
-                                // 4. 가용 홀드 수량 부족 시 에러 발생 (롤백 유도)
-                                if (availableHoldQty < requiredForThisPerformance) {
-                                    console.warn(`[PrdPrefService] 경고: 자재(${material.item_code}, Lot:${material.lot_number})의 홀드량 부족. 필요: ${requiredForThisPerformance}, 가용: ${availableHoldQty}`);
-                                    throw new Error(`자재(${material.item_code}) 홀드량이 부족하여 출고 및 작업 진행 불가. (가용: ${availableHoldQty}, 필요: ${requiredForThisPerformance})`);
-                                }
+                                // // 4. 가용 홀드 수량 부족 시 에러 발생 (롤백 유도)
+                                // if (availableHoldQty < requiredForThisPerformance) {
+                                //     console.warn(`[PrdPrefService] 경고: 자재(${material.item_code}, Lot:${material.lot_number})의 홀드량 부족. 필요: ${requiredForThisPerformance}, 가용: ${availableHoldQty}`);
+                                //     throw new Error(`자재(${material.item_code}) 홀드량이 부족하여 출고 및 작업 진행 불가. (가용: ${availableHoldQty}, 필요: ${requiredForThisPerformance})`);
+                                // }
 
                                 // 5. 자재 출고 내역 't_material_release' 테이블에 삽입
                                 const insertMaterialOutParams = [
                                     newMatOutCode,               // 새로 생성된 출고 코드
-                                    details.work_inst_code,      // 작업 지시 코드
-                                    newPerfCode,                 // 현재 작업 실적 코드
-                                    material.item_code,          // 출고할 자재 코드
-                                    currentProcessRow.process_code, // 현재 공정 코드
                                     requiredForThisPerformance,  // 출고 수량
-                                    material.lot_number          // 자재 LOT 번호
+                                    details.work_inst_code,      // 작업 지시 코드
+                                    currentProcessRow.process_code, // 현재 공정 코드
+                                    material.item_code,          // 출고할 자재 코드
+                                    material.lot_number,          // 자재 LOT 번호
+                                    newPerfCode,                 // 현재 작업 실적 코드
+                                    holdIdToUse                  //holdId     
                                 ];
                                 await connection.query(sqlList['materialReleaseForProcess'], insertMaterialOutParams);
                                 console.log(`[PrdPrefService] ✅ 자재(${material.item_code}) 출고 (t_material_out) 성공: 코드=${newMatOutCode}, 수량=${requiredForThisPerformance}`);
@@ -420,8 +413,7 @@ const insertPrdPref = async (details) => {
                                     '0b2b', // 'N'은 홀드 사용 중 또는 아직 완전히 해제되지 않음을 의미하는 것으로 추정됩니다.
                                     requiredForThisPerformance, // 사용된 수량에 추가될 값
                                     holdIdToUse,                // 업데이트할 홀드 ID
-                                    material.item_code,         // 자재 코드 (WHERE 조건에 사용될 수 있음)
-                                    material.lot_number         // LOT 번호 (WHERE 조건에 사용될 수 있음)
+                                    
                                 ]);
                                 console.log(`[PrdPrefService] ✅ 자재(${material.item_code}) 홀드(${holdIdToUse}) 업데이트 성공: used_qty +${requiredForThisPerformance}`);
                             } else {
@@ -495,22 +487,21 @@ const insertPrdPref = async (details) => {
                         '0y1y',                 // perf_type: 실적에 의한 출고 (예시)
                         newPerfCode,                 // perf_code (현재 작업 실적 코드)
                         details.prod_code,           // prod_code (완제품 코드)
-                        details.work_inst_code,      // work_inst_code
-                        currentProcessRow.process_code // process_code
-                        // LOT 코드가 필요하다면 추가 (insertSemiProdOut 쿼리에도 lot 컬럼 추가 필요)
+                        //로트코드
+                    
                     ];
                     await connection.query(sqlList['insertSemiProdOut'], insertSemiProdOutParams);
                     console.log(`[PrdPrefService] ✅ 반제품 출고 (t_semi_prod_out) 성공: 코드=${newSemiOutCode}, 수량=${newProdQtyAccumulated}, 품목=${details.prod_code}`);
 
                     // 2. 자재 홀드 업데이트 (작업 지시와 관련된 모든 홀드 '사용 완료' 처리)
-                    // `getWorkInstMaterials`는 `use_yn = '0b1b'`만 조회하므로, 이미 사용된 것은 포함되지 않음.
+                    // `getWorkInstMaterials`는 `use_yn = '0b2b'`만 조회하므로, 이미 사용된 것은 포함되지 않음.
                     // 전체 작업지시 관련 홀드를 가져와서 최종적으로 '사용 완료' 처리
                     const [finalHoldUpdateResult] = await connection.query(sqlList['getWorkInstMaterials'], [details.work_inst_code]); // `use_yn='0b1b'`만 가져오므로, 이미 '0b2b'인 것은 가져오지 않음. 모든 홀드를 보려면 WHERE 조건 제거 또는 다른 쿼리 필요.
                     if (finalHoldUpdateResult && finalHoldUpdateResult.length > 0) {
                         for (const hold of finalHoldUpdateResult) {
-                            // 이 시점에서는 모든 홀드를 '0b3b' (사용 완료)로 마킹합니다.
+                            // 이 시점에서는 모든 홀드를 '0b1b' (사용 완료)로 마킹합니다.
                             // 만약 잔여량이 있다면, 그 잔여량만큼 홀드를 해제하는 로직이 필요할 수 있습니다.
-                            await connection.query(sqlList['updateMaterialHoldUseYn'], ['0b3b', hold.hold_id]); // '0b3b': 사용 완료 상태 코드
+                            await connection.query(sqlList['updateMaterialHoldUseYn'], ['0b1b ', hold.hold_id]); // '0b3b': 사용 완료 상태 코드
                             console.log(`[PrdPrefService] ✅ 자재 홀드(${hold.hold_id}) 최종 완료 (use_yn = '0b3b')`);
                         }
                     } else {
@@ -534,7 +525,7 @@ const insertPrdPref = async (details) => {
                     }
 
                     // 최종 공정이 완료되면, 작업 지시를 "생산 완료" 상태로 변경
-                    newWorkInstStatusCode = '0s3s'; // '0s3s': 생산 완료
+                    newWorkInstStatusCode = '0s3s'; // 지시상태가 '0s3s': 생산 완료 변경
                     updateWorkInstStatusFlag = true;
                     console.log(`[PrdPrefService] 최종 공정(${currentProcessRow.work_process_code})이 완료되었으므로, 작업지시(${details.work_inst_code}) 상태를 '${newWorkInstStatusCode}'로 변경.`);
 
@@ -542,7 +533,6 @@ const insertPrdPref = async (details) => {
                     if (updateWorkInstStatusFlag) {
                         await connection.query(sqlList['updateWorkInstStatus'], [
                             newWorkInstStatusCode,  // inst_state = '0s3s'
-                            'Y',                    // complete_yn = 'Y'
                             details.work_inst_code
                         ]);
                         console.log(`[PrdPrefService] ✅ 작업지시(${details.work_inst_code}) 상태 업데이트 성공: inst_state=${newWorkInstStatusCode}, complete_yn=Y`);
@@ -568,21 +558,9 @@ const insertPrdPref = async (details) => {
                     // 여기서는 currentProcessRow의 `newProdQtyAccumulated`를 사용하지만, 실제로는 `t_prod_plan.prod_qty`가 최종 생산량일 가능성이 높습니다.
                     if (prodPlanInfo.prod_qty >= orderDetailInfo.order_qty) { // 생산계획의 prod_qty로 비교
                         // 주문 상세 상태 업데이트 (생산 완료에 해당하는 상태 코드 '0s3s')
-                        await connection.query(sqlList['updateOrderDetailStatus'], ['0s3s', orderDetailInfo.order_detail_code]);
+                        await connection.query(sqlList['updateOrderDetailStatus'], ['0n4n', orderDetailInfo.order_detail_code]);
                         console.log(`[PrdPrefService] ✅ 주문 상세(${orderDetailInfo.order_detail_code}) 상태 '0s3s'로 업데이트 성공.`);
-
-                        // 상위 주문 (t_order) 상태 업데이트 로직 (모든 상세 주문이 완료되었는지 확인 후)
-                        // getOrderInfoByOrderDetailCode 쿼리는 order_code를 기준으로 모든 상세 주문 완료 여부를 판단해야 합니다.
-                        const [orderMasterInfoRows] = await connection.query(sqlList['getOrderInfoByOrderDetailCode'], [orderDetailInfo.order_detail_code]);
-                        const orderMasterInfo = orderMasterInfoRows[0];
-
-                        if (orderMasterInfo && orderMasterInfo.total_detail_count === orderMasterInfo.completed_detail_count) {
-                            // 모든 주문 상세가 완료되면 상위 주문 상태도 업데이트
-                            await connection.query(sqlList['updateOrderStatus'], ['0s3s', orderMasterInfo.order_code]); // '0s3s': 주문 완료 상태 코드
-                            console.log(`[PrdPrefService] ✅ 상위 주문(${orderMasterInfo.order_code}) 상태 '0s3s'로 업데이트 성공 (모든 상세 완료).`);
-                        } else if (orderMasterInfo) {
-                            console.log(`[PrdPrefService] 상위 주문(${orderMasterInfo.order_code})은 아직 모든 상세 주문이 완료되지 않아 상태를 업데이트하지 않습니다.`);
-                        }
+                        
                     } else {
                         console.log(`[PrdPrefService] 주문 상세(${orderDetailInfo.order_detail_code})의 생산량(${prodPlanInfo.prod_qty})이 주문량(${orderDetailInfo.order_qty})에 미달하여 완료 처리하지 않습니다.`);
                     }

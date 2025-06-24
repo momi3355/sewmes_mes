@@ -246,91 +246,66 @@ const updateCompanyColumnEditor = () => {
 <template>
   <div class="py-4 container-fluid">
     <div class="row">
-     <div class="col-12">
-  <!-- 상단 검색 영역 -->
-  <!-- ✨ 1. 모든 검색 요소를 이 하나의 row 안에 넣습니다. -->
-  <div class="row searchbox mb-3 align-items-end">
-    
-    <!-- 자재코드 -->
-    <div class="col-md-2">
-      <label class="form-label">자재코드</label>
-      <input type="text" class="form-control" v-model="searchField1">
-    </div>
-    
-    <!-- 자재명 -->
-    <div class="col-md-2">
-      <label class="form-label">자재명</label>
-      <input type="text" class="form-control" v-model="searchField2">
-    </div>
-
-    <!-- 자재유형 -->
-    <div class="col-md-2">
-      <label for="material-type-select" class="form-label">자재유형</label>
-      <select id="material-type-select" class="form-control" v-model="searchMaterialType">
-        <option value="">전체</option>
-        <option value="0b1b">원자재</option>
-        <option value="0b1b">부자재</option>
-      </select>
-    </div>
-
-    <!-- ✨ 2. 버튼 영역도 같은 row 안으로 이동시킵니다. -->
-    <div class="col-md-auto">
-      <button class="btn btn-secondary me-2" @click="resetSearch">초기화</button>
-      <button class="btn btn-primary">조회</button>
-    </div>
-    </div>
-  </div> <!-- ✨ <div class="row ..."> 가 여기서 끝납니다. -->
-  
-  <div class="row mt-4">
-          <div class="col-lg-12">
-            <tabulator-card
-              ref="materialTableCard"
-              card-title="공급필요 자재 목록"
-              :table-data="materialData"
-              :table-columns="materialColumns"
-              :tabulator-options="{
-                apginationSize: 7,
-                rowClick: handleMatRowClick,
-              }"
-            />
-              <div class="button-container">
-                <ArgonButton 
-                  class="addbutton"
-                  color="info" 
-                  variant="gradient"
-                  @click="addSelectedMaterials"
-                >
-                  추가
-                </ArgonButton>
+      <div class="col-12">
+        <!-- 상단 검색 영역 -->
+        <div class="search-area bg-white rounded p-3 shadow-sm">
+          <div class="row align-items-end">
+            <!-- 자재명 -->
+            <div class="col-md-3">
+              <label class="form-label search-label">자재명</label>
+              <input type="text" class="form-control" v-model="searchProdName">
+            </div>
+            <div class="col-md-2">
+              <label for="date" class="form-label search-label">입/출고일자</label>
+              <div class="date-input-wrapper">
+                <input type="date" id="date" class="form-control" max="2039-12-31" min="2000-01-01">
               </div>
-          </div>
-            <div class="col-12 mt-4">
-              <tabulator-card
-              ref="productTableCardRef"
-                card-title="발주 요청서 작성"
-                :table-data="productData"
-                :table-columns="productColumns"
-              >
-                <template #actions>
-                  <button class="btn btn-secondary" @click="delOrder">삭제</button>
-                  <button class="btn btn-success" @click="saveOrder">저장</button>
-                </template>
-              </tabulator-card>
+            </div>
+            <div class="col-md-2">
+              <label for="material-type" class="form-label">자재유형</label>
+              <select id="material-type" class="form-control" v-model="searchMaterialType">
+                <option value="">전체</option>
+                <option value="원자재">원자재</option>
+                <option value="부자재">부자재</option>
+                <option value="소모품">소모품</option>
+              </select>
+            </div>
+            <!-- 버튼 -->
+            <div class="col-md-2 d-flex align-items-end gap-2">
+              <button class="btn btn-outline-secondary w-50" @click="resetFilter">초기화</button>
+              <button class="btn btn-primary w-50" @click="searchLotHistoryList">조회</button>
             </div>
           </div>
         </div>
       </div>
+
+      <div class="row mt-4">
+        <div class="col-lg-12">
+          <tabulator-card ref class="materialTableCard" card-title="공급필요 자재 목록" :table-data="materialData"
+            :table-columns="materialColumns" :tabulator-options="{
+                apginationSize: 7,
+                rowClick: handleMatRowClick,
+              }" />
+          <div class="button-container">
+            <ArgonButton class="addbutton" color="info" variant="gradient" @click="addSelectedMaterials">
+              추가
+            </ArgonButton>
+          </div>
+        </div>
+        <div class="col-12 mt-4">
+          <tabulator-card ref class="productTableCardRef" card-title="발주 요청서 작성" :table-data="productData"
+            :table-columns="productColumns">
+            <template #actions>
+              <button class="btn btn-secondary" @click="delOrder">삭제</button>
+              <button class="btn btn-success" @click="saveOrder">저장</button>
+            </template>
+          </tabulator-card>
+        </div>
+      </div>
+    </div>
+  </div>
 </template>
 <style scoped>
-.searchbox {
-  background-color: #ffffff;
-  border-radius: 1rem;
-  margin-left: 0px;
-  margin-right: 3px;
-}
-.btn.btn-secondary.me-2 {
-  margin-right: 10px;
-}
 .button-container {
   display: flex;
   justify-content: center;
@@ -339,17 +314,11 @@ const updateCompanyColumnEditor = () => {
   width: 140px;
   margin-top: 25px;
 }
-.savebtn {
-  width: 70px;
-  margin-top: 25px;
-  margin-left: 10px;
-}
 .btn-success {
   margin-left: 10px;
 }
 .form-label {
-  font-size: large;
-  margin-bottom: 15px;
+  font-size: medium;
 }
 .mb-3 {
   height: 120px;
@@ -358,14 +327,11 @@ const updateCompanyColumnEditor = () => {
 .form-control {
   margin-left: 5px;
 }
-.btn.btn-secondary.me-2 {
-  margin: 13px;
-}  
-.btn.btn-primary {
-  margin: 13px;
+.materialTableCard{
+  width: 1666px;
 }
-.col-md-2 {
-  padding-bottom: 20px;
+.productTableCardRef{
+  width: 1666px;
 }
 select.form-control {
   /* 1. 기본 브라우저 화살표 숨기기 */
