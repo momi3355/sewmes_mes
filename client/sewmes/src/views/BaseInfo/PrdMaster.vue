@@ -189,7 +189,7 @@ const productClickhandler = async () => {
   }
 
   const find = productData.value.find((e) => {
-    return e.prod_code === detailFields.value.prod_code;
+    return e.prod_name === detailFields.value.prod_name;
   });
 
   if (find != null) {
