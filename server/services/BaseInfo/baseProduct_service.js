@@ -45,7 +45,32 @@ const getProductListByCode = async (code) => {
 };
 
 const addProduct = async (params) => {
-  return mariadb.query("insertBaseProduct", params);
+let newCode = undefined;
+  const matPrefix = [
+    {
+      type: "0k1k",
+      prefix: "H",
+    },
+    {
+      type: "0k2k",
+      prefix: "F",
+    },
+  ];
+
+  for (const code of matPrefix) {
+    if (code.type == params.prod_type) {
+      let matCode = await mariadb.query("createCodeProc", [ 't_product', 'prod_code', code.prefix ]);
+      newCode = matCode[1][0].newCode;
+      break;
+    }
+  }
+
+  if (newCode) {
+    params.prod_code = newCode;
+    return mariadb.query("insertBaseProduct", params);
+  } else {
+    throw Error("존재하지 않는 자재유형");
+  }
 };
 
 const setProduct = async (code, params) => {

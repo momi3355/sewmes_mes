@@ -142,7 +142,6 @@ const materialClickhandler = async () => {
   const currentDetailFields = detailFields.value;
 
   const isAnyRequiredFieldEmpty =
-      currentDetailFields.material_code === "" ||
       currentDetailFields.material_name === "" ||
       currentDetailFields.standard === "" ||
       currentDetailFields.unit === "";
@@ -150,7 +149,7 @@ const materialClickhandler = async () => {
   if (isAnyRequiredFieldEmpty) {
     Swal.fire({
       title: "필수 입력 항목",
-      text: "자재 코드, 자재명, 규격, 단위을 모두 채워주세요.",
+      text: "자재명, 규격, 단위을 모두 채워주세요.",
       icon: "error"
     });
     return;
