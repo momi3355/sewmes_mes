@@ -166,7 +166,6 @@ const productClickhandler = async () => {
   const currentDetailFields = detailFields.value;
 
   const isAnyRequiredFieldEmpty =
-    currentDetailFields.prod_code === "" ||
     currentDetailFields.prod_name === "" ||
     currentDetailFields.standard === "" ||
     currentDetailFields.unit === "";
@@ -174,7 +173,7 @@ const productClickhandler = async () => {
   if (isAnyRequiredFieldEmpty) {
     Swal.fire({
       title: "필수 입력 항목",
-      text: "제품 코드, 제품명, 규격, 단위을 모두 채워주세요.",
+      text: "제품명, 규격, 단위을 모두 채워주세요.",
       icon: "error"
     });
     return;
@@ -190,7 +189,7 @@ const productClickhandler = async () => {
   }
 
   const find = productData.value.find((e) => {
-    return e.prod_code === detailFields.value.prod_code;
+    return e.prod_name === detailFields.value.prod_name;
   });
 
   if (find != null) {

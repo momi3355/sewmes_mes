@@ -84,6 +84,8 @@ const saveData = async () => {
             pref_note: pref_note.value,
             defect_type: defect_type.value,
             emp_num: userCode, // 현재 로그인된 사용자 코드 (PrdPrefModal 자체에서 가져옴)
+            equi_code: props.prefProps[5],
+            process_code: props.prefProps[6]
         };
         console.log('생산 실적 등록 요청 페이로드:', perfPayload);
         const perfResult = await axios.post('/api/prdPref', perfPayload);
@@ -166,16 +168,7 @@ onMounted(()=>{
 
         </select>
       </div>
-      <div>
-        <div>
-          <label>설비상태</label>
-        </div>
-        <div v-for="opt in equirunningopt" :key="opt.detail_code" class="form-check form-check-inline me-2">
-                        <input type="radio" :value="opt.detail_code" :id="'info'+opt.detail_code"
-                          v-model="selectEquiOpt" class="form-check-input">
-                        <label :for="'info'+opt.detail_code" class="form-check-label">{{ opt.detail_name }}</label>
-                      </div>
-      </div>
+      
       <div class="mb-4">
         <label class="form-label">비고</label>
         

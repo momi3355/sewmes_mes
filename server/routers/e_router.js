@@ -82,6 +82,25 @@ router.get('/allworkInst',async(req,res)=>{
     }
 })
 
+//생산작업 지시 실행조회
+router.get('/allworkInstForWorking',async(req,res)=>{
+    try{
+        const allworkInsts = await workInstService.getWorkInstAllForPrd();
+           res.json({
+            success: true,
+            message: allworkInsts.length > 0 ? '생산계획 목록 조회 성공' : '조회된 생산계획 데이터가 없습니다.',
+            data: allworkInsts // <-- 빈 배열이라도 여기에 담아 보냅니다.
+        });
+    }catch(error){
+         console.error('작업지시  목록 API 오류:', error);
+        res.status(500).json({
+            success: false,
+            message: '작업지시 목록을 불러오는 중 서버 오류 발생',
+            error: error.message
+        });
+    }
+})
+
 // 작업지시 삭제
 router.post('/workInstMngment/delete', async (req, res) => {
     try {
@@ -216,7 +235,7 @@ router.post('/endWork', async (req, res) => {
 });
 
 router.post('/prdPref', async (req, res) => {
-    const { work_inst_code, prod_code, work_process_code,input_qty, prod_qty,defect_qty, pref_note,defect_type, emp_num} = req.body;
+    const { work_inst_code, prod_code, work_process_code,input_qty, prod_qty,defect_qty, pref_note,defect_type, emp_num,equi_code} = req.body;
     try {
         // details 객체를 생성하여 전달
         const details = {
@@ -228,7 +247,8 @@ router.post('/prdPref', async (req, res) => {
             defect_qty,
             pref_note,
             defect_type,
-            emp_num
+            emp_num,
+            equi_code
         };
 
         // 디버깅을 위해 전달되는 details 객체 로그 출력 (배포 시에는 제거)
