@@ -183,4 +183,46 @@ const save = async () => {
   width: 700px;
   border-radius: 10px;
 }
+.table {
+  width: 100%;
+  /* ✨ border-collapse를 separate로 변경하여 각 셀이 독립적인 테두리를 갖도록 함 */
+ 
+  /* ✨ 셀 사이의 간격을 없애서 합쳐진 것처럼 보이게 함 */
+  border-spacing: 0; 
+  margin-top: 1.5rem;
+  border-radius: .5rem; /* 테이블 모서리를 둥글게 */
+  overflow: hidden; /* 둥근 모서리 밖으로 삐져나가는 내용 숨기기 */
+  border: 1px solid #dee2e6; /* 테이블 전체 외곽선 */
+}
+
+.table thead th {
+  background-color: #f8f9fa;
+  padding: .75rem;
+  text-align: center;
+  border-bottom: 2px solid #dee2e6; /* 헤더 아래쪽 구분선 */
+}
+
+/* ✨ tbody의 td에 대한 스타일을 수정합니다. */
+.table tbody td {
+  padding: .75rem;
+  text-align: center;
+  vertical-align: middle;
+  /* ✨ 아래쪽 테두리만 그려서 행을 구분합니다. */
+  border-bottom: 1px solid #dee2e6;
+}
+
+/* ✨ 세로선을 그리기 위해, 헤더와 셀의 오른쪽 테두리를 추가합니다. */
+.table th:not(:last-child),
+.table td:not(:last-child) {
+  border-right: 1px solid #dee2e6;
+}
+
+/* ✨ 마지막 행의 아래쪽 테두리를 제거하여, 테이블의 바닥선과 겹치지 않게 함 */
+.table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.form-control {
+  text-align: center;
+}
 </style>
