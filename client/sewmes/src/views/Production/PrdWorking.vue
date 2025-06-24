@@ -386,7 +386,12 @@ const startWorkHandler = async () => {
             selectedProcess.value.process_start_date = currentTime;
 
 
-            alert('작업이 시작되었습니다.');
+            Swal.fire({
+                title: '작업 시작', // 팝업 제목
+                text: '작업이 성공적으로 시작되었습니다.', // 팝업 내용
+                icon: 'success', // 성공 아이콘 (success, error, warning, info, question 중 선택)
+                confirmButtonText: '확인' // 확인 버튼 텍스트
+            });
         } else {
             alert('작업 시작에 실패했습니다: ' + (response.data.message || '알 수 없는 오류'));
         }
