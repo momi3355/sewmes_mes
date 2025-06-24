@@ -123,9 +123,9 @@ onMounted(() => {
               </select>
             </div>
             <!-- 버튼 -->
-            <div class="col-md-2 d-flex justify-content-end gap-2">
-              <button class="btn btn-secondary" @click="resetFilter">초기화</button>
-              <button class="btn btn-primary" @click="searchLotHistoryList">조회</button>
+            <div class="col-md-2 d-flex align-items-end gap-2">
+              <button class="btn btn-outline-secondary w-50" @click="resetFilter">초기화</button>
+              <button class="btn btn-primary w-50" @click="searchLotHistoryList">조회</button>
             </div>
           </div>
         </div>
@@ -165,16 +165,6 @@ onMounted(() => {
   width: 100%;
 }
 
-.date-input-wrapper::after {
-  content: '📅';
-  font-size: 1.2rem;
-  color: #adb5bd;
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none;
-}
 .date-input-wrapper input[type="date"]::-webkit-calendar-picker-indicator {
   position: absolute;
   top: 0;
@@ -183,14 +173,6 @@ onMounted(() => {
   height: 100%;
   opacity: 0;
   cursor: pointer;
-}
-.btn-primary {
- width: 80px;
- margin: 0px;
-}
-.btn-secondary {
- width: 80px;
- margin: 0px;
 }
 .removebtn {
   width: 70px;

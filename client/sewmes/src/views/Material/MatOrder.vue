@@ -271,9 +271,9 @@ const updateCompanyColumnEditor = () => {
               </select>
             </div>
             <!-- 버튼 -->
-            <div class="col-md-2 d-flex justify-content-end gap-2">
-              <button class="btn btn-secondary" @click="resetFilter">초기화</button>
-              <button class="btn btn-primary" @click="searchLotHistoryList">조회</button>
+            <div class="col-md-2 d-flex align-items-end gap-2">
+              <button class="btn btn-outline-secondary w-50" @click="resetFilter">초기화</button>
+              <button class="btn btn-primary w-50" @click="searchLotHistoryList">조회</button>
             </div>
           </div>
         </div>
@@ -326,19 +326,6 @@ const updateCompanyColumnEditor = () => {
 }
 .form-control {
   margin-left: 5px;
-}
-.btn-secondary {
-  width: 80px;
-  margin: 0px;
-}  
-.btn.btn-primary {
-  width: 80px;
-  margin: 0px;
-}
-.btn-success {
-  width: 80px;
-  margin: 0px;
-  margin-left: 10px;
 }
 .materialTableCard{
   width: 1666px;

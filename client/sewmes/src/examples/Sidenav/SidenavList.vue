@@ -93,7 +93,7 @@ const getRoute = () => {
           :subItems="[
             { name: '예약 자재 재고 조회', to: '/matHold' },
             { name: '자재 발주서 관리', to: '/matOrder' },
-            { name: '자재 발주서 조회', to: '/matOrderView' },
+            // { name: '자재 발주서 조회', to: '/matOrderView' },
             { name: '자재 입출고 조회', to: '/matInoutView' },
             { name: '자재 수입검사 관리', to: '/matCheck' },
             { name: '자재 수입검사 조회', to: '/matCheckView' },

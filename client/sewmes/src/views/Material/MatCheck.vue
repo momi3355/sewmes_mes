@@ -182,9 +182,9 @@ function refreshPage() {
             </div>
           </div>
             <!-- 버튼 -->
-            <div class="col-md-2 d-flex justify-content-end gap-2">
-              <button class="btn btn-secondary" @click="resetFilter">초기화</button>
-              <button class="btn btn-primary" @click="searchLotHistoryList">조회</button>
+            <div class="col-md-2 d-flex align-items-end gap-2">
+              <button class="btn btn-outline-secondary w-50" @click="resetFilter">초기화</button>
+              <button class="btn btn-primary w-50" @click="searchLotHistoryList">조회</button>
             </div>
           </div>
         </div>
@@ -219,13 +219,6 @@ function refreshPage() {
   />
 </template>
 <style scoped>
- .btn{
-  padding: 10px;
-  margin: 0px;
- }
- .btn-secondary.me-2{
-  margin-right: 10px;
- }
 
 .date-input-wrapper {
   position: relative;
@@ -261,12 +254,6 @@ function refreshPage() {
 }
 .form-control {
   margin-left: 5px;
-}
-.btn.btn-secondary {
-  width: 80px;
-}  
-.btn.btn-primary {
-  width: 80px;
 }
 .search-label {
   font-size: medium;

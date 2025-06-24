@@ -173,15 +173,6 @@ const routes = [
     }
   },
   {
-    path: '/matOrderView',
-    name: 'MatOrderView',
-    component: () => import('@/views/Material/MatOrderView.vue'),
-    meta: {
-      title: '자재 발주서 조회',
-      group: '자재'
-    }
-  },
-  {
     path: '/matInoutView',
     name: 'MatInoutView',
     component: () => import('@/views/Material/MatInoutView.vue'),

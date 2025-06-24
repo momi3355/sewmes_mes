@@ -138,9 +138,9 @@ onMounted(() => {
             </div>
           </div>
             <!-- 버튼 -->
-            <div class="col-md-2 d-flex justify-content-end gap-2">
-              <button class="btn btn-secondary" @click="resetFilter">초기화</button>
-              <button class="btn btn-primary" @click="searchLotHistoryList">조회</button>
+            <div class="col-md-2 d-flex align-items-end gap-2">
+              <button class="btn btn-outline-secondary w-50" @click="resetFilter">초기화</button>
+              <button class="btn btn-primary w-50" @click="searchLotHistoryList">조회</button>
             </div>
           </div>
         </div>
@@ -224,14 +224,6 @@ onMounted(() => {
   border-radius: 1rem;
   margin: 30px;
  }
- .btn{
-  padding: 10px;
-  margin: 0px;
- }
- .btn btn-secondary me-2{
-  margin-right: 10px;
-
- }
  .check{
   margin-left: 96%;
  }
@@ -280,16 +272,6 @@ table.detail-table {
   .form-label{
     font-size: medium;
   }
-  .date-input-wrapper::after {
-  content: '📅';
-  font-size: 1.2rem;
-  color: #adb5bd;
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  pointer-events: none; 
-}
 
 .date-input-wrapper input[type="date"]::-webkit-calendar-picker-indicator {
   position: absolute;
