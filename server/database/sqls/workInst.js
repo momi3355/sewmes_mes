@@ -85,78 +85,7 @@ FROM t_bom
 WHERE prod_code = ?
 `;
 
-// 작업지시 테이블 bom_code로 소요량 조회 (item_code를 통해 실제 품목 유형 조회)
 
-
-// ... (sqlList 객체의 다른 쿼리들) ...
-
-// 작업지시 테이블 bom_code로 소요량 조회 (t_bom_detail.item_type 활용)
-// 여러 번의 LEFT JOIN을 사용하여 다단계 BOM을 펼칩니다 (최대 5단계 깊이 가정).
-// ... (sqlList 객체의 다른 쿼리들) ...
-
-// const selectBomDetailsByBomCode = `
-// SELECT
-//     COALESCE(tm5.material_code, tp5.prod_code,
-//              tm4.material_code, tp4.prod_code,
-//              tm3.material_code, tp3.prod_code,
-//              tm2.material_code, tp2.prod_code,
-//              tm1.material_code, tp1.prod_code) AS item_code,
-//     COALESCE(tm5.material_type, tp5.prod_type,
-//              tm4.material_type, tp4.prod_type,
-//              tm3.material_type, tp3.prod_type,
-//              tm2.material_type, tp2.prod_type,
-//              tm1.material_type, tp1.prod_type) AS item_actual_type,
-
-//     SUM(
-//         tbd1.need * ? *
-//         COALESCE(tbd2.need, 1) *
-//         COALESCE(tbd3.need, 1) *
-//         COALESCE(tbd4.need, 1) *
-//         COALESCE(tbd5.need, 1)
-//     ) AS required_qty
-// FROM
-//     t_bom_detail tbd1
-// LEFT JOIN
-//     t_product tp1 ON tbd1.item_code = tp1.prod_code
-// LEFT JOIN
-//     t_material tm1 ON tbd1.item_code = tm1.material_code
-// WHERE
-//     tbd1.bom_code = ?
-
-// LEFT JOIN t_bom t_bom2
-//     ON tbd1.item_type = '0k1k' AND tbd1.item_code = t_bom2.prod_code
-// LEFT JOIN t_bom_detail tbd2 ON t_bom2.bom_code = tbd2.bom_code
-// LEFT JOIN t_product tp2 ON tbd2.item_code = tp2.prod_code
-// LEFT JOIN t_material tm2 ON tbd2.item_code = tm2.material_code
-
-// LEFT JOIN t_bom t_bom3
-//     ON tbd2.item_type = '0k1k' AND tbd2.item_code = t_bom3.prod_code
-// LEFT JOIN t_bom_detail tbd3 ON t_bom3.bom_code = tbd3.bom_code
-// LEFT JOIN t_product tp3 ON tbd3.item_code = tp3.prod_code
-// LEFT JOIN t_material tm3 ON tbd3.item_code = tm3.material_code
-
-// LEFT JOIN t_bom t_bom4
-//     ON tbd3.item_type = '0k1k' AND tbd3.item_code = t_bom4.prod_code
-// LEFT JOIN t_bom_detail tbd4 ON t_bom4.bom_code = tbd4.bom_code
-// LEFT JOIN t_product tp4 ON tbd4.item_code = tp4.prod_code
-// LEFT JOIN t_material tm4 ON tbd4.item_code = tm4.material_code
-
-// LEFT JOIN t_bom t_bom5
-//     ON tbd4.item_type = '0k1k' AND tbd4.item_code = t_bom5.prod_code
-// LEFT JOIN t_bom_detail tbd5 ON t_bom5.bom_code = tbd5.bom_code
-// LEFT JOIN t_product tp5 ON tbd5.item_code = tp5.prod_code
-// LEFT JOIN t_material tm5 ON tbd5.item_code = tm5.material_code
-
-// WHERE
-//     (tbd1.item_type LIKE '0l%'
-//     OR tbd2.item_type LIKE '0l%'
-//     OR tbd3.item_type LIKE '0l%'
-//     OR tbd4.item_type LIKE '0l%'
-//     OR tbd5.item_type LIKE '0l%')
-// GROUP BY
-//     item_code,
-//     item_actual_type;
-// `;
 
 // 작업지시 상태 조회
 const selectWorkInstState = `
@@ -321,6 +250,11 @@ LEFT JOIN
 WHERE
     tbd.bom_code = ?;
 `;
+
+
+
+
+
 
 
 

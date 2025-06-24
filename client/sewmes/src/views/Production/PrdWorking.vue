@@ -6,6 +6,7 @@ import axios from "axios";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import PrdPrefModal from "./PrdPrefModal.vue";
 import Swal from 'sweetalert2';
+import moment from 'moment';
 
 // 부서별 권한 관련
 const store = useStore(); 
@@ -27,6 +28,12 @@ const instStateMap = {
     '0s1s': '생산 전',
     '0s2s': '생산 중',
     '0s3s': '생산 완료',
+};
+const equipStateMap ={
+    '0u1u' :'가동가능',
+    '0u2u': '가동중', 
+    '0u3u': '점검',
+    '0u4u': '고장'
 };
 const instStateOptions = Object.entries(instStateMap).map(([code, name]) => ({ code, name }));
 
@@ -96,18 +103,22 @@ const isEndButtonEnabled = computed(() =>
 // --- Tabulator Columns 및 Options ---
 const workOrderColumns = [
     { title: "지시코드", field: "work_inst_code", width: 120, hozAlign: "center" },
-    { title: "제품명", field: "prod_name", width: 180 },
+    { title: "제품명", field: "prod_name" },
     { title: "수량", field: "inst_qty", hozAlign: "right", width: 90 },
-    { title: "지시일자", field: "inst_date", hozAlign: "center", width: 200 },
-    { title: "작업시작일", field: "work_start_date", hozAlign: "center", width: 200 },
-    { title: "작업종료일", field: "work_end_date", hozAlign: "center", width: 200 },
-    { title: "진행상태", field: "inst_state", width: 180 
+    { title: "지시일자", field: "inst_reg_date", hozAlign: "center", width: 200,
+           formatter: function(cell){
+            const value = cell.getValue();
+            return value ? moment(value).format('YYYY-MM-DD') : ''; // 값이 있을 때만 포맷, 없으면 빈 문자열
+        }
+     },
+    { title: "진행상태", field: "inst_state", width: 120 
         , formatter: function(cell) {
                 const value = cell.getValue();
                 return instStateMap[value] || value;
             }
     },
 ];
+
 
 
 const workOrderOnEvents = [
@@ -122,11 +133,11 @@ const workOrderOnEvents = [
 
 const processFlowColumns = [
     { title: "작업공정코드", field: "work_process_code", width: 100, visible: false  },
-    { title: "공정코드", field: "process_code", width: 200, visible: false  },
-    { title: "공정명", field: "process_name", width: 200 },
-    { title: "공정순서", field: "process_seq", hozAlign: "right", width: 200 },
-    { title: "지시수량", field: "inst_qty", hozAlign: "right", width: 200 },
-    { title: "생산수량", field: "prod_qty", hozAlign: "right", width: 200 },
+    { title: "공정코드", field: "process_code", width: 150, visible: false  },
+    { title: "공정명", field: "process_name"     },
+    { title: "공정순서", field: "process_seq", hozAlign: "right", width: 150 },
+    { title: "지시수량", field: "inst_qty", hozAlign: "right", width: 150 },
+    { title: "생산수량", field: "prod_qty", hozAlign: "right", width: 150 },
 ];
 
 
@@ -144,18 +155,10 @@ const equipmentColumns = [
     { title: "설비코드", field: "equi_code", width: 200, hozAlign: "center" },
     { title: "설비명", field: "equi_name", minWidth: 200 },
     { title: "상태", field: "equi_status", width: 200, hozAlign: "center",
-        formatter: function(cell) {
-            const status = cell.getValue();
-            let colorClass = '';
-            if (status === '가동가능') {
-                colorClass = 'text-success';
-            } else if (status === '점검필요') {
-                colorClass = 'text-danger';
-            } else if (status === '가동중') {
-                colorClass = 'text-primary';
+ formatter: function(cell) {
+                const value = cell.getValue();
+                return equipStateMap[value] || value;
             }
-            return `<span class="${colorClass}">${status}</span>`;
-        }
     },
 ];
 
@@ -177,9 +180,16 @@ const equipmentOnEvents = [
 const fetchAllWorkOrders = async () => {
     isLoadingWorkOrders.value = true;
     try {
+        // 1. 백엔드 API에 파라미터 없이 모든 작업지시 데이터 요청
+        //    (즉, 백엔드 라우터 서비스의 getWorkInstAll 함수는 변경할 필요 없음)
         const response = await axios.get('/api/allworkInst');
+
         if (response.data.success && Array.isArray(response.data.data)) {
-            workOrderData.value = response.data.data.map(item => ({ ...item, }));
+            // 2. 받은 데이터에서 '생산 전' (0s1s)과 '생산 중' (0s2s) 상태만 필터링
+            workOrderData.value = response.data.data.filter(item => {
+                // inst_state가 '0s1s' 또는 '0s2s'인 항목만 유지
+                return item.inst_state === '0s1s' || item.inst_state === '0s2s';
+            }).map(item => ({ ...item })); // 필터링된 데이터를 새 배열로 매핑
         } else {
             console.error('작업지시 목록 불러오기 실패:', response.data.message);
             workOrderData.value = [];
@@ -463,7 +473,7 @@ onMounted(() => {
                             :table-columns="processFlowColumns"
                             :tabulatorOptions="tabulatorOptions"
                             :on="processFlowOnEvents"                            
-                            height="420px"
+                            height="250px"
                         />
 
                         <tabulator-card
@@ -604,7 +614,7 @@ onMounted(() => {
                                   currentWorkOrder.inst_qty,
                                   selectedProcess.inst_qty ,
                                   selectedProcess.work_process_code,
-                                  selectedProcess.equi_code,
+                                  selectedEquipment.equi_code,
                                   selectedProcess.process_code,
             
                                   ]"

@@ -103,10 +103,10 @@ const startWorkProcess = async (workInstCode, processCode, equiCode, startDate) 
             workInstCode
         ]);
 
-        const updateEquiState= await connection.query(sqlList['updateEquiState'],[
-            '0u2u'
-            ,equiCode
-        ])
+        // const updateEquiState= await connection.query(sqlList['updateEquiState'],[
+        //     '0u2u'
+        //     ,equiCode
+        // ])
 
         if (updateInstStateResult.affectedRows === 0) {
             console.warn(`[PrdWorkingService] 작업지시(${workInstCode}) 상태를 '생산중'으로 업데이트하는 데 영향을 받은 행이 없습니다. (이미 '0s2s'일 수 있음)`);
@@ -144,10 +144,10 @@ const endWorkProcess = async (workInstCode, processCode,equiCode) => { // endDat
             throw new Error(`해당 작업지시(${workInstCode})의 공정(${processCode})을 찾을 수 없거나 종료 업데이트에 실패했습니다.`);
         }
         
-        //  const updateEquiState= await connection.query(sqlList['updateEquiState'],[
-        //     ''
-        //     ,equiCode
-        // ])
+         const updateEquiState= await connection.query(sqlList['updateEquiState'],[
+            '0u1u'
+            ,equiCode
+        ])
 
         await connection.commit();
 
@@ -206,6 +206,7 @@ const insertPrdPref = async (details) => {
                     details.pref_note,
                     details.defect_type,
                     details.emp_num,
+                    details.equi_code,
                 ];
 
                 try { // ⭐ 이 try 블록이 없었으니 추가해주세요!
@@ -299,6 +300,22 @@ const insertPrdPref = async (details) => {
                     console.log(`[PrdPrefService] 작업공정(${currentProcessRow.work_process_code})이 성공적으로 업데이트되었습니다. 완료여부: ${isProcessCompleted ? '1a1a' : '미완료'}`);
                 }
                 
+                
+                if (details.equi_code) { // `details` 객체에 `equi_code`가 전달되었는지 확인
+                    // '0e1e'는 귀하의 시스템에서 '가동 가능'을 나타내는 실제 상태 코드로 변경해야 합니다.
+                    const updateEquiStateResult = await connection.query(sqlList['updateEquiState'], [
+                        '0u1u', 
+                        details.equi_code
+                    ]);
+
+                    if (updateEquiStateResult.affectedRows === 0) {
+                        console.warn(`[PrdPrefService] 경고: 실적 등록 후 설비(${details.equi_code}) 상태 업데이트에 실패했거나 변경사항이 없습니다.`);
+                    } else {
+                        console.log(`[PrdPrefService] ✅ 실적 등록 후 설비(${details.equi_code}) 상태가 '가동 가능'으로 업데이트되었습니다.`);
+                    }
+                } else {
+                    console.log(`[PrdPrefService] 실적 등록 시 설비 코드(details.equi_code)가 제공되지 않아 설비 상태를 업데이트하지 않습니다.`);
+                }        
                 // --- 공정별 추가 로직 (자재 출고, 반제품 입고 등) ---
                 // 2. 현재 공정순서가 1이고 지시수량만큼 완료했을때 
                 if (currentProcessRow.process_seq == 1 && isProcessCompleted) { // process 대신 currentProcessRow 사용
