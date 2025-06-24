@@ -281,7 +281,7 @@ const updateCompanyColumnEditor = () => {
 
       <div class="row mt-4">
         <div class="col-lg-12">
-          <tabulator-card ref class="materialTableCard" card-title="공급필요 자재 목록" :table-data="materialData"
+          <tabulator-card ref="materialTableCard" card-title="공급필요 자재 목록" :table-data="materialData"
             :table-columns="materialColumns" :tabulator-options="{
                 apginationSize: 7,
                 rowClick: handleMatRowClick,
@@ -293,7 +293,7 @@ const updateCompanyColumnEditor = () => {
           </div>
         </div>
         <div class="col-12 mt-4">
-          <tabulator-card ref class="productTableCardRef" card-title="발주 요청서 작성" :table-data="productData"
+          <tabulator-card ref="productTableCardRef" card-title="발주 요청서 작성" :table-data="productData"
             :table-columns="productColumns">
             <template #actions>
               <button class="btn btn-secondary" @click="delOrder">삭제</button>
@@ -326,12 +326,6 @@ const updateCompanyColumnEditor = () => {
 }
 .form-control {
   margin-left: 5px;
-}
-.materialTableCard{
-  width: 1666px;
-}
-.productTableCardRef{
-  width: 1666px;
 }
 select.form-control {
   /* 1. 기본 브라우저 화살표 숨기기 */
