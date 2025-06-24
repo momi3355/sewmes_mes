@@ -386,7 +386,7 @@ onMounted(() => {
                     <div v-if="showImgModal" class="modal-overlay" @click.self="closeImageModal">
                       <div class="modal-content">
                         <button class="btn btn-close" style="color: red;" @click="closeImageModal">X</button>
-                        <img :src="modalImgSrc" style="max-width: 70vw; max-height: 70vh;" />
+                        <img :src="modalImgSrc" style="max-width: 600px; max-height: 800px;" />
                       </div>
                     </div>
                   </td>

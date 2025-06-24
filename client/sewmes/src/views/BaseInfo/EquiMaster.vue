@@ -1,6 +1,5 @@
 <script setup>
-import { onBeforeMount, onMounted, reactive, ref, computed } from "vue";
-import { useStore } from "vuex";
+import { onMounted, reactive, ref, computed } from "vue";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import axios from "axios";
 import groupcodelist from "../../assets/js/utils/groupcodelist.js";
@@ -20,15 +19,6 @@ let imageInput = ref();
 let equiStatus = ref([]);
 let maintCate = ref([]);
 
-// 부서별 권한 관련
-const store = useStore(); 
-const dept = ref("");
-onBeforeMount(() => {
-  dept.value = store.state.user.dept;
-})
-const canShow = (allowedDepts) => {
-  return allowedDepts.includes(dept.value);
-};
 
 //설비기준정보 컬럼
 const equiListColumns = [
@@ -405,7 +395,7 @@ const openMaintModal = (type) => {
       <div class="col-md-5">
         <input type="date" class="form-control" v-model="equiSchData.startDate" />
       </div>
-      <div class="col-md-2 text-center">
+      <div class="col-md-1 text-center">
         <span class="mt-2 d-inline-block">~</span>
       </div>
       <div class="col-md-5">
@@ -413,9 +403,17 @@ const openMaintModal = (type) => {
       </div>
     </div>
   </div>
+  <div class="col-md-1 text-center">
+    <select class="form-select" v-model="equiSchData.schDate">
+      <option value="">-</option>
+      <option v-for="target in equiSchDateList" :key="target.detail_code" :value="target.detail_code">
+        {{ target.detail_name }}
+      </option>
+    </select>
+  </div>
 
   <!-- 사용 여부 -->
-  <div class="col-md-2">
+  <div class="col-md-1">
     <label class="form-label search-label">사용 여부</label>
     <div v-for="yn in equiuseYn" :key="yn.detail_code" class="form-check">
       <input class="form-check-input" type="checkbox"
@@ -430,7 +428,7 @@ const openMaintModal = (type) => {
   <div class="col-md-3">
     <label class="form-label search-label">설비 상태</label>
     <div class="row">
-      <div class="col-6" v-for="state in equiStatus" :key="state.detail_code">
+      <div class="col-5" v-for="state in equiStatus" :key="state.detail_code">
         <div class="form-check">
           <input type="checkbox" class="form-check-input"
                  v-model="equiSchData.equiStatus"
@@ -473,7 +471,7 @@ const openMaintModal = (type) => {
             <h5 class="mt-0 text-start flex-grow-1">설비 상세</h5>
             <!-- <button class="btn btn-secondary" @click="openMaintModal('0t1t')">점검</button>
             <button class="btn btn-danger" @click="openMaintModal('0t3t')">수리</button> -->
-            <button class="btn btn-success" @click="saveEquiMaster" v-if="canShow(['0c4c', '0c5c'])">저장</button>
+            <button class="btn btn-success" @click="saveEquiMaster">저장</button>
           </div>
           <div class="card-body detail-body">
             <table class="table table-bordered table-sm align-middle mb-2">
@@ -539,7 +537,7 @@ const openMaintModal = (type) => {
                     <!-- 이미지 썸네일과 모달 -->
                     <div v-if="equiInfo.equi_img" class="image-preview mt-2" style="cursor:pointer;">
                       <img :src="`/api/getimgs/${equiInfo.equi_img}`" style="max-height: 150px;"
-                        @click="openImageModal(`/api/getimgs/${equiInfo.equi_img}`)" alt="참고 이미지" />
+                        @click="openImageModal(`/api/getimgs/${equiInfo.equi_img}`)"/>
                     </div>
 
                     <!-- 파일 입력은 항상 보여줌 -->
@@ -549,7 +547,7 @@ const openMaintModal = (type) => {
                     <div v-if="showImgModal" class="modal-overlay" @click.self="closeImageModal">
                       <div class="modal-content">
                         <button class="btn btn-close" style="color: red;" @click="closeImageModal">X</button>
-                        <img :src="modalImgSrc" style="max-width: 70vw; max-height: 70vh;" />
+                        <img :src="modalImgSrc" style="max-width: 600px; max-height: 800px;" />
                       </div>
                     </div>
                   </td>
