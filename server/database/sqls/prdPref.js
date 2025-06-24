@@ -154,7 +154,7 @@ SET use_yn=?,
     release_qty=?
 WHERE hold_id=?`;
 
-//마지막공정 반제품출고
+//마지막공정 봉제 반제품출고
 const insertSemiProdOut = `
 INSERT INTO t_semi_prod_out(semi_release_code
                                 ,release_date
@@ -162,7 +162,7 @@ INSERT INTO t_semi_prod_out(semi_release_code
                                 ,perf_type
                                 ,perf_code
                                 ,prod_code
-                                ,lot)
+                                )
 
 VALUES(                          ?
                                 ,NOW()
@@ -170,7 +170,7 @@ VALUES(                          ?
                                 ,?
                                 ,?
                                 ,?
-                                ,?
+                                
 )
 `;
 
@@ -197,11 +197,20 @@ WHERE work_inst_code = ?;
 
 const getProdPlanByWorkInst =`
 SELECT
-    prod_plan_code, 
-    prod_qty,      
-    order_detail_code      
-FROM t_prod_plan
-WHERE work_inst_code = ?; 
+    tpp.prod_plan_code, 
+    tpp.prod_qty,      
+    tpp.order_detail_code      
+FROM t_prod_plan tpp
+LEFT JOIN t_work_inst twi on twi.prod_plan_code = tpp.prod_plan_code
+WHERE twi.work_inst_code = ?; 
+`;
+
+//주문코드조회
+const getOrderCode =`
+SELECT od.order_detail_code, od.total_qty
+from t_order_detail od
+LEFT JOIN t_prod_plan pp on pp.order_detail_code = od.order_detail_code
+WHERE pp.prod_plan_code = ?
 `;
 //작업공정의 작업
 // 생산계획업데이트(완료여부 Y update)
@@ -209,7 +218,7 @@ WHERE work_inst_code = ?;
 //주문테이블(주문서상태 생산완료) 
 const updateOrderListStatus=`
 UPDATE t_order_detail
-SET state = ? 
+SET order_detail_state = ? 
 WHERE order_detail_code = ?;
 `; 
 const getMaterialHoldForRelease=`
@@ -229,12 +238,14 @@ WHERE
 const updateProdPlanComplete=`
 UPDATE t_prod_plan
 SET
-    complete= ?,        
+    complete= ?        
  
 WHERE
     prod_plan_code = ?
 
 `;
+
+
 const updateOrderDetailStatus=`
 UPDATE t_order_detail
 SET
@@ -342,5 +353,6 @@ module.exports={
         updateOrderDetailStatus,
         selectworkProcessPref,
         getWorkProcessPrefDetail,
-        updateEquiState
+        updateEquiState,
+        getOrderCode
 }

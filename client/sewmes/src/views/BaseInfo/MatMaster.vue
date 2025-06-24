@@ -1,7 +1,7 @@
 <script setup>
-import { onMounted, ref } from "vue";
+import { onBeforeMount, onMounted, ref } from "vue";
+import { useStore } from "vuex";
 import axios from "axios";
-
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import groupcodelist from "@/assets/js/utils/groupcodelist";
 import { typeFormatter } from "@/assets/js/utils/tableFormatter";
@@ -13,6 +13,16 @@ const colortype = ref([]);
 
 const table = ref(null);
 const materialData = ref([]);
+
+// 부서별 권한 관련
+const store = useStore(); 
+const dept = ref("");
+onBeforeMount(() => {
+  dept.value = store.state.user.dept;
+})
+const canShow = (allowedDepts) => {
+  return allowedDepts.includes(dept.value);
+};
 
 const materialColumns = [
   { title: "자재코드", field: "material_code", width: 100 },
@@ -309,7 +319,7 @@ onMounted(async () => {
         <div class="card flex-grow-1" style="min-height: 350px;">
           <div class="card-header header-fixed mt-3">
             <h5 class="mt-0 text-start">자재항목 상세</h5>
-            <button class="btn btn-sm btn-success" @click="materialClickhandler">저장</button>
+            <button class="btn btn-sm btn-success" @click="materialClickhandler" v-if="canShow(['0c3c', '0c5c'])">저장</button>
           </div>
           <div class="card-body p-2">
             <table class="table table-bordered table-sm align-middle mb-2">

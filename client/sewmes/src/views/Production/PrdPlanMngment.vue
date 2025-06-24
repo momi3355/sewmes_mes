@@ -1,7 +1,7 @@
 <script setup>
 import axios from 'axios';
 import { useStore } from "vuex";
-import { ref, nextTick, onMounted  } from 'vue';
+import { onBeforeMount, ref, nextTick, onMounted  } from 'vue';
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
 import OrderProdListModal from "./OrderProdListModal.vue";
 import ProductSearchModal from "./ProductSearchModal.vue";
@@ -32,6 +32,15 @@ const prodPlanData = ref([]);
 // 제품목록 가져오기 모달 객체
 const isSearchModalOpen = ref(false);
 const modalTargetRow = ref(null);
+
+// 부서별 권한 관련
+const dept = ref("");
+onBeforeMount(() => {
+  dept.value = store.state.user.dept;
+})
+const canShow = (allowedDepts) => {
+  return allowedDepts.includes(dept.value);
+};
 
 // 제품 목록 조건에 따른 검색
 const searchProdPlan = async () => {
@@ -410,7 +419,7 @@ onMounted(() => {
       <div class="d-flex justify-content-between align-items-center">
         <!-- 왼쪽: 조회 버튼 -->
         <div>
-          <button class="btn btn-info" style="width: 150px;" @click="openModal">주문 제품 목록 조회</button>
+          <button class="btn btn-info" style="width: 150px;" @click="openModal" v-if="canShow(['0c2c', '0c5c'])">주문 제품 목록 조회</button>
         </div> 
       </div>
     </div>
@@ -426,9 +435,9 @@ onMounted(() => {
           :tabulatorOptions="tabulatorOptions"
         >
           <template #actions>
-            <button class="btn btn-secondary me-2" @click="addRow">행추가</button>
-            <button class="btn btn-success me-2" @click="saveProdPlan">저장</button>
-            <button class="btn btn-delete" @click="deleteProdPlan" style="background-color: red; color: black;">삭제</button>
+            <button class="btn btn-secondary me-2" @click="addRow" v-if="canShow(['0c2c', '0c5c'])">행추가</button>
+            <button class="btn btn-success me-2" @click="saveProdPlan" v-if="canShow(['0c2c', '0c5c'])">저장</button>
+            <button class="btn btn-delete" @click="deleteProdPlan" style="background-color: red; color: black;" v-if="canShow(['0c2c', '0c5c'])">삭제</button>
           </template>
         </tabulator-card>
       </div>

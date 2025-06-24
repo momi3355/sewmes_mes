@@ -1,10 +1,21 @@
 <script setup>
 import axios from 'axios';
-import { ref, onMounted } from 'vue';
+import { onBeforeMount, ref, onMounted } from 'vue';
+import { useStore } from "vuex";
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
 import ArgonButton from "@/components/ArgonButton.vue";
 import Swal from 'sweetalert2';
 import { formatToDate } from '@/utils/dateUtils';
+
+// 부서별 권한 관련
+const store = useStore(); 
+const dept = ref("");
+onBeforeMount(() => {
+  dept.value = store.state.user.dept;
+})
+const canShow = (allowedDepts) => {
+  return allowedDepts.includes(dept.value);
+};
 
 const releaseMaterialTableRef = ref(null);
 const outsouOrderTableRef = ref(null);
@@ -44,6 +55,7 @@ const searchOutsouOrder = async () => {
       rowNum: idx + 1,
       outsouOrderCode: item.outsou_order_code,
       workProcessCode: item.work_process_code,
+      prodCode: item.prod_code,
       prodName: item.prod_name,
       regDate: formatDate(item.reg_date),
       deadDate: formatDate(item.dead_date),
@@ -314,7 +326,7 @@ onMounted(() => {
           :on="tabulatorEvent"
         >
           <template #actions>
-            <ArgonButton style="width: 150px;" color="success" variant="gradient" @click="handleReleaseComplete">
+            <ArgonButton style="width: 150px;" color="success" variant="gradient" @click="handleReleaseComplete" v-if="canShow(['0c2c', '0c5c'])">
               출고 완료
             </ArgonButton>
           </template>

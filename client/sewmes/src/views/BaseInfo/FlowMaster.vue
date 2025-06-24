@@ -1,6 +1,7 @@
 <script setup>
 import axios from 'axios';
-import { ref, onMounted } from 'vue';
+import { onBeforeMount, ref, onMounted } from 'vue';
+import { useStore } from "vuex";
 import TabulatorCard from '@/examples/Cards/TabulatorCard.vue';
 import ProcessSearchModal from "./ProcessSearchModal.vue";
 import groupcodelist from "../../assets/js/utils/groupcodelist";
@@ -21,6 +22,16 @@ const processList = ref([]);
 // 공통 코드 변환 객체, 함수 ======================
 const prodTypeList = ref([]);
 const prodTypeMap = ref({});
+
+// 부서별 권한 관련
+const store = useStore(); 
+const dept = ref("");
+onBeforeMount(() => {
+  dept.value = store.state.user.dept;
+})
+const canShow = (allowedDepts) => {
+  return allowedDepts.includes(dept.value);
+};
 
 const loadProdTypeList = async () => {
   await groupcodelist.groupCodeList('0J', prodTypeList);
@@ -451,9 +462,9 @@ onMounted(() => {
           :on="flowTableEvents"
         >
           <template #actions>
-            <button class="btn btn-success me-2" @click="loadProcesses">불러오기</button>
-            <button class="btn btn-primary me-2" @click="saveProcesses">저장</button>
-            <button class="btn btn-danger" @click="deleteProcessFlow">삭제</button>
+            <button class="btn btn-success me-2" @click="loadProcesses" v-if="canShow(['0c2c', '0c5c'])">불러오기</button>
+            <button class="btn btn-primary me-2" @click="saveProcesses" v-if="canShow(['0c2c', '0c5c'])">저장</button>
+            <button class="btn btn-danger" @click="deleteProcessFlow" v-if="canShow(['0c2c', '0c5c'])">삭제</button>
           </template>
         </tabulator-card>
         <div class="mt-3 flex-grow-1">

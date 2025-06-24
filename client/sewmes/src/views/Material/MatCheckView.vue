@@ -158,10 +158,6 @@ onMounted(() => {
               }"
               height="700px"
             >
-              <template #actions>
-                <button class="btn btn-primary" @click="showDetails">조회</button>
-                <!-- <ArgonButton color="info" variant="gradient">PDF로 저장</ArgonButton> -->
-              </template>
             </tabulator-card>
           </div>
         </div>

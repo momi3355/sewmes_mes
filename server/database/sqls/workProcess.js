@@ -157,6 +157,7 @@ const displayMaterials=
 		,th.work_inst_code
         ,th.material_code
         ,tm.material_name
+        ,wd.prod_type
         ,th.lot_code
         ,tm.unit
         ,tm.standard

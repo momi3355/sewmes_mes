@@ -1,10 +1,21 @@
 <script setup>
 import { TabulatorFull as Tabulator } from "tabulator-tables";
-import { ref, onMounted, computed, watch } from "vue";
+import { onBeforeMount, ref, onMounted, computed, watch } from "vue";
+import { useStore } from "vuex";
 import axios from "axios";
 import TabulatorCard from "@/examples/Cards/TabulatorCard.vue";
 import PrdPrefModal from "./PrdPrefModal.vue";
 import Swal from 'sweetalert2';
+
+// 부서별 권한 관련
+const store = useStore(); 
+const dept = ref("");
+onBeforeMount(() => {
+  dept.value = store.state.user.dept;
+})
+const canShow = (allowedDepts) => {
+  return allowedDepts.includes(dept.value);
+};
 
 // --- 상태 변수 선언 (ref 사용) ---
 const workOrderData = ref([]);
@@ -568,7 +579,7 @@ onMounted(() => {
                                         class="btn btn-danger me-2"
                                         :disabled="!isEndButtonEnabled"
                                         @click="endWorkHandler"
-                                        
+                                        v-if="canShow(['0c2c', '0c5c'])"
                                     >
                                         작업 종료
                                     </button>
@@ -578,6 +589,7 @@ onMounted(() => {
                                         class="btn btn-info"
                                         :disabled="!isStartButtonEnabled"
                                         @click="startWorkHandler"
+                                        v-if="canShow(['0c2c', '0c5c'])"
                                     >
                                         작업 시작
                                     </button>

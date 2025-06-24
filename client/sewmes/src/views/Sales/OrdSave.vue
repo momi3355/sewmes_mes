@@ -70,9 +70,9 @@
       </div>
     </div>
                 <div class="card-footer d-flex justify-content-end pt-0">
-                  <button class="btn btn-outline-secondary btn-sm me-2" @click="openModal">제품추가 🧾</button>
-                <argon-button color="danger" class="me-2" id="arbtn" @click="deleteSelectedRows">삭제</argon-button>
-                <argon-button color="success" id="arbtn" @click="saveOrder">저장</argon-button>
+                  <button class="btn btn-outline-secondary btn-sm me-2" @click="openModal" v-if="canShow(['0c1c', '0c5c'])">제품추가 🧾</button>
+                <argon-button color="danger" class="me-2" id="arbtn" @click="deleteSelectedRows" v-if="canShow(['0c1c', '0c5c'])">삭제</argon-button>
+                <argon-button color="success" id="arbtn" @click="saveOrder" v-if="canShow(['0c1c', '0c5c'])">저장</argon-button>
               </div>
               <tabulator-card
               ref="productTableCardRef"
@@ -93,7 +93,7 @@
   
   <script setup>
   import { TabulatorFull as Tabulator } from 'tabulator-tables';
-  import { ref, computed, onMounted } from "vue"; // Import ref and onMounted
+  import { onBeforeMount, ref, computed, onMounted } from "vue"; // Import ref and onMounted
   import { useStore } from 'vuex';
   import axios from "axios";
   import ArgonButton from "@/components/ArgonButton.vue";
@@ -129,6 +129,16 @@
   const companyList = ref([]);
   const listOpen = ref(false);
   const searchTerm = ref("");
+
+  // 부서별 권한 관련
+const dept = ref("");
+onBeforeMount(() => {
+  dept.value = store.state.user.dept;
+})
+const canShow = (allowedDepts) => {
+  return allowedDepts.includes(dept.value);
+};
+
   // input 누르고 다른곳 클릭시 에러안나게함
   const onFocusOut = () => {
   setTimeout(() => {
