@@ -176,9 +176,9 @@ router.put('/equipment/:code', upload.single('image'), async(req, res) => {
 
 //설비 이력 조회
 router.get('/equipment/history/:code', async(req, res) => {
-  let equiCode = req.params.code;
+  let equi_code = req.params.code;
 
-  let equiHistoryList = equipmentService.equiHistoryList(equiCode).catch(err => console.log(err));
+  let equiHistoryList = await equipmentService.equiHistoryList(equi_code).catch(err => console.log(err));
   res.send(equiHistoryList);
 })
 
@@ -188,7 +188,7 @@ router.get('/equipment/history/:code', async(req, res) => {
 router.post('/equipment/history', async(req, res) => {
   let equiHistoryInfo = req.body;
 
-  let result = equipmentService.equiHistoryInsert(equiHistoryInfo).catch(err=>console.log(err));
+  let result = await equipmentService.equiHistoryInsert(equiHistoryInfo).catch(err=>console.log(err));
   res.send(result);
 })
 

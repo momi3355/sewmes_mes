@@ -87,8 +87,8 @@ const equiModify = async(equiCode, equiInfo) => {
 }
 
 //설비 비가동 이력조회
-const equiHistoryList = async (equiCode) => {
-  let list = await mariadb.query("selectEquiHistory", equiCode).catch(err => console.log(err));
+const equiHistoryList = async (equi_code) => {
+  let list = await mariadb.query("selectEquiHistory", equi_code).catch(err => console.log(err));
   return list;
 }
 
