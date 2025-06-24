@@ -59,7 +59,7 @@ const outsouReleaseMaterialColumns = [
   { title: "No", field: "rowNum", width: 80 },
   { title: '외주발주코드', field: 'outsouOrderCode', width: 150 },
   { title: '자재홀드코드', field: 'holdCode', width: 150 },
-  { title: '명칭', field: 'itemName', width: 300 },
+  { title: '명칭', field: 'itemName' },
   { title: '등록일', field: 'regDate', width: 200 },
   { title: '납기일', field: 'deadDate', width: 200 },
   { title: '외주업체명', field: 'cpName', width: 200 },

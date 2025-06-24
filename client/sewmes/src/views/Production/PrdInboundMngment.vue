@@ -81,7 +81,7 @@ const getTestStatus = ({ defectQtySum, passQty }) => {
   const pass = formatInt(passQty);
 
   if (pass === 0 && defect === 0) return "검사 전";
-  if (pass > 0 && defect > 0) return "검사 완료";
+  if (pass > 0) return "검사 완료";
   return "검사 전";
 };
 
@@ -178,7 +178,8 @@ const inboundTestHistoryColumns = [
 ];
 // 형태 변환
 const formatInt = (val) => {
-  const num = parseInt(val);
+  if (val === null || val === undefined || val === '') return 0;
+  const num = parseInt(val, 10);
   return isNaN(num) ? 0 : num;
 };
 const formatDate = (str) => {

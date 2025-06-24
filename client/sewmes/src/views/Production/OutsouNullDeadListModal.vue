@@ -28,7 +28,7 @@ const modalTableColumns = [
     // ... 컬럼 정의 (이전 코드 유지) ...
     { formatter: "rowSelection", titleFormatter: "rowSelection", hozAlign: "center", headerSort: false, width: 40, cssClass: 'tabulator-checkbox-column' },
     { title: "외주발주코드", field: "outsouOrderCode", width: 150 },
-    { title: "품명", field: "prodName", width: 200 },
+    { title: "품명", field: "prodName"},
     { title: "주문수량", field: "orderQty", width: 150 },
     {
       title: "외주업체명", field: "cpName", width: 150,
