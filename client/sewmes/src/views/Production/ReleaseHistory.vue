@@ -12,7 +12,16 @@ const stantype = ref([]);
 const releaseData = ref([]);
 
 const releaseColumns = [
-  { title: "LOT", field: "lot" },
+  {
+    title: "출고일자",
+    field: "release_date",
+    width: 140,
+    formatter: dateFormatter,
+    formatterParams: {
+      dateformat: "YYYY-MM-DD",
+    },
+  },
+  { title: "제품명", field: "prod_name" },
   { 
     title: "카테고리",
     field: "category",
@@ -22,7 +31,6 @@ const releaseColumns = [
       typeArray: catetype,
     },
   },
-  { title: "제품명", field: "prod_name" },
   {
     title: "규격",
     field: "standard",
@@ -34,16 +42,8 @@ const releaseColumns = [
   },
   { title: "출고수량", field: "release_qty", width: 120, hozAlign: "right" },
   { title: "단위", field: "unit", width: 90 },
+  { title: "LOT", field: "lot" },
   { title: "납품처", field: "cp_name", width: 170 },
-  {
-    title: "출고일자",
-    field: "release_date",
-    width: 140,
-    formatter: dateFormatter,
-    formatterParams: {
-      dateformat: "YYYY-MM-DD",
-    },
-  },
   { title: "담당자", field: "emp_name", width: 100 },
 ];
 
