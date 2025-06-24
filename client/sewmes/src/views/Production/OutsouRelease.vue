@@ -44,6 +44,7 @@ const searchOutsouOrder = async () => {
       rowNum: idx + 1,
       outsouOrderCode: item.outsou_order_code,
       workProcessCode: item.work_process_code,
+      prodCode: item.prod_code,
       prodName: item.prod_name,
       regDate: formatDate(item.reg_date),
       deadDate: formatDate(item.dead_date),
