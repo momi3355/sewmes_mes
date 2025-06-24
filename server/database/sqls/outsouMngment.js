@@ -3,6 +3,7 @@ const selectOutsouOrderByConditions = `
   SELECT
     o.outsou_order_code,
     o.work_process_code,
+    o.prod_code,
     p.prod_name,
     o.order_qty,
     o.dead_date,

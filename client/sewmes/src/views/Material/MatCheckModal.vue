@@ -19,9 +19,10 @@ const defectTotal = computed(() => {
 });
 
 // 합격 수량 계산
-const passQty = computed(() =>
-  props.checkData.order_qty - defectTotal.value
-);
+const passQty = computed(() =>{
+  const calculatedQty = props.checkData.order_qty - defectTotal.value;
+  return calculatedQty < 0 ? 0 : calculatedQty;
+});
 
 const fetchTestItems = async () => {
   try {
@@ -52,6 +53,25 @@ const save = async () => {
   //console.log('userInfo', props.userInfo);
   //console.log('qualiityData', materialQualityTest.value);
 
+  const hasNegative = materialQualityTest.value.some(e => e.defect_qty < 0);
+  if (hasNegative){
+    Swal.fire({
+      title: "입력 오류",
+      text: "불합격 수량은 음수를 입력할 수 없습니다.",
+      icon: "error"
+    });
+    return;
+  }
+  if (defectTotal.value > props.checkData.order_qty){
+    Swal.fire({
+      title: "수량 오류",
+      text: "불합격 수량은 검사수량을 초과할 수 없습니다.",
+      icon: "error"
+    });
+    return;
+  }
+
+
   const inboundData = {
     inboundCheckCode: props.checkData.inbound_check_code,
     userCode: props.userInfo.emp_num,
@@ -78,14 +98,14 @@ const save = async () => {
      emit('refresh')
     }
   } catch (err) {
-    console.error('저장 실패: ', err);
-      Swal.fire({
-      title: "오류",
-      text: "저장에 실패했습니다.",
-      icon: "error"
-    });
+    // console.error('저장 실패: ', err);
+    //   Swal.fire({
+    //   title: "오류",
+    //   text: "저장에 실패했습니다.",
+    //   icon: "error"
+    }
   }
-};
+
 
 // async function onComplete(){
 //   try{

@@ -146,9 +146,7 @@ const handleCheckComplete = async (checkData) => {
     if(response.data.success){
       alert('검사 결과가 성공적으로 저장되었습니다.');
       fetchCheckList();
-    } else{
-      alert('저장에 실패했습니다.: ' + response.data.message);
-    } 
+    } else{} 
   } catch(error){
       console.error('검사 결과 저장 API 호출 오류', error);
       alert('서버에 저장하는 도중 오류가 발생했습니다.');
