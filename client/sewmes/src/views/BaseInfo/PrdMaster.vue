@@ -164,6 +164,7 @@ const searchHandler = async () => {
 
 const productClickhandler = async () => {
   const currentDetailFields = detailFields.value;
+  const tabulator = table.value.getTabulator();
 
   const isAnyRequiredFieldEmpty =
     currentDetailFields.prod_name === "" ||
@@ -188,43 +189,58 @@ const productClickhandler = async () => {
     return;
   }
 
-  const find = productData.value.find((e) => {
-    return e.prod_name === detailFields.value.prod_name;
-  });
+  // const find = productData.value.find((e) => {
+  //   return e.prod_name === detailFields.value.prod_name;
+  // });
 
-  if (find != null) {
-    console.log(detailFields.value);
-    const result = await axios.put("/api/baseProduct", {
-      //body
-      data: detailFields.value,
-    }, {
-      //params
-      params: {
-        code: find.prod_code,
+  //테이블에서 선택이 되어 있으면
+  if (tabulator.getSelectedRows().length > 0) {
+    try {
+      const result = await axios.put("/api/baseProduct", {
+        //body
+        data: detailFields.value,
+      }, {
+        //params
+        params: {
+          code: detailFields.value.prod_code,
+        }
+      });
+      if (result?.data) {
+        Swal.fire({
+          title: "성공",
+          text: "제품 정보가 수정되었습니다.",
+          icon: "success"
+        });
       }
-    });
-    // console.log(result);
-    if (result?.data) {
+    } catch(error) {
+      // console.log(error);
       Swal.fire({
-        title: "성공",
-        text: "제품 정보가 수정되었습니다.",
-        icon: "success"
+        title: "수정 실패",
+        text: "제품을 수정하는 도중에 문제가 발생했습니다.",
+        icon: "error"
       });
     }
   } else {
-    const result = await axios.post("/api/baseProduct", {
-      data: detailFields.value,
-    });
-    // console.log(result);
-    if (result?.data) {
+    try {
+      const result = await axios.post("/api/baseProduct", {
+        data: detailFields.value,
+      });
+      if (result?.data) {
+        Swal.fire({
+          title: "성공",
+          text: "제품 정보가 추가되었습니다.",
+          icon: "success"
+        });
+      }
+    } catch(error) {
+      // console.error(error.response.data?.message);
       Swal.fire({
-        title: "성공",
-        text: "제품 정보가 추가되었습니다.",
-        icon: "success"
+        title: "등록 실패",
+        text: "제품을 등록하는 도중에 문제가 발생했습니다.",
+        icon: "error"
       });
     }
   }
-  const tabulator = table.value.getTabulator();
   await tabulator.setData("/api/baseProduct", searchData.value);
   productData.value = tabulator.getData();
 };
