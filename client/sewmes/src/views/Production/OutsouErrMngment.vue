@@ -34,6 +34,9 @@ const searchInboundDefect = async () => {
       rowNum: idx + 1,
       defectHistoryCode: item.defect_history_code,
       outsouInboundCode: item.outsou_inbound_code,
+      testName: item.test_name,
+      testMethod: item.test_method,
+      testStandard: item.test_standard,
       prodName: item.prod_name,
       regDate: formatDate(item.reg_date),
       inboundDate: formatDate(item.inbound_date),
@@ -48,8 +51,11 @@ const searchInboundDefect = async () => {
 
 const outsouDefectColumns = [
   { title: "No", field: "rowNum", width: 80 },
-  { title: '품명', field: 'prodName', width: 250 },
+  { title: '품명', field: 'prodName', width: 150 },
   { title: '등록일', field: 'regDate', width: 150 },
+  { title: '검사명', field: 'testName', width: 150 },
+  { title: '검사방법', field: 'testMethod', width: 250 },
+  { title: '검사기준', field: 'testStandard', width: 250 },
   { title: '입고일', field: 'inboundDate', width: 150 },
   { title: '외주업체명', field: 'cpName', width: 200 },
   { title: '불합격수량', field: 'defectQty', width: 150 },

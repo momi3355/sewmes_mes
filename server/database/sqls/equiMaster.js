@@ -69,14 +69,14 @@ WHERE  equi_code = ?
 //설비이력 조회
 const selectEquiHistory = 
 `
-SELECT equi_code
-       , cate 
-       , start_date 
-       , end_date 
-       , history_detail 
-       , history_note 
-       , emp_num
-FROM   t_equi_history
+SELECT e.equi_code
+       , e.cate 
+       , e.start_date 
+       , e.end_date 
+       , e.history_detail 
+       , e.history_note 
+       , em.emp_name
+FROM   t_equi_history e JOIN t_employees em ON e.emp_num = em.emp_num
 WHERE  equi_code = ?
 `;
 

@@ -41,6 +41,9 @@ const selectInboundDefectByConditions = `
   SELECT
     od.defect_history_code,
     oi.outsou_inbound_code,
+    q.test_name,
+    q.test_method,
+    q.test_standard,
     p.prod_name,
     oi.reg_date,
     oi.inbound_date,
@@ -49,6 +52,7 @@ const selectInboundDefectByConditions = `
     e.emp_name
   FROM t_outsou_defect_detail od
   LEFT JOIN t_outsou_receive oi ON od.outsou_inbound_code = oi.outsou_inbound_code
+  LEFT JOIN t_quality q ON od.quality_code = q.quality_code
   LEFT JOIN t_product p ON oi.prod_code = p.prod_code
   LEFT JOIN t_company c ON oi.cp_code = c.cp_code
   LEFT JOIN t_employees e ON oi.emp_num = e.emp_num

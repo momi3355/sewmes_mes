@@ -323,7 +323,7 @@ const onImageUploadClick = async (flowCode) => {
 
     try {
       await axios.post('/api/flowImageUpload', formData);
-      alert('이미지 업로드 완료');
+      Swal.fire({ title: "완료", text: "이미지 업로드 완료", icon: "success" });
     } catch (err) {
       console.error('업로드 실패:', err);
     }
