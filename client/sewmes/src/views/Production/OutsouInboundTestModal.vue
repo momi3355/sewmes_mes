@@ -88,7 +88,7 @@ const save = async () => {
       defectList: defectArray
     });
 //    { 전달되는 데이터 예시
-//   "outsouInboundCode": "OR4",
+//   "outsouInboundCode": "OR000004",
 //   "userCode": "EMP01",
 //   "passQty": 95,
 //   "defectList": [
@@ -168,7 +168,10 @@ const save = async () => {
 .modal-content {
   background: white;
   padding: 30px;
-  width: 700px;
+  max-width: 60vw;  
+  min-width: 700px;  
+  max-height: 80vh;   
+  overflow: auto;     
   border-radius: 10px;
 }
 </style>

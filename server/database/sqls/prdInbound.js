@@ -31,7 +31,7 @@ const selectProdInboundTestByConditions = `
     LEFT JOIN t_product_check pc
     ON ip.work_perf_code = pc.work_perf_code
     LEFT JOIN (
-        SELECT inbound_check_code, SUM(defect_qty) AS defect_qty_sum
+        SELECT inbound_check_code, IFNULL(SUM(defect_qty), 0) AS defect_qty_sum
         FROM t_prodcheck_detail
         GROUP BY inbound_check_code
     ) d

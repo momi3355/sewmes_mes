@@ -71,7 +71,7 @@ const searchOutsouOrder = async () => {
 };
 const outsouOrderColumns = [
   { title: "No", field: "rowNum", width: 75 },
-  { title: '품명', field: 'prodName', width: 200 },
+  { title: '품명', field: 'prodName'},
   { title: '상태', field: 'releaseStateLabel', width: 130 },
   { title: '외주발주코드', field: 'outsouOrderCode', width: 150 },
   { title: '등록일', field: 'regDate', width: 150 },
@@ -135,7 +135,7 @@ const convertCode = (code) => {
 };
 const releaseMaterialColumns = [
   { title: "No", field: "rowNum", width: 80 },
-  { title: '명칭', field: 'itemName', width: 200 },
+  { title: '명칭', field: 'itemName' },
   { title: '등록일', field: 'regDate', width: 150 },
   { title: '납기일', field: 'deadDate', width: 150 },
   { title: '외주업체명', field: 'cpName', width: 150 },
