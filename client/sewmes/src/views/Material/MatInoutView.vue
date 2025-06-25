@@ -26,7 +26,7 @@ const dateFormatter = (cell) => {
 const inOutColumns = [
   { title: "자재코드", field: "material_code", width: 150, hozAlign: "left" },
   { title: "자재명", field: "material_name", minWidth: 200, hozAlign: "left" },
-  { title: "공급처/사용처", field: "partner", minWidth: 150, hozAlign: "left" }, // ✨ partner
+  { title: "LOT", field: "lot", minWidth: 150, hozAlign: "left" }, // ✨ partner
   { title: "수량", field: "qty", hozAlign: "left" }, // ✨ qty
   { title: "유형", field: "category", width: 100 }, // 
   { 
