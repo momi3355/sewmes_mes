@@ -10,7 +10,6 @@ import Swal from 'sweetalert2';
 
 let equiList = ref([]);
 let equiInfo = ref({});
-let equiMaintHistoryList = ref([]);
 let equiTypeCodeList = ref([]);
 let equiSchDateList = ref([]);
 let equiHistoryList = reactive([]);
@@ -79,7 +78,7 @@ const equiMaintHistoryColumns = [
       return matched ? matched.detail_name : code;
     },},
   { title: "일시", field: "start_date"},
-  { title: "작업자", field: "emp_num"},
+  { title: "작업자", field: "emp_name"},
   { title: "상세내용", field: "history_detail"},
   { title: "비고", field: "history_note"},
 ];
@@ -251,7 +250,7 @@ const saveEquiMaster = async () => {
 
   await getEquiList();
   equiInfo.value = {};
-  equiMaintHistoryList.value = []
+  equiHistoryList.value = []
   equiInfo.value = {
     equi_name: '',
     use_yn: '',
@@ -283,8 +282,6 @@ const tabulatorEvents = [
       const rowData = row.getData();
       selectedEquiCode.value = rowData.equi_code;
       selectedEquiName.value = rowData.equi_name;
-      console.log(selectedEquiCode.value);
-      console.log(selectedEquiName.value);
         const info = await axios.get(`/api/equipment/${rowData.equi_code}`);
         equiInfo.value = info.data;
         const historyList = await axios.get(`/api/equipment/history/${rowData.equi_code}`);
@@ -360,7 +357,6 @@ const openMaintModal = (type) => {
     Swal.fire({ text: '먼저 설비를 선택해주세요.', icon: 'warning' });
     return;
   }
-  console.log(type);
   maintType.value = type;  // '0t1t', '0t2t', '0t3t'
   isMaintModalOpen.value = true;
 };
@@ -371,83 +367,80 @@ const openMaintModal = (type) => {
   <div class="container-fluid p-3 full-height">
     <!-- 상단 검색 영역 -->
     <div class="search-area bg-white rounded p-3 mb-3 shadow-sm">
-     <div class="row">
-  <!-- 설비명 -->
-  <div class="col-md-1">
-    <label class="form-label search-label">설비명</label>
-    <input type="text" class="form-control" v-model="equiSchData.equiName" onfocus="this.select()" />
-  </div>
+      <div class="row">
+        <!-- 설비명 -->
+        <div class="col-md-1">
+          <label class="form-label search-label">설비명</label>
+          <input type="text" class="form-control" v-model="equiSchData.equiName" onfocus="this.select()" />
+        </div>
 
-  <!-- 설비 유형 -->
-  <div class="col-md-1">
-    <label class="form-label search-label">설비 유형</label>
-    <select class="form-select" v-model="equiSchData.equiType">
-      <option value="">-</option>
-      <option v-for="target in equiTypeCodeList" :key="target.detail_code" :value="target.detail_code">
-        {{ target.detail_name }}</option>
-    </select>
-  </div>
+        <!-- 설비 유형 -->
+        <div class="col-md-1">
+          <label class="form-label search-label">설비 유형</label>
+          <select class="form-select" v-model="equiSchData.equiType">
+            <option value="">-</option>
+            <option v-for="target in equiTypeCodeList" :key="target.detail_code" :value="target.detail_code">
+              {{ target.detail_name }}</option>
+          </select>
+        </div>
 
-  <!-- 조회 기간 -->
-  <div class="col-md-3">
-    <label class="form-label search-label">조회 기간</label>
-    <div class="row g-1">
-      <div class="col-md-5">
-        <input type="date" class="form-control" v-model="equiSchData.startDate" />
-      </div>
-      <div class="col-md-1 text-center">
-        <span class="mt-2 d-inline-block">~</span>
-      </div>
-      <div class="col-md-5">
-        <input type="date" class="form-control" v-model="equiSchData.endDate" />
-      </div>
-    </div>
-  </div>
-  <div class="col-md-1 text-center">
-    <select class="form-select" v-model="equiSchData.schDate">
-      <option value="">-</option>
-      <option v-for="target in equiSchDateList" :key="target.detail_code" :value="target.detail_code">
-        {{ target.detail_name }}
-      </option>
-    </select>
-  </div>
+        <!-- 조회 기간 -->
+        <div class="col-md-3">
+          <label class="form-label search-label">조회 기간</label>
+          <div class="row g-1">
+            <div class="col-md-5">
+              <input type="date" class="form-control" v-model="equiSchData.startDate" />
+            </div>
+            <div class="col-md-1 text-center">
+              <span class="mt-2 d-inline-block">~</span>
+            </div>
+            <div class="col-md-5">
+              <input type="date" class="form-control" v-model="equiSchData.endDate" />
+            </div>
+          </div>
+        </div>
+        <div class="col-md-1">
+          <label class="form-label search-label">기준일</label>
+          <select class="form-select" v-model="equiSchData.schDate">
+            <option value="">-</option>
+            <option v-for="target in equiSchDateList" :key="target.detail_code" :value="target.detail_code">
+              {{ target.detail_name }}
+            </option>
+          </select>
+        </div>
 
-  <!-- 사용 여부 -->
-  <div class="col-md-1">
-    <label class="form-label search-label">사용 여부</label>
-    <div v-for="yn in equiuseYn" :key="yn.detail_code" class="form-check">
-      <input class="form-check-input" type="checkbox"
-             v-model="equiSchData.useYn"
-             :value="yn.detail_code"
-             :id="yn.detail_code" />
-      <label class="form-check-label" :for="yn.detail_code">{{ yn.detail_name }}</label>
-    </div>
-  </div>
+        <!-- 사용 여부 -->
+        <div class="col-md-1">
+          <label class="form-label search-label">사용 여부</label>
+          <div v-for="yn in equiuseYn" :key="yn.detail_code" class="form-check">
+            <input class="form-check-input" type="checkbox" v-model="equiSchData.useYn" :value="yn.detail_code"
+              :id="yn.detail_code" />
+            <label class="form-check-label" :for="yn.detail_code">{{ yn.detail_name }}</label>
+          </div>
+        </div>
 
-  <!-- 설비 상태 -->
-  <div class="col-md-3">
-    <label class="form-label search-label">설비 상태</label>
-    <div class="row">
-      <div class="col-5" v-for="state in equiStatus" :key="state.detail_code">
-        <div class="form-check">
-          <input type="checkbox" class="form-check-input"
-                 v-model="equiSchData.equiStatus"
-                 :value="state.detail_code"
-                 :id="'sch'+state.detail_code" />
-          <label class="form-check-label" :for="'sch'+state.detail_code">
-            {{ state.detail_name }}
-          </label>
+        <!-- 설비 상태 -->
+        <div class="col-md-3">
+          <label class="form-label search-label">설비 상태</label>
+          <div class="row">
+            <div class="col-5" v-for="state in equiStatus" :key="state.detail_code">
+              <div class="form-check">
+                <input type="checkbox" class="form-check-input" v-model="equiSchData.equiStatus"
+                  :value="state.detail_code" :id="'sch'+state.detail_code" />
+                <label class="form-check-label" :for="'sch'+state.detail_code">
+                  {{ state.detail_name }}
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 버튼 -->
+        <div class="col-md-2 d-flex  justify-content-end align-items-center mt-2">
+          <button class="btn btn-outline-secondary w-50 me-2" @click="EquiSearchReset">초기화</button>
+          <button class="btn btn-primary w-50" @click="EquiSearchHandler">조회</button>
         </div>
       </div>
-    </div>
-  </div>
-
-  <!-- 버튼 -->
-  <div class="col-md-2 d-flex  justify-content-end align-items-center mt-2">
-    <button class="btn btn-outline-secondary w-50 me-2" @click="EquiSearchReset">초기화</button>
-    <button class="btn btn-primary w-50" @click="EquiSearchHandler">조회</button>
-  </div>
-</div>
     </div>
 
     <!-- 본문 영역 -->
@@ -558,13 +551,13 @@ const openMaintModal = (type) => {
         </div>
 
         <!-- 이력 카드 -->
-        <!-- <div class="card mb-2 detail-card">
+        <div class="card mb-2 detail-card">
 
           <div class="card flex-grow-1">
-            <tabulator-card card-title="설비 비가동 이력" :table-data="equiMaintHistoryList"
+            <tabulator-card card-title="설비 비가동 이력" :table-data="equiHistoryList"
               :table-columns="equiMaintHistoryColumns" height="137px" />
           </div>
-        </div> -->
+        </div>
       </div>
     </div>
   </div>
@@ -652,11 +645,11 @@ const openMaintModal = (type) => {
 
 .detail-card {
   flex-shrink: 0;
-  width: 656px;
+  width: 648px;
 }
 
 .detail-body {
-  height: 575px;
+  max-height: 350px;
   overflow-y: auto;
   padding: 10px;
 }

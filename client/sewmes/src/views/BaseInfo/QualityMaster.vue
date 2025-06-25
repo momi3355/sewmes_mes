@@ -184,7 +184,6 @@ const saveQualityMaster = async () => {
             'Content-Type': 'multipart/form-data'
           }
         });
-        console.log(renewRes);
         if (renewRes.data.isSuccessed) {
           Swal.fire({
             text: "갱신되었습니다.",
