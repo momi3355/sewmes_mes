@@ -17,7 +17,7 @@ const selectProdPlanByConditions = `
   LEFT JOIN t_order_detail o ON pp.order_detail_code = o.order_detail_code
   LEFT JOIN t_product p ON pp.prod_code = p.prod_code
   LEFT JOIN t_employees e ON pp.emp_num = e.emp_num
-  WHERE od.order_detail_state = '0n1n'
+  WHERE 1 = 1
         /**조건절**/
   ORDER BY pp.start_date DESC`;
 
@@ -32,7 +32,7 @@ const selectOrderProdList =`
     od.dead_date
   FROM t_order_detail od
   LEFT JOIN t_product p ON od.prod_code = p.prod_code
-  WHERE 1 = 1
+  WHERE od.order_detail_state = '0n1n'
         /**조건절**/
   ORDER BY od.order_date DESC`;
 // 생산계획 저장 SQL문 집합
