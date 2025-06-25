@@ -48,11 +48,6 @@ const closeMenu = () => {
 
 onMounted(() => {
   if (!isLoggedIn.value) {
-    Swal.fire({
-      title: "권한 실패",
-      text: "로그인이 필요합니다.",
-      icon: "error"
-    });
     router.push('/signin');
   }
 });
