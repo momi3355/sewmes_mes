@@ -103,6 +103,7 @@ const tabulatorEvent = [
     eventAction: (e, row) => {
       const rowData = row.getData();
       // console.log(rowData);
+      detailFields.value.material_code = "";
       detailFields.value = { ...rowData };
       //console.log(detailFields.value.material_code);
     }
@@ -140,6 +141,7 @@ const searchHandler = async () => {
 
 const materialClickhandler = async () => {
   const currentDetailFields = detailFields.value;
+  const tabulator = table.value.getTabulator();
 
   const isAnyRequiredFieldEmpty =
       currentDetailFields.material_name === "" ||
@@ -164,12 +166,12 @@ const materialClickhandler = async () => {
     return;
   }
 
-  const find = materialData.value.find(e => {
-    return e.material_name === detailFields.value.material_name
-  });
+  // const find = materialData.value.find(e => {
+  //   return e.material_name === detailFields.value.material_name
+  // });
 
-  if (find != null) {
-    console.log(detailFields.value);
+  //테이블에서 선택이 되어 있으면
+  if (tabulator.getSelectedRows().length > 0) {
     try {
       const result = await axios.put("/api/baseMaterial", {
         //body
@@ -177,10 +179,9 @@ const materialClickhandler = async () => {
       }, {
         //params
         params: {
-          code: find.material_code,
+          code: detailFields.value.material_code,
         }
       });
-      // console.log(result);
       if (result?.data) {
         Swal.fire({
           title: "성공",
@@ -189,20 +190,18 @@ const materialClickhandler = async () => {
         });
       }
     } catch(error) {
-      console.log(error);
+      // console.log(error);
       Swal.fire({
         title: "수정 실패",
-        text: "제품을 수정하는 도중에 문제가 발생했습니다.",
+        text: "자재을 수정하는 도중에 문제가 발생했습니다.",
         icon: "error"
       });
     }
   } else {
     try {
-      detailFields.value.material_code = ""; //새로운 코드 부여
       const result = await axios.post("/api/baseMaterial", {
         data: detailFields.value,
       });
-      // console.log(result);
       if (result?.data) {
         Swal.fire({
           title: "성공",
@@ -211,15 +210,14 @@ const materialClickhandler = async () => {
         });
       }
     } catch(error) {
-      console.error(error.response.data?.message);
+      // console.error(error.response.data?.message);
       Swal.fire({
         title: "등록 실패",
-        text: "제품을 등록하는 도중에 문제가 발생했습니다.",
+        text: "자재을 등록하는 도중에 문제가 발생했습니다.",
         icon: "error"
       });
     }
   }
-  const tabulator = table.value.getTabulator();
   await tabulator.setData("/api/baseMaterial" , searchData.value);
   materialData.value = tabulator.getData();
 };
