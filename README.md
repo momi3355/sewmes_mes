@@ -10,12 +10,12 @@
 
 |  이름  |  담당  | 깃주소 | 역할 |
 | ------ | ----- | ------| ---- |
-| 김시인 |  팀장  |  [end134340](https://github.com/end134340) | 품질 / 설비점검 / 모니터링 |
-| 조정민 | 부팀장 |  [jo-art](https://github.com/jo-art) | 공정 관리 설비 연동 / 가동 관리 |
-| 이민호 | DB담당  | [abcals77](https://github.com/abcals77) | 생산 계획 수립 / 작업 지시 관리 |
-| 이창현 | Git담당 | [momi3355](https://github.com/momi3355) | 상품 관리(BOM) / 출고 관리 |
-| 심재진 | 배포담당 | [jaejine](https://github.com/jaejine) | 사원 관리 주문 / 관리 |
-| 최민혁 | 개발환경 | [Shiratory](https://github.com/Shiratory) | 자재 관리 / 재고 관리 |
+| 김시인 |  팀장  |  [end134340](https://github.com/end134340) | 품질관리 / 설비관리 / 모니터링 |
+| 조정민 | 부팀장 |  [jo-art](https://github.com/jo-art) | 작업지시관리 / 작업공정관리 / 생산실적관리 |
+| 이민호 | DB담당  | [abcals77](https://github.com/abcals77) | 공정관리 / 생산계획 / 외주관리 |
+| 이창현 | Git담당 | [momi3355](https://github.com/momi3355) | 기본품목관리 / BOM관리 / 완제품 출고 관리 |
+| 심재진 | 배포담당 | [jaejine](https://github.com/jaejine) | 로그인 / 업체관리 / 주문관리 |
+| 최민혁 | 개발환경 | [Shiratory](https://github.com/Shiratory) | 자재 관리 / 자재 발주 |
 
 ## 개발 기간
 
@@ -36,21 +36,23 @@
 
 ## 개발 환경
 
-- 개발 언어: Javascript
-- 프론트 엔드: Vue.js(v3.4.19)
-- 백엔드: Node.js + Express(v5.1.0)
-- IDE: VSCode
-- 버전관리: Git + GitHub
+- **개발 언어**: Javascript
+- **프론트 엔드**: Vue.js(v3.4.19)
+- **백엔드**: Node.js(v22.15.0) + Express(v5.1.0)
+- **IDE**: VSCode
+- **버전관리**: Git + GitHub
 
 ## 실행 / 배포 환경
 
-- 서버: Nginx + PM2
-- 운영체제: Ubuntu(v24.04)
-- 포트: 80
-- CI/CD: Github Action
+- **서버**: Nginx + PM2
+- **서비스**: NAVER CLOUD
+- **운영체제**: ubuntu(v24.04)
+- **포트**: 80
+- **CI/CD**: Github Action
 
 ## 데이터베이스
 
-- 서버: MySql
-- 운영체제: Ubuntu(v24.04)
-- 포트: 3306
+- **서버**: MySql
+- **서비스**: NAVER CLOUD
+- **운영체제**: ubuntu(v24.04)
+- **포트**: 3306
