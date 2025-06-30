@@ -9,7 +9,7 @@ import ArgonDashboard from "./argon-dashboard";
 const appInstance = createApp(App);
 
 // 새로고침 시 localStorage 확인해서 Vuex 복구
-const userData = localStorage.getItem('user');
+const userData = sessionStorage.getItem('user');
 if (userData) {
   store.dispatch('saveUser', JSON.parse(userData));
 }
